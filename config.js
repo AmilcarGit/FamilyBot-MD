@@ -1,0 +1,17 @@
+export default {
+  nombreBot: 'TheYui-MD',
+  prefijo: '.',
+  owner: ['51900000000'],
+  numeroBot: '',
+  sessionFolder: './session',
+  dbFile: './database.json',
+  groupCacheTTL: 60 * 1000,
+  rateLimitPause: 90 * 1000,
+  maxReconnectAttempts: 8,
+  maxReconnectDelay: 5 * 60 * 1000,
+  bienvenida: {
+    activa: true,
+    mensajeEntrada: '👋 ¡Bienvenido/a {mention} a *{grupo}*!\nLee las reglas y disfruta tu estadía 🎉',
+    mensajeSalida: '😢 {mention} salió de *{grupo}*. ¡Hasta pronto!',
+  },
+}
