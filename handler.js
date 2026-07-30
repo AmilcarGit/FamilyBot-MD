@@ -15,17 +15,36 @@ const comandos = {}
 const listaComandos = []
 const cooldowns = new Map()
 
-async function cargarComandos() {
-  const archivos = fs
-    .readdirSync(commandsDir)
-    .filter((f) => f.endsWith('.js'))
+function listarArchivosComandos(dir) {
+  const resultado = []
+  const entradas = fs.readdirSync(dir, { withFileTypes: true })
 
-  for (const archivo of archivos) {
-    const nombre = archivo.replace(/\.js$/, '')
-    const mod = await import(`./commands/${archivo}`)
+  for (const entrada of entradas) {
+    const rutaCompleta = path.join(dir, entrada.name)
+    if (entrada.isDirectory()) {
+      resultado.push(...listarArchivosComandos(rutaCompleta))
+    } else if (entrada.name.endsWith('.js')) {
+      resultado.push(rutaCompleta)
+    }
+  }
+
+  return resultado
+}
+
+async function cargarComandos() {
+  const archivos = listarArchivosComandos(commandsDir)
+
+  for (const rutaCompleta of archivos) {
+    const nombre = path.basename(rutaCompleta, '.js')
+    const relPath = path.relative(commandsDir, rutaCompleta).split(path.sep).join('/')
+    const dirRelativo = path.dirname(relPath)
+    const categoria = dirRelativo === '.' ? 'general' : dirRelativo
+
+    const mod = await import(`./commands/${relPath}`)
 
     const entrada = {
       nombre,
+      categoria,
       run: mod.default,
       desc: mod.desc || 'Sin descripción',
       alias: mod.alias || [],
