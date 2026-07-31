@@ -6,7 +6,8 @@ import config from './config.js'
 import { esOwner, normalizarJid } from './lib/utils.js'
 import { esAdminGrupo } from './lib/groupPermissions.js'
 import { getDB } from './lib/db.js'
-import { info, error as logError } from './lib/logger.js'
+import { info, warn, error as logError } from './lib/logger.js'
+import { t, obtenerIdiomaUsuario } from './lib/i18n.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const commandsDir = path.join(__dirname, 'commands')
@@ -31,37 +32,88 @@ function listarArchivosComandos(dir) {
   return resultado
 }
 
+function quitarComando(nombre) {
+  const entradaVieja = comandos[nombre]
+  if (!entradaVieja) return
+
+  delete comandos[nombre]
+  for (const a of entradaVieja.alias) delete comandos[a]
+
+  const idx = listaComandos.findIndex((c) => c.nombre === nombre)
+  if (idx !== -1) listaComandos.splice(idx, 1)
+}
+
+async function cargarComandoIndividual(rutaCompleta, avisar = false) {
+  const nombre = path.basename(rutaCompleta, '.js')
+  const relPath = path.relative(commandsDir, rutaCompleta).split(path.sep).join('/')
+  const dirRelativo = path.dirname(relPath)
+  const categoria = dirRelativo === '.' ? 'general' : dirRelativo
+
+  quitarComando(nombre)
+
+  const mod = await import(`./commands/${relPath}?update=${Date.now()}`)
+
+  const entrada = {
+    nombre,
+    categoria,
+    run: mod.default,
+    subcomandos: mod.subcomandos || null,
+    desc: mod.desc || 'Sin descripción',
+    alias: mod.alias || [],
+    cooldown: mod.cooldown ?? 3,
+    soloOwner: mod.soloOwner || false,
+    soloAdmin: mod.soloAdmin || false,
+    oculto: mod.oculto || false,
+  }
+
+  comandos[nombre] = entrada
+  for (const a of entrada.alias) comandos[a] = entrada
+  listaComandos.push(entrada)
+
+  if (avisar) {
+    info(chalk.magenta(`♻️  Comando recargado: ${nombre}`))
+  }
+}
+
 async function cargarComandos() {
   const archivos = listarArchivosComandos(commandsDir)
 
   for (const rutaCompleta of archivos) {
-    const nombre = path.basename(rutaCompleta, '.js')
-    const relPath = path.relative(commandsDir, rutaCompleta).split(path.sep).join('/')
-    const dirRelativo = path.dirname(relPath)
-    const categoria = dirRelativo === '.' ? 'general' : dirRelativo
-
-    const mod = await import(`./commands/${relPath}`)
-
-    const entrada = {
-      nombre,
-      categoria,
-      run: mod.default,
-      desc: mod.desc || 'Sin descripción',
-      alias: mod.alias || [],
-      cooldown: mod.cooldown ?? 3,
-      soloOwner: mod.soloOwner || false,
-      soloAdmin: mod.soloAdmin || false,
+    try {
+      await cargarComandoIndividual(rutaCompleta)
+    } catch (err) {
+      logError(`Error cargando el comando "${rutaCompleta}":`, err)
     }
-
-    comandos[nombre] = entrada
-    for (const a of entrada.alias) comandos[a] = entrada
-    listaComandos.push(entrada)
   }
 
   info(chalk.green(`✔ ${listaComandos.length} comandos cargados desde /commands`))
 }
 
+function activarHotReload() {
+  fs.watch(commandsDir, { recursive: true }, (evento, nombreArchivo) => {
+    if (!nombreArchivo || !nombreArchivo.endsWith('.js')) return
+
+    const rutaCompleta = path.join(commandsDir, nombreArchivo)
+
+    if (!fs.existsSync(rutaCompleta)) {
+      const nombre = path.basename(nombreArchivo, '.js')
+      quitarComando(nombre)
+      warn(chalk.yellow(`🗑️  Comando eliminado: ${nombre}`))
+      return
+    }
+
+    setTimeout(() => {
+      cargarComandoIndividual(rutaCompleta, true).catch((err) => {
+        logError(`Error recargando "${nombreArchivo}":`, err)
+      })
+    }, 150)
+  })
+
+  info(chalk.blue('👀 Hot-reload activo, vigilando /commands...'))
+}
+
 await cargarComandos()
+activarHotReload()
 
 async function notificarErrorAlOwner(sock, err, comando) {
   try {
@@ -79,15 +131,18 @@ export default async function handler(sock, m) {
   const jidRemitente = msg.key.participant || msg.key.remoteJid
   const chatId = msg.key.remoteJid
 
+  let db
   try {
-    const db = await getDB()
+    db = await getDB()
     const jidNormalizado = normalizarJid(jidRemitente)
-    db.data.users[jidNormalizado] ??= { mensajes: 0 }
+    db.data.users[jidNormalizado] ??= { mensajes: 0, idioma: config.idiomaPorDefecto }
     db.data.users[jidNormalizado].mensajes++
     await db.write()
   } catch (err) {
     logError('Error guardando en la base de datos:', err)
   }
+
+  const idioma = obtenerIdiomaUsuario(db, jidRemitente, config)
 
   const texto =
     msg.message.conversation ||
@@ -119,17 +174,13 @@ export default async function handler(sock, m) {
   const esDueno = esOwner(jidRemitente, config.owner)
 
   if (entrada.soloOwner && !esDueno) {
-    return sock.sendMessage(chatId, {
-      text: '⛔ Este comando es solo para el owner del bot.',
-    })
+    return sock.sendMessage(chatId, { text: t(idioma, 'soloOwner') })
   }
 
   if (entrada.soloAdmin && !esDueno) {
     const esAdmin = await esAdminGrupo(sock, chatId, jidRemitente)
     if (!esAdmin) {
-      return sock.sendMessage(chatId, {
-        text: '⛔ Este comando es solo para administradores del grupo.',
-      })
+      return sock.sendMessage(chatId, { text: t(idioma, 'soloAdmin') })
     }
   }
 
@@ -141,15 +192,24 @@ export default async function handler(sock, m) {
     if (vencimiento && ahora < vencimiento) {
       const restante = Math.ceil((vencimiento - ahora) / 1000)
       return sock.sendMessage(chatId, {
-        text: `⏳ Espera ${restante}s antes de volver a usar *${config.prefijo}${entrada.nombre}*.`,
+        text: t(idioma, 'cooldown', { restante, prefijo: config.prefijo, comando: entrada.nombre }),
       })
     }
     cooldowns.set(clave, ahora + entrada.cooldown * 1000)
   }
 
-  try {
-    const db = await getDB()
+  let ejecutar = entrada.run
+  let argsFinal = args
 
+  if (entrada.subcomandos && args[0]) {
+    const nombreSub = args[0].toLowerCase()
+    if (entrada.subcomandos[nombreSub]) {
+      ejecutar = entrada.subcomandos[nombreSub]
+      argsFinal = args.slice(1)
+    }
+  }
+
+  try {
     db.data.stats ??= { comandosEjecutados: 0 }
     db.data.stats.comandosEjecutados++
     await db.write()
@@ -160,15 +220,17 @@ export default async function handler(sock, m) {
       chalk.gray(`(${jidRemitente.split('@')[0]})`)
     )
 
-    await entrada.run({
+    await ejecutar({
       sock,
       msg,
-      args,
+      args: argsFinal,
       chatId,
       esDueno,
       comandos: listaComandos,
       config,
       db,
+      idioma,
+      t: (clave, vars) => t(idioma, clave, vars),
     })
   } catch (err) {
     logError(`Error en el comando "${entrada.nombre}":`, err)
