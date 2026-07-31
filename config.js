@@ -2,7 +2,7 @@ export default {
   nombreBot: 'TheYui-MD',
   prefijo: '.',
   idiomaPorDefecto: 'es',
-  owner: ['51900000000'],
+  owner: ['51910227479'],
   numeroBot: '',
   sessionFolder: './session',
   dbFile: './database.json',
