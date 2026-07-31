@@ -1,6 +1,7 @@
 export default {
   nombreBot: 'TheYui-MD',
   prefijo: '.',
+  idiomaPorDefecto: 'es',
   owner: ['51900000000'],
   numeroBot: '',
   sessionFolder: './session',
