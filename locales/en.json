@@ -1,0 +1,8 @@
+{
+  "soloOwner": "⛔ This command is only for the bot owner.",
+  "soloAdmin": "⛔ This command is only for group admins.",
+  "cooldown": "⏳ Wait {restante}s before using *{prefijo}{comando}* again.",
+  "idiomaCambiado": "✅ Language switched to *English*.",
+  "idiomaInvalido": "❌ Language not available. Options: {opciones}",
+  "idiomaActual": "🌐 Your current language is *{idioma}*.\nUsage: {prefijo}idioma <es|en>"
+}
