@@ -8,6 +8,7 @@ import { esAdminGrupo } from './lib/groupPermissions.js'
 import { getDB } from './lib/db.js'
 import { info, warn, error as logError } from './lib/logger.js'
 import { t, obtenerIdiomaUsuario } from './lib/i18n.js'
+import { obtenerConfigChat } from './lib/groupSettings.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const commandsDir = path.join(__dirname, 'commands')
@@ -159,6 +160,32 @@ export default async function handler(sock, m) {
   )
 
   if (!texto) return
+
+  if (esGrupo) {
+    const contieneLink = /chat\.whatsapp\.com\/[a-zA-Z0-9]+/i.test(texto)
+
+    if (contieneLink) {
+      const configChat = obtenerConfigChat(db, chatId)
+
+      if (configChat.antilink) {
+        const esDuenoMsj = esOwner(jidRemitente, config.owner)
+        const esAdminMsj = esDuenoMsj ? true : await esAdminGrupo(sock, chatId, jidRemitente)
+
+        if (!esDuenoMsj && !esAdminMsj) {
+          try {
+            await sock.sendMessage(chatId, { delete: msg.key })
+          } catch {}
+
+          await sock.sendMessage(chatId, {
+            text: `🔗 @${jidRemitente.split('@')[0]} no se permiten links de invitación en este grupo.`,
+            mentions: [jidRemitente],
+          })
+
+          return
+        }
+      }
+    }
+  }
 
   let cuerpo = texto
   if (config.prefijo && texto.startsWith(config.prefijo)) {
