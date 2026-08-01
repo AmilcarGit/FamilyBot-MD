@@ -1,11 +1,18 @@
-import { Jimp } from 'jimp'
 import webp from 'node-webpmux'
+import { JimpWebp } from '../../lib/webp.js'
 import { descargarMedia, obtenerMensajeCitado, tipoDeMedia } from '../../lib/media.js'
 import config from '../../config.js'
 
 export const desc = 'Convierte una imagen en sticker'
 export const alias = ['s', 'stiker']
 export const cooldown = 5
+
+const AUTOR_STICKER =
+  '╭─𓆩 👑 𓆪─╮\n' +
+  '🌸🦋 𝙏𝙝𝙚𝙔𝙪𝙞-𝙈𝘿 • ʙᴏᴛ\n' +
+  '🐱 ᴏʀɪɢɪɴᴀʟ sᴛɪᴄᴋᴇʀs\n' +
+  '💎 ᴄʀᴇᴀᴛᴏʀ ᴇᴅɪᴛ\n' +
+  '╰─𓆩🦋𓆪─╯'
 
 export default async function sticker({ sock, msg, chatId }) {
   const citado = obtenerMensajeCitado(msg)
@@ -20,7 +27,7 @@ export default async function sticker({ sock, msg, chatId }) {
 
   try {
     const buffer = await descargarMedia(objetivo, sock.logger)
-    const imagen = await Jimp.read(buffer)
+    const imagen = await JimpWebp.read(buffer)
     imagen.cover({ w: 512, h: 512 })
 
     const webpBuffer = await imagen.getBuffer('image/webp')
@@ -29,9 +36,9 @@ export default async function sticker({ sock, msg, chatId }) {
     await img.load(webpBuffer)
 
     const json = {
-      'sticker-pack-id': 'thebase-sticker',
+      'sticker-pack-id': 'theyui-md-sticker',
       'sticker-pack-name': config.nombreBot,
-      'sticker-pack-publisher': config.nombreBot,
+      'sticker-pack-publisher': AUTOR_STICKER,
       emojis: ['🤖'],
     }
 
