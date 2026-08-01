@@ -1,8 +1,16 @@
-import ytdl from '@distube/ytdl-core'
-import yts from 'yt-search'
+import { Innertube, UniversalCache } from 'youtubei.js'
 
 export const desc = 'Busca y descarga una canción de YouTube en audio'
 export const cooldown = 8
+
+let clienteYt = null
+
+async function obtenerCliente() {
+  if (!clienteYt) {
+    clienteYt = await Innertube.create({ cache: new UniversalCache(false) })
+  }
+  return clienteYt
+}
 
 export default async function play({ sock, chatId, args }) {
   const consulta = args.join(' ').trim()
@@ -15,38 +23,46 @@ export default async function play({ sock, chatId, args }) {
 
   await sock.sendMessage(chatId, { text: `🔎 Buscando *${consulta}*...` })
 
-  let resultado
+  let yt
   try {
-    const busqueda = await yts(consulta)
-    resultado = busqueda.videos?.[0]
+    yt = await obtenerCliente()
+  } catch (err) {
+    return sock.sendMessage(chatId, { text: '❌ No pude conectar con YouTube.' })
+  }
+
+  let video
+  try {
+    const busqueda = await yt.search(consulta, { type: 'video' })
+    video = busqueda?.videos?.[0]
   } catch (err) {
     return sock.sendMessage(chatId, { text: '❌ Ocurrió un error buscando en YouTube.' })
   }
 
-  if (!resultado) {
+  if (!video) {
     return sock.sendMessage(chatId, { text: '❌ No encontré resultados para esa búsqueda.' })
   }
 
   try {
-    const stream = ytdl(resultado.url, { filter: 'audioonly', quality: 'highestaudio' })
-    const chunks = []
-
-    await new Promise((resolve, reject) => {
-      stream.on('data', (chunk) => chunks.push(chunk))
-      stream.on('end', resolve)
-      stream.on('error', reject)
+    const stream = await yt.download(video.id, {
+      type: 'audio',
+      quality: 'best',
+      format: 'mp4',
     })
 
+    const chunks = []
+    for await (const chunk of stream) {
+      chunks.push(chunk)
+    }
     const buffer = Buffer.concat(chunks)
 
     await sock.sendMessage(chatId, {
       audio: buffer,
       mimetype: 'audio/mp4',
-      fileName: `${resultado.title}.mp3`,
+      fileName: `${video.title}.mp3`,
     })
   } catch (err) {
     await sock.sendMessage(chatId, {
-      text: `❌ No pude descargar el audio.\n🔗 Puedes escucharlo directo aquí: ${resultado.url}`,
+      text: `❌ No pude descargar el audio.\n🔗 Puedes escucharlo directo aquí: https://youtu.be/${video.id}`,
     })
   }
 }
