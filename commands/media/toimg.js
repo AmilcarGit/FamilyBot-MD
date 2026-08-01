@@ -1,4 +1,4 @@
-import { Jimp } from 'jimp'
+import { JimpWebp } from '../../lib/webp.js'
 import { descargarMedia, obtenerMensajeCitado, tipoDeMedia } from '../../lib/media.js'
 
 export const desc = 'Convierte un sticker en imagen'
@@ -18,7 +18,7 @@ export default async function toimg({ sock, msg, chatId }) {
 
   try {
     const buffer = await descargarMedia(objetivo, sock.logger)
-    const imagen = await Jimp.read(buffer)
+    const imagen = await JimpWebp.read(buffer)
     const pngBuffer = await imagen.getBuffer('image/png')
 
     await sock.sendMessage(chatId, { image: pngBuffer })
