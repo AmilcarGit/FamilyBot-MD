@@ -57,6 +57,7 @@ export default async function sticker({ sock, msg, chatId }) {
 
     await sock.sendMessage(chatId, { sticker: finalBuffer })
   } catch (err) {
+    console.error('Error creando sticker:', err)
     await sock.sendMessage(chatId, { text: '❌ No pude crear el sticker.' })
   }
 }
