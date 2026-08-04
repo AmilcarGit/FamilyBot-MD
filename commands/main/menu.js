@@ -30,7 +30,7 @@ export default async function menu({ sock, chatId, comandos, config }) {
 ┃ 📚 Comandos : ${comandos.length}
 ┃ 📅 Fecha : ${fecha}
 ┃ 🕒 Hora : ${hora}
-┃ 🔰 Prefijo : ${config.prefijo}
+┃ 🔰 Prefijo : MULTIPREFIJO
 ╰━━━━━━━━━━━━━━━━━━⬣
 `
 
