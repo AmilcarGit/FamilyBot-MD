@@ -1,7 +1,15 @@
+import { Jimp } from 'jimp'
 import webp from 'node-webpmux'
-import { JimpWebp } from '../../lib/webp.js'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
+import fs from 'fs/promises'
+import os from 'os'
+import path from 'path'
+import { randomUUID } from 'crypto'
 import { descargarMedia, obtenerMensajeCitado, tipoDeMedia } from '../../lib/media.js'
 import config from '../../config.js'
+
+const execFileAsync = promisify(execFile)
 
 export const desc = 'Convierte una imagen en sticker'
 export const alias = ['s', 'stiker']
@@ -13,6 +21,29 @@ const AUTOR_STICKER =
   '🐱 ᴏʀɪɢɪɴᴀʟ sᴛɪᴄᴋᴇʀs\n' +
   '💎 ᴄʀᴇᴀᴛᴏʀ ᴇᴅɪᴛ\n' +
   '╰─𓆩🦋𓆪─╯'
+
+async function pngABuffer(objetivo, sock) {
+  const buffer = await descargarMedia(objetivo, sock.logger)
+  const imagen = await Jimp.read(buffer)
+  imagen.cover({ w: 512, h: 512 })
+  return imagen.getBuffer('image/png')
+}
+
+async function convertirAPngWebp(bufferPng) {
+  const carpetaTemp = os.tmpdir()
+  const id = randomUUID()
+  const rutaPng = path.join(carpetaTemp, `theyui-${id}.png`)
+  const rutaWebp = path.join(carpetaTemp, `theyui-${id}.webp`)
+
+  try {
+    await fs.writeFile(rutaPng, bufferPng)
+    await execFileAsync('cwebp', ['-q', '80', rutaPng, '-o', rutaWebp])
+    return await fs.readFile(rutaWebp)
+  } finally {
+    await fs.unlink(rutaPng).catch(() => {})
+    await fs.unlink(rutaWebp).catch(() => {})
+  }
+}
 
 export default async function sticker({ sock, msg, chatId }) {
   const citado = obtenerMensajeCitado(msg)
@@ -26,11 +57,8 @@ export default async function sticker({ sock, msg, chatId }) {
   }
 
   try {
-    const buffer = await descargarMedia(objetivo, sock.logger)
-    const imagen = await JimpWebp.read(buffer)
-    imagen.cover({ w: 512, h: 512 })
-
-    const webpBuffer = await imagen.getBuffer('image/webp')
+    const bufferPng = await pngABuffer(objetivo, sock)
+    const webpBuffer = await convertirAPngWebp(bufferPng)
 
     const img = new webp.Image()
     await img.load(webpBuffer)
@@ -58,6 +86,13 @@ export default async function sticker({ sock, msg, chatId }) {
     await sock.sendMessage(chatId, { sticker: finalBuffer })
   } catch (err) {
     console.error('Error creando sticker:', err)
+
+    if (err.code === 'ENOENT') {
+      return sock.sendMessage(chatId, {
+        text: '❌ Falta instalar la herramienta *webp* en el servidor.\nEjecuta: pkg install webp (Termux) o apt install webp (Linux/hosting).',
+      })
+    }
+
     await sock.sendMessage(chatId, { text: '❌ No pude crear el sticker.' })
   }
 }
