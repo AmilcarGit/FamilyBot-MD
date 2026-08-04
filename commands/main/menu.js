@@ -3,61 +3,74 @@ export const alias = ['help', 'ayuda', 'menu']
 export const cooldown = 5
 
 export default async function menu({ sock, chatId, comandos, config }) {
-  const fecha = new Date().toLocaleDateString('es-PE')
-  const hora = new Date().toLocaleTimeString('es-PE')
+  const fecha = new Date().toLocaleString('es-PE', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  })
 
-  const iconos = {
-    main: '🏠',
-    descargas: '📥',
-    economia: '💰',
-    grupo: '👥',
-    media: '🎬',
-    owner: '👑'
+  const porCategoria = {}
+
+  for (const c of comandos) {
+    const cat = c.categoria || 'main'
+    if (!porCategoria[cat]) porCategoria[cat] = []
+    porCategoria[cat].push(c)
   }
 
-  const categorias = {}
+  const categoriasOrdenadas = Object.keys(porCategoria).sort()
 
-  for (const cmd of comandos) {
-    const cat = cmd.categoria || 'main'
-    if (!categorias[cat]) categorias[cat] = []
-    categorias[cat].push(cmd)
-  }
+  let lista = ''
 
-  let menu = `
-╭━━━〔 🌸🦋 *TheYui-MD* 🌸🦋 〕━━━⬣
-┃ 👑 Owner : AmilcarGit
-┃ ⚡ Versión : 1.0.0
-┃ 📚 Comandos : ${comandos.length}
-┃ 📅 Fecha : ${fecha}
-┃ 🕒 Hora : ${hora}
-┃ 🔰 Prefijo : MULTIPREFIJO
-╰━━━━━━━━━━━━━━━━━━⬣
-`
+  for (const cat of categoriasOrdenadas) {
 
-  for (const cat of Object.keys(categorias).sort()) {
-    const emoji = iconos[cat.toLowerCase()] || '📂'
+    const emoji =
+      cat.toLowerCase() === 'main' ? '🏠' :
+      cat.toLowerCase() === 'descargas' ? '📥' :
+      cat.toLowerCase() === 'economia' ? '💰' :
+      cat.toLowerCase() === 'grupo' ? '👥' :
+      cat.toLowerCase() === 'media' ? '🎬' :
+      cat.toLowerCase() === 'owner' ? '👑' :
+      '📂'
 
-    menu += `
+    lista += `
 
 ╭━━〔 ${emoji} ${cat.toUpperCase()} 〕━━⬣
 `
 
-    for (const cmd of categorias[cat]) {
-      menu += `┃ ✦ ${config.prefijo}${cmd.nombre}\n`
-    }
+    lista += porCategoria[cat]
+      .map((c) => {
+        const aliases = c.alias?.length
+          ? ` (${c.alias.map(a => config.prefijo + a).join(', ')})`
+          : ''
 
-    menu += `╰━━━━━━━━━━━━━━━━━━⬣`
+        return `┃ ✦ *${config.prefijo}${c.nombre}*${aliases}
+┃ 💬 ${c.desc}`
+      })
+      .join('\n┃\n')
+
+    lista += `
+╰━━━━━━━━━━━━━━━━━━⬣`
   }
 
-  menu += `
+  const texto = `
+╭━━━〔 🌸🦋 *TheYui-MD* 🌸🦋 〕━━━⬣
+┃ 👑 Owner : AmilcarGit
+┃ 📅 ${fecha}
+┃ 📚 Comandos : ${comandos.length}
+┃ ⚡ Prefijo : ${config.prefijo}
+╰━━━━━━━━━━━━━━━━━━⬣
+
+📜 *MENÚ DE COMANDOS*
+
+${lista}
 
 ╭━━━━━━━━━━━━━━━━━━⬣
 ┃ 🌸 Gracias por usar
 ┃ 🤖 TheYui-MD 🌸🦋
 ┃ 💜 Powered by AmilcarGit
-╰━━━━━━━━━━━━━━━━━━⬣`
+╰━━━━━━━━━━━━━━━━━━⬣
+`
 
   await sock.sendMessage(chatId, {
-    text: menu.trim()
+    text: texto.trim()
   })
 }
