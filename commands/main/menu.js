@@ -52,7 +52,7 @@ export default async function menu({ sock, chatId, comandos, config }) {
   }
 
   const texto = `
-╭━━━〔 🌸🦋 *TheYui-MD* 🌸🦋 〕━━━⬣
+╭━━〔🌸🦋 *TheYui-MD* 🌸🦋〕━━⬣
 ┃ 👑 Owner : AmilcarGit
 ┃ 📅 ${fecha}
 ┃ 📚 Comandos : ${comandos.length}
