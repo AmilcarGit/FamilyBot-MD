@@ -1,12 +1,10 @@
 export const desc = 'Muestra este menú de comandos'
-export const alias = ['help', 'ayuda']
+export const alias = ['help', 'ayuda', 'menu']
 export const cooldown = 5
 
 export default async function menu({ sock, chatId, comandos, config }) {
-  const fecha = new Date().toLocaleString('es-PE', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  })
+  const fecha = new Date().toLocaleDateString('es-PE')
+  const hora = new Date().toLocaleTimeString('es-PE')
 
   const iconos = {
     main: '🏠',
@@ -17,50 +15,49 @@ export default async function menu({ sock, chatId, comandos, config }) {
     owner: '👑'
   }
 
-  const porCategoria = {}
+  const categorias = {}
 
-  for (const c of comandos) {
-    const cat = c.categoria || 'main'
-    if (!porCategoria[cat]) porCategoria[cat] = []
-    porCategoria[cat].push(c)
+  for (const cmd of comandos) {
+    const cat = cmd.categoria || 'main'
+    if (!categorias[cat]) categorias[cat] = []
+    categorias[cat].push(cmd)
   }
 
-  const categoriasOrdenadas = Object.keys(porCategoria).sort()
-
-  let lista = ''
-
-  for (const cat of categoriasOrdenadas) {
-    const emoji = iconos[cat.toLowerCase()] || '📂'
-
-    lista += `\n\n${emoji} *${cat.toUpperCase()}*\n`
-
-    lista += porCategoria[cat]
-      .map(c => {
-        const alias = c.alias?.length
-          ? ` _(${c.alias.map(a => config.prefijo + a).join(', ')})_`
-          : ''
-
-        return `▢ *${config.prefijo}${c.nombre}*${alias}\n   ${c.desc}`
-      })
-      .join('\n\n')
-  }
-
-  const texto = `
-╭━━━〔 🤖 ${config.nombreBot} 〕━━━⬣
-┃ 📅 ${fecha}
-┃ 📚 Comandos: ${comandos.length}
-┃ ⚡ Prefijo: ${config.prefijo}
-╰━━━━━━━━━━━━━━━━⬣
-
-📜 *MENÚ DE COMANDOS*${lista}
-
-╭━━━━━━━━━━━━━━━━⬣
-┃ 💎 Gracias por usar
-┃ 🤖 ${config.nombreBot}
-╰━━━━━━━━━━━━━━━━⬣
+  let menu = `
+╭━━━〔 🌸🦋 *TheYui-MD* 🌸🦋 〕━━━⬣
+┃ 👑 Owner : AmilcarGit
+┃ ⚡ Versión : 1.0.0
+┃ 📚 Comandos : ${comandos.length}
+┃ 📅 Fecha : ${fecha}
+┃ 🕒 Hora : ${hora}
+┃ 🔰 Prefijo : ${config.prefijo}
+╰━━━━━━━━━━━━━━━━━━⬣
 `
 
+  for (const cat of Object.keys(categorias).sort()) {
+    const emoji = iconos[cat.toLowerCase()] || '📂'
+
+    menu += `
+
+╭━━〔 ${emoji} ${cat.toUpperCase()} 〕━━⬣
+`
+
+    for (const cmd of categorias[cat]) {
+      menu += `┃ ✦ ${config.prefijo}${cmd.nombre}\n`
+    }
+
+    menu += `╰━━━━━━━━━━━━━━━━━━⬣`
+  }
+
+  menu += `
+
+╭━━━━━━━━━━━━━━━━━━⬣
+┃ 🌸 Gracias por usar
+┃ 🤖 TheYui-MD 🌸🦋
+┃ 💜 Powered by AmilcarGit
+╰━━━━━━━━━━━━━━━━━━⬣`
+
   await sock.sendMessage(chatId, {
-    text: texto.trim()
+    text: menu.trim()
   })
 }
