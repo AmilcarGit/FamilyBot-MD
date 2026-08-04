@@ -1,54 +1,58 @@
-export const desc = 'Muestra el menú de comandos'
-export const alias = ['help', 'ayuda', 'menu']
+export const desc = 'Muestra este menú de comandos'
+export const alias = ['help', 'ayuda']
 export const cooldown = 5
 
 export default async function menu({ sock, chatId, comandos, config }) {
   const fecha = new Date().toLocaleString('es-PE', {
-    dateStyle: 'full',
-    timeStyle: 'short'
+    dateStyle: 'short',
+    timeStyle: 'short',
   })
 
-  const categorias = {}
-
-  for (const cmd of comandos) {
-    const cat = cmd.categoria || 'General'
-    if (!categorias[cat]) categorias[cat] = []
-    categorias[cat].push(cmd)
+  const iconos = {
+    main: '🏠',
+    descargas: '📥',
+    economia: '💰',
+    grupo: '👥',
+    media: '🎬',
+    owner: '👑'
   }
 
-  const orden = Object.keys(categorias).sort()
+  const porCategoria = {}
 
-  let menu = `
+  for (const c of comandos) {
+    const cat = c.categoria || 'main'
+    if (!porCategoria[cat]) porCategoria[cat] = []
+    porCategoria[cat].push(c)
+  }
+
+  const categoriasOrdenadas = Object.keys(porCategoria).sort()
+
+  let lista = ''
+
+  for (const cat of categoriasOrdenadas) {
+    const emoji = iconos[cat.toLowerCase()] || '📂'
+
+    lista += `\n\n${emoji} *${cat.toUpperCase()}*\n`
+
+    lista += porCategoria[cat]
+      .map(c => {
+        const alias = c.alias?.length
+          ? ` _(${c.alias.map(a => config.prefijo + a).join(', ')})_`
+          : ''
+
+        return `▢ *${config.prefijo}${c.nombre}*${alias}\n   ${c.desc}`
+      })
+      .join('\n\n')
+  }
+
+  const texto = `
 ╭━━━〔 🤖 ${config.nombreBot} 〕━━━⬣
-┃ 👑 Creador : ${config.owner || "AmilcarGit"}
 ┃ 📅 ${fecha}
-┃ 📚 Comandos : ${comandos.length}
-┃ ⚡ Prefijo : ${config.prefijo}
+┃ 📚 Comandos: ${comandos.length}
+┃ ⚡ Prefijo: ${config.prefijo}
 ╰━━━━━━━━━━━━━━━━⬣
-`
 
-  for (const categoria of orden) {
-    menu += `
-
-╭─❖「 ${categoria.toUpperCase()} 」
-`
-
-    for (const cmd of categorias[categoria]) {
-      const aliases = cmd.alias?.length
-        ? `\n│ ➜ Alias: ${cmd.alias.map(a => config.prefijo + a).join(", ")}`
-        : ""
-
-      menu += `│
-│ ✦ ${config.prefijo}${cmd.nombre}
-│ 📖 ${cmd.desc}${aliases}
-│
-`
-    }
-
-    menu += `╰────────────⬣`
-  }
-
-  menu += `
+📜 *MENÚ DE COMANDOS*${lista}
 
 ╭━━━━━━━━━━━━━━━━⬣
 ┃ 💎 Gracias por usar
@@ -57,6 +61,6 @@ export default async function menu({ sock, chatId, comandos, config }) {
 `
 
   await sock.sendMessage(chatId, {
-    text: menu.trim()
+    text: texto.trim()
   })
 }
