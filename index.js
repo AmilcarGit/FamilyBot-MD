@@ -12,6 +12,7 @@ import config from './config.js'
 import handler from './handler.js'
 import { delay, backoffDelay } from './lib/utils.js'
 import { info, warn, error as logError } from './lib/logger.js'
+import { mostrarBannerInicio, mostrarConexionExitosa } from './lib/banner.js'
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
@@ -80,7 +81,7 @@ async function iniciar() {
     if (connection === 'open') {
       intentosReconexion = 0
       codigoSolicitado = false
-      info(chalk.green(`✔ ${config.nombreBot} conectado correctamente.`))
+      mostrarConexionExitosa(config.nombreBot)
     }
 
     if (connection === 'close') {
@@ -167,4 +168,5 @@ async function iniciar() {
   return sock
 }
 
+mostrarBannerInicio(config.nombreBot, process.env.npm_package_version || "1.0.0")
 iniciar()
