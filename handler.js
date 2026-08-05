@@ -8,6 +8,7 @@ import { esAdminGrupo } from './lib/groupPermissions.js'
 import { getDB } from './lib/db.js'
 import { info, warn, error as logError } from './lib/logger.js'
 import { t, obtenerIdiomaUsuario } from './lib/i18n.js'
+import { mostrarResumenComandos } from './lib/banner.js'
 import { obtenerConfigChat } from './lib/groupSettings.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -87,7 +88,7 @@ async function cargarComandos() {
     }
   }
 
-  info(chalk.green(`✔ ${listaComandos.length} comandos cargados desde /commands`))
+  mostrarResumenComandos(listaComandos)
 }
 
 function activarHotReload() {
@@ -110,7 +111,7 @@ function activarHotReload() {
     }, 150)
   })
 
-  info(chalk.blue('👀 Hot-reload activo, vigilando /commands...'))
+  info(chalk.blue('👀 Vigilando /commands para hot-reload...'))
 }
 
 await cargarComandos()
