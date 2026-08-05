@@ -2,42 +2,65 @@
 
 # 🌸 TheYui-MD 🌸
 
-<img src="https://files.catbox.moe/e259p4.png" width="250">
+<img src="./src/TheYui-MD-Banner.jpg" width="100%">
 
-<p>
-  <img src="https://readme-typing-svg.demolab.com?font=Poppins&size=30&duration=3500&pause=1000&color=FF69B4&center=true&vCenter=true&width=700&lines=TheYui-MD;WhatsApp+Bot+Multi-Device;Powered+By+Baileys;Created+By+AmilcarGit" />
+<p align="center">
+
+<img src="https://readme-typing-svg.demolab.com?font=Poppins&size=32&duration=3500&pause=1000&color=FF69B4&center=true&vCenter=true&width=800&lines=TheYui-MD;Bot+de+WhatsApp+Multi-Device;Powered+By+Baileys;Creado+por+AmilcarGit;IA+%7C+Descargas+%7C+Juegos+%7C+Grupos">
+
 </p>
 
-<img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDBqYmE0dW44Zm5ldXh3NnA0bTV3d3Q0eDl2Zzl0Y2p4NjB3NnJ5YiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ICOgUNjpvO0PC/giphy.gif" width="500">
+<p>
 
----
+<img src="https://img.shields.io/github/stars/AmilcarGit/TheYui-MD?style=for-the-badge&color=ff69b4">
 
-![Version](https://img.shields.io/badge/Version-1.0.0-ff69b4?style=for-the-badge)
-![NodeJS](https://img.shields.io/badge/Node.js-18+-green?style=for-the-badge)
-![Platform](https://img.shields.io/badge/Platform-WhatsApp-success?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Online-brightgreen?style=for-the-badge)
+<img src="https://img.shields.io/github/forks/AmilcarGit/TheYui-MD?style=for-the-badge&color=ff69b4">
+
+<img src="https://img.shields.io/github/license/AmilcarGit/TheYui-MD?style=for-the-badge">
+
+<img src="https://img.shields.io/github/repo-size/AmilcarGit/TheYui-MD?style=for-the-badge">
+
+<img src="https://img.shields.io/github/last-commit/AmilcarGit/TheYui-MD?style=for-the-badge">
+
+</p>
 
 </div>
 
 ---
 
-# 🌹 Acerca del proyecto
+# 🌹 Características
 
-**TheYui-MD** es un Bot de WhatsApp Multi-Device desarrollado con **Node.js** y **Baileys**.
+<table>
 
-Cuenta con:
+<tr>
 
-- 🤖 IA
-- 🎵 Descargas
-- 🎮 Juegos
-- 👥 Administración
-- 💰 Economía
-- 🎨 Stickers
-- 📥 Multimedia
-- 🔍 Buscadores
-- 👑 Owner
-- ⚡ Optimizado
+<td>🤖 IA</td>
+<td>🎵 Descargas</td>
+
+</tr>
+
+<tr>
+
+<td>👥 Administración</td>
+<td>🎮 Juegos</td>
+
+</tr>
+
+<tr>
+
+<td>💰 Economía</td>
+<td>🎨 Stickers</td>
+
+</tr>
+
+<tr>
+
+<td>📥 Multimedia</td>
+<td>⚡ Muy rápido</td>
+
+</tr>
+
+</table>
 
 ---
 
@@ -45,30 +68,26 @@ Cuenta con:
 
 <div align="center">
 
-<img height="170" src="https://github-readme-stats.vercel.app/api?username=AmilcarGit&show_icons=true&theme=tokyonight"/>
+<img height="180" src="https://github-readme-stats.vercel.app/api?username=AmilcarGit&show_icons=true&theme=tokyonight"/>
 
-<img height="170" src="https://github-readme-streak-stats.herokuapp.com/?user=AmilcarGit&theme=tokyonight"/>
-
-<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=AmilcarGit&layout=compact&theme=tokyonight"/>
+<img height="180" src="https://streak-stats.demolab.com?user=AmilcarGit&theme=tokyonight"/>
 
 </div>
 
 ---
 
-# 🛠 Tecnologías
+<div align="center">
 
-<p align="center">
+<img src="https://github-readme-activity-graph.vercel.app/graph?username=AmilcarGit&theme=tokyo-night"/>
 
-<img src="https://skillicons.dev/icons?i=nodejs,javascript,git,github,vscode,npm"/>
-
-</p>
+</div>
 
 ---
 
 # 🚀 Instalación
 
 ```bash
-git clone https://github.com/AmilcarGit/TheYui-MD.git
+git clone https://github.com/AmilcarGit/TheYui-MD
 
 cd TheYui-MD
 
@@ -79,108 +98,71 @@ npm start
 
 ---
 
-# 📂 Características
+# 📂 Comandos
 
 <details>
-<summary>🤖 Inteligencia Artificial</summary>
 
-- Chat IA
-- GPT
-- Gemini
-- Imágenes IA
+<summary>🤖 IA</summary>
+
+- chat
+- gpt
+- gemini
+- imagine
+- traducir
 
 </details>
 
 <details>
+
 <summary>📥 Descargas</summary>
 
-- YouTube
-- TikTok
-- Facebook
-- Instagram
-- Spotify
+- play
+- ytmp3
+- ytmp4
+- tiktok
+- facebook
+- instagram
 
 </details>
 
 <details>
+
 <summary>👥 Grupo</summary>
 
-- Antilink
-- Antispam
-- Welcome
-- Goodbye
-- AntiFake
+- antilink
+- welcome
+- goodbye
+- antispam
+- antifake
 
 </details>
 
 <details>
-<summary>🎮 Juegos</summary>
 
-- Trivia
-- RPG
-- Economía
-- Casino
-- Ranking
-
-</details>
-
-<details>
 <summary>👑 Owner</summary>
 
-- Eval
-- Shell
-- Restart
-- Plugins
-- Backup
+- eval
+- shell
+- restart
+- backup
+- plugins
 
 </details>
 
 ---
 
-# 📈 Actividad
+# ❤️ Donaciones
 
-<p align="center">
-
-<img src="https://github-readme-activity-graph.vercel.app/graph?username=AmilcarGit&theme=tokyo-night"/>
-
-</p>
-
----
-
-# 🏆 Trofeos
-
-<p align="center">
-
-<img src="https://github-profile-trophy.vercel.app/?username=AmilcarGit&theme=tokyonight&no-frame=true&margin-w=15"/>
-
-</p>
-
----
-
-# 💖 Apóyame
-
-Si te gusta el proyecto:
-
-⭐ Dale una estrella al repositorio.
-
-🍴 Haz un Fork.
-
-❤️ Comparte el proyecto.
-
----
-
-# 👑 Creador
-
-## AmilcarGit
-
-Bot desarrollado con ❤️ para la comunidad de WhatsApp.
+Si deseas apoyar el desarrollo del proyecto, puedes hacerlo dejando una ⭐ al repositorio o realizando una donación.
 
 ---
 
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&height=120&color=FF69B4&section=footer"/>
+### 🌸 Creador
 
-### 🌸 Gracias por visitar TheYui-MD 🌸
+## AmilcarGit
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=ff69b4&height=150&section=footer"/>
 
 </div>
