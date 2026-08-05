@@ -1,3 +1,5 @@
+import { obtenerImagenMenuAleatoria } from '../../lib/randomImage.js'
+
 export const desc = 'Muestra este menú de comandos'
 export const alias = ['help', 'ayuda', 'menu']
 export const cooldown = 5
@@ -70,7 +72,11 @@ ${lista}
 ╰━━━━━━━━━━━━━━━━━━⬣
 `
 
-  await sock.sendMessage(chatId, {
-    text: texto.trim()
-  })
+  const imagen = obtenerImagenMenuAleatoria()
+
+  if (imagen) {
+    await sock.sendMessage(chatId, { image: imagen, caption: texto.trim() })
+  } else {
+    await sock.sendMessage(chatId, { text: texto.trim() })
+  }
 }
