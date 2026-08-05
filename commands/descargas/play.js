@@ -7,7 +7,9 @@ let clienteYt = null
 
 async function obtenerCliente() {
   if (!clienteYt) {
-    clienteYt = await Innertube.create({ cache: new UniversalCache(false) })
+    clienteYt = await Innertube.create({
+      cache: new UniversalCache(false),
+    })
   }
   return clienteYt
 }
@@ -21,48 +23,81 @@ export default async function play({ sock, chatId, args }) {
     })
   }
 
-  await sock.sendMessage(chatId, { text: `🔎 Buscando *${consulta}*...` })
+  await sock.sendMessage(chatId, {
+    text: `🔎 Buscando *${consulta}*...`,
+  })
 
   let yt
+
   try {
     yt = await obtenerCliente()
-  } catch (err) {
-    return sock.sendMessage(chatId, { text: '❌ No pude conectar con YouTube.' })
+  } catch {
+    return sock.sendMessage(chatId, {
+      text: '❌ No pude conectar con YouTube.',
+    })
   }
 
   let video
+
   try {
-    const busqueda = await yt.search(consulta, { type: 'video' })
+    const busqueda = await yt.search(consulta, {
+      type: 'video',
+    })
+
     video = busqueda?.videos?.[0]
-  } catch (err) {
-    return sock.sendMessage(chatId, { text: '❌ Ocurrió un error buscando en YouTube.' })
+  } catch {
+    return sock.sendMessage(chatId, {
+      text: '❌ Error buscando en YouTube.',
+    })
   }
 
   if (!video) {
-    return sock.sendMessage(chatId, { text: '❌ No encontré resultados para esa búsqueda.' })
+    return sock.sendMessage(chatId, {
+      text: '❌ No encontré resultados.',
+    })
   }
 
-  try {
-    const stream = await yt.download(video.id, {
-      type: 'audio',
-      quality: 'best',
-      format: 'mp4',
-    })
+  const youtubeUrl = `https://www.youtube.com/watch?v=${video.id}`
 
-    const chunks = []
-    for await (const chunk of stream) {
-      chunks.push(chunk)
+  await sock.sendMessage(chatId, {
+    text: `⬇️ Descargando *${video.title}*...`,
+  })
+
+  try {
+    const apiUrl =
+      `https://dv-yer-api.online/ytmp3?mode=link&url=${encodeURIComponent(youtubeUrl)}&apikey=dvyer673989047548`
+
+    const res = await fetch(apiUrl)
+    const data = await res.json()
+
+    // Ajusta este campo si la API devuelve otro nombre
+    const audioUrl = data.url || data.download || data.link
+
+    if (!audioUrl) {
+      throw new Error('No llegó enlace de descarga')
     }
-    const buffer = Buffer.concat(chunks)
+
+    const audioRes = await fetch(audioUrl)
+
+    if (!audioRes.ok) {
+      throw new Error('Error descargando audio')
+    }
+
+    const buffer = Buffer.from(await audioRes.arrayBuffer())
 
     await sock.sendMessage(chatId, {
       audio: buffer,
-      mimetype: 'audio/mp4',
+      mimetype: 'audio/mpeg',
       fileName: `${video.title}.mp3`,
     })
+
   } catch (err) {
+    console.error(err)
+
     await sock.sendMessage(chatId, {
-      text: `❌ No pude descargar el audio.\n🔗 Puedes escucharlo directo aquí: https://youtu.be/${video.id}`,
+      text:
+        `❌ No pude descargar el audio.\n\n` +
+        `🔗 ${youtubeUrl}`,
     })
   }
 }
