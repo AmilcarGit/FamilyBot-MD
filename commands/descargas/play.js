@@ -1,4 +1,5 @@
 import { Innertube, UniversalCache } from 'youtubei.js'
+import { extraerIdYoutube } from '../../lib/utils.js'
 
 export const desc = 'Busca y descarga una canción de YouTube en audio'
 export const cooldown = 8
@@ -16,36 +17,45 @@ async function obtenerCliente() {
 }
 
 export default async function play({ sock, chatId, args }) {
-  const consulta = args.join(' ').trim()
+  const entrada = args.join(' ').trim()
 
-  if (!consulta) {
+  if (!entrada) {
     return sock.sendMessage(chatId, {
-      text: '❀ Escribe el nombre de la canción.\nEjemplo: play shape of you',
+      text: '❀ Escribe el nombre de la canción o pega un link de YouTube.\nEjemplo: play shape of you',
     })
   }
 
-  await sock.sendMessage(chatId, { text: `🔎 Buscando *${consulta}*...` })
+  const idDirecto = extraerIdYoutube(entrada)
+  let youtubeUrl
+  let tituloBusqueda = entrada
 
-  let yt
-  try {
-    yt = await obtenerCliente()
-  } catch (err) {
-    return sock.sendMessage(chatId, { text: '❌ No pude conectar con YouTube.' })
+  if (idDirecto) {
+    youtubeUrl = `https://www.youtube.com/watch?v=${idDirecto}`
+  } else {
+    await sock.sendMessage(chatId, { text: `🔎 Buscando *${entrada}*...` })
+
+    let yt
+    try {
+      yt = await obtenerCliente()
+    } catch (err) {
+      return sock.sendMessage(chatId, { text: '❌ No pude conectar con YouTube.' })
+    }
+
+    let video
+    try {
+      const busqueda = await yt.search(entrada, { type: 'video' })
+      video = busqueda?.videos?.[0]
+    } catch (err) {
+      return sock.sendMessage(chatId, { text: '❌ Ocurrió un error buscando en YouTube.' })
+    }
+
+    if (!video) {
+      return sock.sendMessage(chatId, { text: '❌ No encontré resultados para esa búsqueda.' })
+    }
+
+    youtubeUrl = `https://www.youtube.com/watch?v=${video.id}`
+    tituloBusqueda = video.title
   }
-
-  let video
-  try {
-    const busqueda = await yt.search(consulta, { type: 'video' })
-    video = busqueda?.videos?.[0]
-  } catch (err) {
-    return sock.sendMessage(chatId, { text: '❌ Ocurrió un error buscando en YouTube.' })
-  }
-
-  if (!video) {
-    return sock.sendMessage(chatId, { text: '❌ No encontré resultados para esa búsqueda.' })
-  }
-
-  const youtubeUrl = `https://www.youtube.com/watch?v=${video.id}`
 
   let datos
   try {
@@ -68,7 +78,7 @@ export default async function play({ sock, chatId, args }) {
     if (!audioRes.ok) throw new Error(`La API respondió ${audioRes.status}`)
 
     const buffer = Buffer.from(await audioRes.arrayBuffer())
-    const titulo = datos.title || video.title
+    const titulo = datos.title || tituloBusqueda
 
     await sock.sendMessage(chatId, {
       audio: buffer,
