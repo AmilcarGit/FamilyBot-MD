@@ -1,72 +1,84 @@
-import yts from 'yt-search'
+import { Innertube, UniversalCache } from 'youtubei.js'
 
 export const desc = 'Busca y descarga una canción de YouTube en audio'
 export const cooldown = 8
+
+const API_BASE = 'https://dv-yer-api.online/ytmp3'
+const API_KEY = 'dvyer673989047548'
+
+let clienteYt = null
+
+async function obtenerCliente() {
+  if (!clienteYt) {
+    clienteYt = await Innertube.create({ cache: new UniversalCache(false) })
+  }
+  return clienteYt
+}
 
 export default async function play({ sock, chatId, args }) {
   const consulta = args.join(' ').trim()
 
   if (!consulta) {
     return sock.sendMessage(chatId, {
-      text: '❀ Escribe el nombre de la canción.\nEjemplo: .play amor'
+      text: '❀ Escribe el nombre de la canción.\nEjemplo: play shape of you',
     })
   }
 
-  await sock.sendMessage(chatId, {
-    text: `🔎 Buscando *${consulta}*...`
-  })
+  await sock.sendMessage(chatId, { text: `🔎 Buscando *${consulta}*...` })
+
+  let yt
+  try {
+    yt = await obtenerCliente()
+  } catch (err) {
+    return sock.sendMessage(chatId, { text: '❌ No pude conectar con YouTube.' })
+  }
+
+  let video
+  try {
+    const busqueda = await yt.search(consulta, { type: 'video' })
+    video = busqueda?.videos?.[0]
+  } catch (err) {
+    return sock.sendMessage(chatId, { text: '❌ Ocurrió un error buscando en YouTube.' })
+  }
+
+  if (!video) {
+    return sock.sendMessage(chatId, { text: '❌ No encontré resultados para esa búsqueda.' })
+  }
+
+  const youtubeUrl = `https://www.youtube.com/watch?v=${video.id}`
+
+  let datos
+  try {
+    const apiUrl = `${API_BASE}?mode=link&url=${encodeURIComponent(youtubeUrl)}&apikey=${API_KEY}`
+    const respuesta = await fetch(apiUrl)
+    datos = await respuesta.json()
+  } catch (err) {
+    console.error('Error consultando la API de play:', err)
+    return sock.sendMessage(chatId, { text: '❌ Ocurrió un error consultando la API de descarga.' })
+  }
+
+  if (!datos?.ok || !datos?.download_url) {
+    return sock.sendMessage(chatId, {
+      text: `❌ No pude obtener el audio.\n🔗 Puedes escucharlo directo aquí: ${youtubeUrl}`,
+    })
+  }
 
   try {
-    const resultado = await yts(consulta)
+    const audioRes = await fetch(datos.download_url)
+    if (!audioRes.ok) throw new Error(`La API respondió ${audioRes.status}`)
 
-    const video = resultado.videos?.[0]
-
-    if (!video) {
-      return sock.sendMessage(chatId, {
-        text: '❌ No encontré resultados.'
-      })
-    }
-
-    const url = video.url
-
-    await sock.sendMessage(chatId, {
-      text: `⬇️ Descargando *${video.title}*...`
-    })
-
-    const api =
-      `https://dv-yer-api.online/ytmp3?mode=link&url=${encodeURIComponent(url)}&apikey=dvyer673989047548`
-
-    const res = await fetch(api)
-    const data = await res.json()
-
-    const audioUrl =
-      data.url ||
-      data.link ||
-      data.download ||
-      data.result
-
-    if (!audioUrl) {
-      console.log(data)
-      throw new Error('La API no devolvió audio')
-    }
-
-    const audio = await fetch(audioUrl)
-
-    const buffer = Buffer.from(
-      await audio.arrayBuffer()
-    )
+    const buffer = Buffer.from(await audioRes.arrayBuffer())
+    const titulo = datos.title || video.title
 
     await sock.sendMessage(chatId, {
       audio: buffer,
-      mimetype: 'audio/mpeg',
-      fileName: `${video.title}.mp3`
+      mimetype: datos.mime_type || 'audio/mp4',
+      fileName: `${titulo}.m4a`,
     })
-
-  } catch (e) {
-    console.error(e)
-
+  } catch (err) {
+    console.error('Error descargando el audio de la API:', err)
     await sock.sendMessage(chatId, {
-      text: '❌ Error buscando o descargando la canción.'
+      text: `❌ No pude descargar el audio.\n🔗 Puedes escucharlo directo aquí: ${youtubeUrl}`,
     })
   }
 }
