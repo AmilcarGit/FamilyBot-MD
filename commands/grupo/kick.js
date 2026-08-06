@@ -24,11 +24,19 @@ export default async function kick({ sock, msg, args, chatId }) {
 
   try {
     await sock.groupParticipantsUpdate(chatId, [jid], 'remove')
+  } catch (err) {
+    console.error('Error expulsando:', err)
+    return sock.sendMessage(chatId, { text: '❌ No pude expulsar a ese usuario.' }).catch(() => {})
+  }
+
+  await new Promise((r) => setTimeout(r, 800))
+
+  try {
     await sock.sendMessage(chatId, {
       text: `✅ @${jid.split('@')[0]} fue expulsado del grupo.`,
       mentions: [jid],
     })
   } catch (err) {
-    await sock.sendMessage(chatId, { text: '❌ No pude expulsar a ese usuario.' })
+    console.error('Kick exitoso, pero no se pudo confirmar por chat:', err)
   }
 }
