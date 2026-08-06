@@ -7,11 +7,13 @@ export const soloOwner = true
 export default async function restart({ sock, chatId }) {
   await sock.sendMessage(chatId, { text: '🔄 Reiniciando el bot...' })
 
-  spawn(process.argv[0], process.argv.slice(1), {
+  const hijo = spawn(process.argv[0], process.argv.slice(1), {
     cwd: process.cwd(),
     detached: true,
-    stdio: 'inherit',
-  }).unref()
+    stdio: 'ignore',
+  })
 
-  process.exit(0)
+  hijo.unref()
+
+  setTimeout(() => process.exit(0), 500)
 }
