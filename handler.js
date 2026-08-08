@@ -3,7 +3,7 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import chalk from 'chalk'
 import config from './config.js'
-import { esOwner, normalizarJid } from './lib/utils.js'
+import { esOwner, normalizarJid, resolverNumeroReal } from './lib/utils.js'
 import { esAdminGrupo } from './lib/groupPermissions.js'
 import { getDB } from './lib/db.js'
 import { info, warn, error as logError } from './lib/logger.js'
@@ -169,7 +169,8 @@ export default async function handler(sock, m) {
       const configChat = obtenerConfigChat(db, chatId)
 
       if (configChat.antilink) {
-        const esDuenoMsj = esOwner(jidRemitente, config.owner)
+        const numeroReal = await resolverNumeroReal(sock, jidRemitente, msg)
+        const esDuenoMsj = esOwner(numeroReal, config.owner)
         const esAdminMsj = esDuenoMsj ? true : await esAdminGrupo(sock, chatId, jidRemitente)
 
         if (!esDuenoMsj && !esAdminMsj) {
@@ -199,7 +200,8 @@ export default async function handler(sock, m) {
   const entrada = comando && comandos[comando]
   if (!entrada) return
 
-  const esDueno = esOwner(jidRemitente, config.owner)
+  const numeroRealRemitente = await resolverNumeroReal(sock, jidRemitente, msg)
+  const esDueno = esOwner(numeroRealRemitente, config.owner)
 
   if (entrada.soloOwner && !esDueno) {
     return sock.sendMessage(chatId, { text: t(idioma, 'soloOwner') })
