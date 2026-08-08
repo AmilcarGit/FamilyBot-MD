@@ -13,6 +13,8 @@ import handler from './handler.js'
 import { delay, backoffDelay } from './lib/utils.js'
 import { info, warn, error as logError } from './lib/logger.js'
 import { mostrarBannerInicio, mostrarConexionExitosa } from './lib/banner.js'
+import { getDB } from './lib/db.js'
+import { obtenerConfigChat } from './lib/groupSettings.js'
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
@@ -155,10 +157,13 @@ async function iniciar() {
   })
 
   sock.ev.on('group-participants.update', async (update) => {
-    if (!config.bienvenida?.activa) return
-
     try {
       const { id: chatId, participants, action } = update
+
+      const db = await getDB()
+      const configChat = obtenerConfigChat(db, chatId)
+      if (!configChat.bienvenida) return
+
       const metadata = await sock.groupMetadata(chatId)
       const nombreGrupo = metadata.subject
 
