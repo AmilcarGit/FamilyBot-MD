@@ -15,7 +15,7 @@ export default async function xvideos({ sock, chatId, args, config }) {
 
   try {
     const apiKey = 'evogb-jRhjmDSp'
-    const url = `https://api.evogb.org/nsfw/search/xvideos?q=${encodeURIComponent(query)}&apikey=${apiKey}`
+    const url = `https://api.evogb.org/nsfw/search/xvideos?query=${encodeURIComponent(query)}&apikey=${apiKey}`
     
     const response = await fetch(url)
     const data = await response.json()
