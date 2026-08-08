@@ -2,11 +2,10 @@ import { Innertube, UniversalCache } from 'youtubei.js'
 import { extraerIdYoutube } from '../../lib/utils.js'
 
 export const desc = 'Busca y descarga un video de YouTube'
-export const alias = ['ytvideo']
-export const cooldown = 8
+export const alias = ['ytvideo', 'vid']
+export const cooldown = 10
 
-const API_BASE = 'https://dv-yer-api.online/ytmp4'
-const CALIDAD_DEFECTO = '360p'
+const API_DELIRIUS = 'https://api.delirius.store/download/ytmp4'
 
 let clienteYt = null
 
@@ -17,79 +16,78 @@ async function obtenerCliente() {
   return clienteYt
 }
 
-export default async function video({ sock, chatId, args }) {
+export default async function video({ sock, chatId, args, config }) {
   const entrada = args.join(' ').trim()
 
   if (!entrada) {
     return sock.sendMessage(chatId, {
-      text: '❀ Escribe el nombre del video o pega un link de YouTube.\nEjemplo: video shape of you',
+      text: `❀ Escribe el nombre del video o pega un link de YouTube.\nEjemplo: *${config.prefijo}video shape of you*`,
     })
   }
 
   const idDirecto = extraerIdYoutube(entrada)
   let youtubeUrl
-  let tituloBusqueda = entrada
+  let tituloVideo = ''
+  let miniatura = ''
 
   if (idDirecto) {
     youtubeUrl = `https://www.youtube.com/watch?v=${idDirecto}`
   } else {
-    await sock.sendMessage(chatId, { text: `🔎 Buscando *${entrada}*...` })
+    await sock.sendMessage(chatId, { text: `🔎 Buscando *${entrada}* en YouTube...` })
 
     let yt
     try {
       yt = await obtenerCliente()
-    } catch (err) {
-      return sock.sendMessage(chatId, { text: '❌ No pude conectar con YouTube.' })
-    }
-
-    let resultado
-    try {
       const busqueda = await yt.search(entrada, { type: 'video' })
-      resultado = busqueda?.videos?.[0]
+      const resultado = busqueda?.videos?.[0]
+
+      if (!resultado) {
+        return sock.sendMessage(chatId, { text: '❌ No encontré resultados para esa búsqueda.' })
+      }
+
+      youtubeUrl = `https://www.youtube.com/watch?v=${resultado.id}`
+      tituloVideo = resultado.title
+      miniatura = resultado.thumbnails?.[0]?.url || ''
     } catch (err) {
-      return sock.sendMessage(chatId, { text: '❌ Ocurrió un error buscando en YouTube.' })
+      console.error('Error buscando en YouTube:', err)
+      return sock.sendMessage(chatId, { text: '❌ Ocurrió un error al buscar en YouTube.' })
     }
-
-    if (!resultado) {
-      return sock.sendMessage(chatId, { text: '❌ No encontré resultados para esa búsqueda.' })
-    }
-
-    youtubeUrl = `https://www.youtube.com/watch?v=${resultado.id}`
-    tituloBusqueda = resultado.title
   }
 
-  let datos
-  try {
-    const apiUrl = `${API_BASE}?mode=link&url=${encodeURIComponent(youtubeUrl)}&quality=${CALIDAD_DEFECTO}`
-    const respuesta = await fetch(apiUrl)
-    datos = await respuesta.json()
-  } catch (err) {
-    console.error('Error consultando la API de video:', err)
-    return sock.sendMessage(chatId, { text: '❌ Ocurrió un error consultando la API de descarga.' })
-  }
-
-  if (!datos?.ok || !datos?.download_url) {
-    return sock.sendMessage(chatId, {
-      text: `❌ No pude obtener el video.\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
-    })
-  }
+  await sock.sendMessage(chatId, { text: '⏳ Procesando descarga, por favor espera...' })
 
   try {
-    const videoRes = await fetch(datos.download_url)
-    if (!videoRes.ok) throw new Error(`La API respondió ${videoRes.status}`)
+    const response = await fetch(`${API_DELIRIUS}?url=${encodeURIComponent(youtubeUrl)}`)
+    const data = await response.json()
 
-    const buffer = Buffer.from(await videoRes.arrayBuffer())
-    const titulo = datos.title || tituloBusqueda
+    if (!data.status || !data.data?.download?.url) {
+      return sock.sendMessage(chatId, {
+        text: `❌ La API de descarga no pudo procesar este video.\n🔗 Puedes verlo aquí: ${youtubeUrl}`,
+      })
+    }
 
+    const { title, author, views, duration } = data.data
+    const downloadUrl = data.data.download.url
+    const filename = data.data.download.filename || 'video.mp4'
+
+    const infoTexto = `🎬 *${title || tituloVideo}*\n` +
+                      `👤 *Autor:* ${author || 'Desconocido'}\n` +
+                      `👁️ *Vistas:* ${views || '---'}\n` +
+                      `⏱️ *Duración:* ${duration || '---'}\n\n` +
+                      `📥 Enviando video...`
+
+    // Intentamos enviar el video
     await sock.sendMessage(chatId, {
-      video: buffer,
+      video: { url: downloadUrl },
+      fileName: filename,
       mimetype: 'video/mp4',
-      caption: `🎬 *${titulo}*\n📺 Calidad: ${datos.quality || CALIDAD_DEFECTO}`,
+      caption: infoTexto
     })
-  } catch (err) {
-    console.error('Error descargando el video de la API:', err)
+
+  } catch (error) {
+    console.error('Error con la API de Delirius:', error)
     await sock.sendMessage(chatId, {
-      text: `❌ No pude descargar el video.\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
+      text: `❌ Hubo un fallo al obtener el video con la nueva API.\n🔗 Link directo: ${youtubeUrl}`
     })
   }
 }
