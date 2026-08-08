@@ -5,9 +5,9 @@ export const desc = 'Busca y descarga un video de YouTube'
 export const alias = ['ytvideo']
 export const cooldown = 8
 
-const API_BASE = 'https://dv-yer-api.online/ytmp4'
-const API_KEY = 'dvyer323465187836'
-const CALIDAD_DEFECTO = '360p'
+const DELIRIUS_BASE = 'https://api.delirius.store/download/ytmp4'
+const EDWARD_BASE = 'https://dv-edward.onrender.com/api/download/ytvideo'
+const EDWARD_API_KEY = 'EdwardwEqIgrqU'
 
 let clienteYt = null
 
@@ -16,6 +16,64 @@ async function obtenerCliente() {
     clienteYt = await Innertube.create({ cache: new UniversalCache(false) })
   }
   return clienteYt
+}
+
+function extraerDatosDelirius(json) {
+  const data = json?.data || json?.result || json
+
+  const url =
+    data?.download?.url ||
+    data?.download_url ||
+    data?.dl_url ||
+    data?.url ||
+    (typeof data?.download === 'string' ? data.download : null)
+
+  const titulo = data?.title || data?.judul || data?.videoTitle
+  const calidad = data?.quality || data?.download?.quality || data?.resolution
+
+  return { url, titulo, calidad }
+}
+
+async function intentarDelirius(youtubeUrl) {
+  try {
+    const apiUrl = `${DELIRIUS_BASE}?url=${encodeURIComponent(youtubeUrl)}`
+    const respuesta = await fetch(apiUrl)
+    const json = await respuesta.json()
+    const { url, titulo, calidad } = extraerDatosDelirius(json)
+
+    if (!url) {
+      console.error('Delirius sin download_url:', JSON.stringify(json))
+      return null
+    }
+
+    return { url, titulo, calidad, fuente: 'delirius' }
+  } catch (err) {
+    console.error('Error consultando Delirius:', err)
+    return null
+  }
+}
+
+async function intentarEdward(youtubeUrl) {
+  try {
+    const apiUrl = `${EDWARD_BASE}?url=${encodeURIComponent(youtubeUrl)}&apiKey=${EDWARD_API_KEY}`
+    const respuesta = await fetch(apiUrl)
+    const json = await respuesta.json()
+
+    if (!json?.status || !json?.result?.download_url) {
+      console.error('Edward sin download_url:', JSON.stringify(json))
+      return null
+    }
+
+    return {
+      url: json.result.download_url,
+      titulo: json.result.title,
+      calidad: json.result.quality,
+      fuente: 'edward',
+    }
+  } catch (err) {
+    console.error('Error consultando Edward:', err)
+    return null
+  }
 }
 
 export default async function video({ sock, chatId, args }) {
@@ -59,44 +117,31 @@ export default async function video({ sock, chatId, args }) {
     tituloBusqueda = resultado.title
   }
 
-  let datos
-  try {
-    const apiUrl = `${API_BASE}?mode=link&url=${encodeURIComponent(youtubeUrl)}&quality=${CALIDAD_DEFECTO}&apikey=${API_KEY}`
-    const respuesta = await fetch(apiUrl, {
-      headers: {
-        apikey: API_KEY,
-        'x-api-key': API_KEY,
-      },
-    })
-    datos = await respuesta.json()
-  } catch (err) {
-    console.error('Error consultando la API de video:', err)
-    return sock.sendMessage(chatId, { text: '❌ Ocurrió un error consultando la API de descarga.' })
+  let info = await intentarDelirius(youtubeUrl)
+  if (!info) {
+    info = await intentarEdward(youtubeUrl)
   }
 
-  if (!datos?.ok || !datos?.download_url) {
-    console.error('Respuesta inesperada de la API de video:', JSON.stringify(datos))
+  if (!info) {
     return sock.sendMessage(chatId, {
-      text: `❌ No pude obtener el video.\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
+      text: `❌ No pude obtener el video con ninguna de las APIs.\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
     })
   }
 
   try {
-    const videoRes = await fetch(datos.download_url, {
-      headers: { apikey: API_KEY },
-    })
-    if (!videoRes.ok) throw new Error(`La API respondió ${videoRes.status}`)
+    const videoRes = await fetch(info.url)
+    if (!videoRes.ok) throw new Error(`La descarga respondió ${videoRes.status}`)
 
     const buffer = Buffer.from(await videoRes.arrayBuffer())
-    const titulo = datos.title || tituloBusqueda
+    const titulo = info.titulo || tituloBusqueda
 
     await sock.sendMessage(chatId, {
       video: buffer,
       mimetype: 'video/mp4',
-      caption: `🎬 *${titulo}*\n📺 Calidad: ${datos.quality || CALIDAD_DEFECTO}`,
+      caption: `🎬 *${titulo}*${info.calidad ? `\n📺 Calidad: ${info.calidad}` : ''}`,
     })
   } catch (err) {
-    console.error('Error descargando el video de la API:', err)
+    console.error(`Error descargando el video (fuente: ${info.fuente}):`, err)
     await sock.sendMessage(chatId, {
       text: `❌ No pude descargar el video.\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
     })
