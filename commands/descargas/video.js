@@ -5,7 +5,9 @@ export const desc = 'Busca y descarga un video de YouTube'
 export const alias = ['ytvideo']
 export const cooldown = 8
 
-const API_BASE = 'https://api.delirius.store/download/ytmp4'
+const API_BASE = 'https://dv-yer-api.online/ytmp4'
+const API_KEY = 'dvyer323465187836'
+const CALIDAD_DEFECTO = '360p'
 
 let clienteYt = null
 
@@ -14,22 +16,6 @@ async function obtenerCliente() {
     clienteYt = await Innertube.create({ cache: new UniversalCache(false) })
   }
   return clienteYt
-}
-
-function extraerDatosApi(json) {
-  const data = json?.data || json?.result || json
-
-  const url =
-    data?.download?.url ||
-    data?.download_url ||
-    data?.dl_url ||
-    data?.url ||
-    (typeof data?.download === 'string' ? data.download : null)
-
-  const titulo = data?.title || data?.judul || data?.videoTitle
-  const calidad = data?.quality || data?.download?.quality || data?.resolution
-
-  return { url, titulo, calidad }
 }
 
 export default async function video({ sock, chatId, args }) {
@@ -73,35 +59,41 @@ export default async function video({ sock, chatId, args }) {
     tituloBusqueda = resultado.title
   }
 
-  let json
+  let datos
   try {
-    const apiUrl = `${API_BASE}?url=${encodeURIComponent(youtubeUrl)}`
-    const respuesta = await fetch(apiUrl)
-    json = await respuesta.json()
+    const apiUrl = `${API_BASE}?mode=link&url=${encodeURIComponent(youtubeUrl)}&quality=${CALIDAD_DEFECTO}&apikey=${API_KEY}`
+    const respuesta = await fetch(apiUrl, {
+      headers: {
+        apikey: API_KEY,
+        'x-api-key': API_KEY,
+      },
+    })
+    datos = await respuesta.json()
   } catch (err) {
     console.error('Error consultando la API de video:', err)
     return sock.sendMessage(chatId, { text: '❌ Ocurrió un error consultando la API de descarga.' })
   }
 
-  const { url: downloadUrl, titulo, calidad } = extraerDatosApi(json)
-
-  if (!downloadUrl) {
-    console.error('Respuesta inesperada de la API de video:', JSON.stringify(json))
+  if (!datos?.ok || !datos?.download_url) {
+    console.error('Respuesta inesperada de la API de video:', JSON.stringify(datos))
     return sock.sendMessage(chatId, {
       text: `❌ No pude obtener el video.\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
     })
   }
 
   try {
-    const videoRes = await fetch(downloadUrl)
-    if (!videoRes.ok) throw new Error(`La descarga respondió ${videoRes.status}`)
+    const videoRes = await fetch(datos.download_url, {
+      headers: { apikey: API_KEY },
+    })
+    if (!videoRes.ok) throw new Error(`La API respondió ${videoRes.status}`)
 
     const buffer = Buffer.from(await videoRes.arrayBuffer())
+    const titulo = datos.title || tituloBusqueda
 
     await sock.sendMessage(chatId, {
       video: buffer,
       mimetype: 'video/mp4',
-      caption: `🎬 *${titulo || tituloBusqueda}*${calidad ? `\n📺 Calidad: ${calidad}` : ''}`,
+      caption: `🎬 *${titulo}*\n📺 Calidad: ${datos.quality || CALIDAD_DEFECTO}`,
     })
   } catch (err) {
     console.error('Error descargando el video de la API:', err)
