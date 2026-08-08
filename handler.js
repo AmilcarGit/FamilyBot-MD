@@ -128,7 +128,20 @@ async function notificarErrorAlOwner(sock, err, comando) {
 
 export default async function handler(sock, m) {
   const msg = m.messages?.[0]
-  if (!msg?.message || msg.key.fromMe) return
+  if (!msg?.message) return
+
+  const esAutorespuesta = msg.key.fromMe
+
+  if (esAutorespuesta) {
+    const posibleTexto =
+      msg.message.conversation ||
+      msg.message.extendedTextMessage?.text ||
+      msg.message.imageMessage?.caption ||
+      ''
+
+    const esComando = config.prefijo && posibleTexto.startsWith(config.prefijo)
+    if (!esComando) return
+  }
 
   const jidRemitente = msg.key.participant || msg.key.remoteJid
   const chatId = msg.key.remoteJid
