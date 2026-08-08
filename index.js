@@ -52,6 +52,24 @@ async function iniciar() {
     browser: ['Ubuntu', 'Chrome', '20.0.04'],
   })
 
+  sock.contacts = {}
+
+  sock.ev.on('contacts.upsert', (contactos) => {
+    for (const contacto of contactos) {
+      sock.contacts[contacto.id] = contacto
+    }
+  })
+
+  sock.ev.on('contacts.update', (actualizaciones) => {
+    for (const act of actualizaciones) {
+      if (sock.contacts[act.id]) {
+        Object.assign(sock.contacts[act.id], act)
+      } else {
+        sock.contacts[act.id] = act
+      }
+    }
+  })
+
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect } = update
 
