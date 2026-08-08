@@ -44,7 +44,10 @@ export default async function menu({ sock, chatId, comandos, config }) {
           ? ` (${c.alias.map(a => config.prefijo + a).join(', ')})`
           : ''
 
-        return `┃ ✦ *${config.prefijo}${c.nombre}*${aliases}
+        const requiereReg = cat.toLowerCase() !== 'main' && cat.toLowerCase() !== 'owner'
+        const etiqueta = requiereReg ? ' 🔒' : ''
+
+        return `┃ ✦ *${config.prefijo}${c.nombre}*${aliases}${etiqueta}
 ┃ 💬 ${c.desc}`
       })
       .join('\n┃\n')
@@ -62,6 +65,7 @@ export default async function menu({ sock, chatId, comandos, config }) {
 ╰━━━━━━━━━━━━━━━━━━⬣
 
 📜 *MENÚ DE COMANDOS*
+🔒 = requiere estar registrado (.reg Nombre.Edad)
 
 ${lista}
 
