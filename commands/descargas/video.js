@@ -8,6 +8,7 @@ export const cooldown = 8
 const DELIRIUS_BASE = 'https://api.delirius.store/download/ytmp4'
 const EDWARD_BASE = 'https://dv-edward.onrender.com/api/download/ytvideo'
 const EDWARD_API_KEY = 'EdwardwEqIgrqU'
+const TIMEOUT_MS = 15000
 
 let clienteYt = null
 
@@ -16,6 +17,17 @@ async function obtenerCliente() {
     clienteYt = await Innertube.create({ cache: new UniversalCache(false) })
   }
   return clienteYt
+}
+
+async function fetchConTimeout(url, opciones = {}) {
+  const controlador = new AbortController()
+  const idTimeout = setTimeout(() => controlador.abort(), TIMEOUT_MS)
+
+  try {
+    return await fetch(url, { ...opciones, signal: controlador.signal })
+  } finally {
+    clearTimeout(idTimeout)
+  }
 }
 
 function extraerDatosDelirius(json) {
@@ -34,36 +46,19 @@ function extraerDatosDelirius(json) {
   return { url, titulo, calidad }
 }
 
-async function intentarDelirius(youtubeUrl) {
-  try {
-    const apiUrl = `${DELIRIUS_BASE}?url=${encodeURIComponent(youtubeUrl)}`
-    const respuesta = await fetch(apiUrl)
-    const json = await respuesta.json()
-    const { url, titulo, calidad } = extraerDatosDelirius(json)
-
-    if (!url) {
-      console.error('Delirius sin download_url:', JSON.stringify(json))
-      return null
-    }
-
-    return { url, titulo, calidad, fuente: 'delirius' }
-  } catch (err) {
-    console.error('Error consultando Delirius:', err)
-    return null
-  }
-}
-
 async function intentarEdward(youtubeUrl) {
+  console.log('🎬 Intentando descargar con Edward...')
   try {
     const apiUrl = `${EDWARD_BASE}?url=${encodeURIComponent(youtubeUrl)}&apiKey=${EDWARD_API_KEY}`
-    const respuesta = await fetch(apiUrl)
+    const respuesta = await fetchConTimeout(apiUrl)
     const json = await respuesta.json()
 
     if (!json?.status || !json?.result?.download_url) {
-      console.error('Edward sin download_url:', JSON.stringify(json))
+      console.log('⚠️ Edward no trajo download_url:', JSON.stringify(json))
       return null
     }
 
+    console.log('✅ Edward respondió correctamente.')
     return {
       url: json.result.download_url,
       titulo: json.result.title,
@@ -71,7 +66,28 @@ async function intentarEdward(youtubeUrl) {
       fuente: 'edward',
     }
   } catch (err) {
-    console.error('Error consultando Edward:', err)
+    console.log('❌ Falló Edward:', err.message)
+    return null
+  }
+}
+
+async function intentarDelirius(youtubeUrl) {
+  console.log('🎬 Intentando descargar con Delirius...')
+  try {
+    const apiUrl = `${DELIRIUS_BASE}?url=${encodeURIComponent(youtubeUrl)}`
+    const respuesta = await fetchConTimeout(apiUrl)
+    const json = await respuesta.json()
+    const { url, titulo, calidad } = extraerDatosDelirius(json)
+
+    if (!url) {
+      console.log('⚠️ Delirius no trajo download_url:', JSON.stringify(json))
+      return null
+    }
+
+    console.log('✅ Delirius respondió correctamente.')
+    return { url, titulo, calidad, fuente: 'delirius' }
+  } catch (err) {
+    console.log('❌ Falló Delirius:', err.message)
     return null
   }
 }
@@ -117,9 +133,9 @@ export default async function video({ sock, chatId, args }) {
     tituloBusqueda = resultado.title
   }
 
-  let info = await intentarDelirius(youtubeUrl)
+  let info = await intentarEdward(youtubeUrl)
   if (!info) {
-    info = await intentarEdward(youtubeUrl)
+    info = await intentarDelirius(youtubeUrl)
   }
 
   if (!info) {
@@ -129,7 +145,7 @@ export default async function video({ sock, chatId, args }) {
   }
 
   try {
-    const videoRes = await fetch(info.url)
+    const videoRes = await fetchConTimeout(info.url)
     if (!videoRes.ok) throw new Error(`La descarga respondió ${videoRes.status}`)
 
     const buffer = Buffer.from(await videoRes.arrayBuffer())
@@ -141,7 +157,7 @@ export default async function video({ sock, chatId, args }) {
       caption: `🎬 *${titulo}*${info.calidad ? `\n📺 Calidad: ${info.calidad}` : ''}`,
     })
   } catch (err) {
-    console.error(`Error descargando el video (fuente: ${info.fuente}):`, err)
+    console.log(`❌ Falló la descarga del archivo (fuente: ${info.fuente}):`, err.message)
     await sock.sendMessage(chatId, {
       text: `❌ No pude descargar el video.\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
     })
