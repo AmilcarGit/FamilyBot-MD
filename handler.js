@@ -128,20 +128,7 @@ async function notificarErrorAlOwner(sock, err, comando) {
 
 export default async function handler(sock, m) {
   const msg = m.messages?.[0]
-  if (!msg?.message) return
-
-  const esAutorespuesta = msg.key.fromMe
-
-  if (esAutorespuesta) {
-    const posibleTexto =
-      msg.message.conversation ||
-      msg.message.extendedTextMessage?.text ||
-      msg.message.imageMessage?.caption ||
-      ''
-
-    const esComando = config.prefijo && posibleTexto.startsWith(config.prefijo)
-    if (!esComando) return
-  }
+  if (!msg?.message || msg.key.fromMe) return
 
   const jidRemitente = msg.key.participant || msg.key.remoteJid
   const chatId = msg.key.remoteJid
@@ -167,11 +154,9 @@ export default async function handler(sock, m) {
 
   const tipoMensaje = Object.keys(msg.message)[0]
   const esGrupo = chatId.endsWith('@g.us')
-  info(
-    chalk.cyan(esGrupo ? '👥 Grupo' : '👤 Privado'),
-    chalk.gray(`${jidRemitente.split('@')[0]}:`),
-    texto || chalk.dim(`[${tipoMensaje}]`)
-  )
+  const tag = esGrupo ? chalk.magenta('👥 GRUPO') : chalk.blue('👤 PRIV')
+  const user = chalk.gray(jidRemitente.split('@')[0])
+  console.log(chalk.gray(`[${new Date().toLocaleTimeString()}]`), tag, '|', user, '|', chalk.white(texto || `[${tipoMensaje}]`))
 
   if (!texto) return
 
@@ -216,21 +201,6 @@ export default async function handler(sock, m) {
   const numeroRealRemitente = await resolverNumeroReal(sock, jidRemitente, msg)
   const esDueno = esOwner(numeroRealRemitente, config.owner)
 
-  const categoriasSinRegistro = ['main', 'owner']
-  if (!esDueno && !categoriasSinRegistro.includes(entrada.categoria)) {
-    const jidNormalizado = normalizarJid(jidRemitente)
-    const usuarioDB = db.data.users[jidNormalizado]
-
-    if (!usuarioDB?.registrado) {
-      return sock.sendMessage(chatId, {
-        text:
-          `📝 Debes registrarte antes de usar comandos.\n\n` +
-          `Usa: *${config.prefijo}reg Nombre.Edad*\n` +
-          `Ejemplo: *${config.prefijo}reg Amilcar.21*`,
-      })
-    }
-  }
-
   if (entrada.soloOwner && !esDueno) {
     return sock.sendMessage(chatId, { text: t(idioma, 'soloOwner') })
   }
@@ -272,11 +242,9 @@ export default async function handler(sock, m) {
     db.data.stats.comandosEjecutados++
     await db.write()
 
-    info(
-      chalk.green('⚡ Comando:'),
-      `${config.prefijo}${entrada.nombre}`,
-      chalk.gray(`(${jidRemitente.split('@')[0]})`)
-    )
+    const cmdTag = chalk.green.bold('⚡ CMD')
+    const cmdName = chalk.yellow.bold(`${config.prefijo}${entrada.nombre}`)
+    console.log(chalk.gray(`[${new Date().toLocaleTimeString()}]`), cmdTag, '|', cmdName, '|', chalk.gray(jidRemitente.split('@')[0]))
 
     await ejecutar({
       sock,
