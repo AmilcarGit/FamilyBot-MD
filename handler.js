@@ -203,6 +203,21 @@ export default async function handler(sock, m) {
   const numeroRealRemitente = await resolverNumeroReal(sock, jidRemitente, msg)
   const esDueno = esOwner(numeroRealRemitente, config.owner)
 
+  const categoriasSinRegistro = ['main', 'owner']
+  if (!esDueno && !categoriasSinRegistro.includes(entrada.categoria)) {
+    const jidNormalizado = normalizarJid(jidRemitente)
+    const usuarioDB = db.data.users[jidNormalizado]
+
+    if (!usuarioDB?.registrado) {
+      return sock.sendMessage(chatId, {
+        text:
+          `📝 Debes registrarte antes de usar comandos.\n\n` +
+          `Usa: *${config.prefijo}reg Nombre.Edad*\n` +
+          `Ejemplo: *${config.prefijo}reg Amilcar.21*`,
+      })
+    }
+  }
+
   if (entrada.soloOwner && !esDueno) {
     return sock.sendMessage(chatId, { text: t(idioma, 'soloOwner') })
   }
