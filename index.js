@@ -15,10 +15,12 @@ import { info, warn, error as logError } from './lib/logger.js'
 import { mostrarBannerInicio, mostrarConexionExitosa } from './lib/banner.js'
 import { getDB } from './lib/db.js'
 import { obtenerConfigChat } from './lib/groupSettings.js'
+import { reconectarSubbotsGuardados } from './subbots/manager.js'
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
 let codigoSolicitado = false
+let subbotsCargados = false
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -102,6 +104,13 @@ async function iniciar() {
       intentosReconexion = 0
       codigoSolicitado = false
       mostrarConexionExitosa(config.nombreBot)
+
+      if (!subbotsCargados) {
+        subbotsCargados = true
+        reconectarSubbotsGuardados(sock).catch((err) => {
+          logError('Error reconectando subbots guardados:', err)
+        })
+      }
     }
 
     if (connection === 'close') {
