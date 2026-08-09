@@ -10,6 +10,8 @@ export default {
   rateLimitPause: 90 * 1000,
   maxReconnectAttempts: 8,
   maxReconnectDelay: 5 * 60 * 1000,
+  maxSubbots: 5,
+  subbotsPorUsuario: 1,
   bienvenida: {
     activa: true,
     mensajeEntrada: '👋 ¡Bienvenido/a {mention} a *{grupo}*!\nLee las reglas y disfruta tu estadía 🎉',
