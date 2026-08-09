@@ -9,7 +9,6 @@ import makeWASocket, {
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
-import handler from '../handler.js'
 import { getDB } from '../lib/db.js'
 import { delay } from '../lib/utils.js'
 import { info, warn, error as logError } from '../lib/logger.js'
@@ -148,6 +147,8 @@ export async function iniciarSubbot({ numero, creadorJid, chatOrigen, sockPrinci
   })
 
   sock.ev.on('creds.update', saveCreds)
+
+  const { default: handler } = await import('../handler.js')
 
   sock.ev.on('messages.upsert', async (m) => {
     try {
