@@ -168,8 +168,9 @@ export default async function video({ sock, chatId, args }) {
     }
 
     await sock.sendMessage(chatId, {
-      video: buffer,
+      document: buffer,
       mimetype: 'video/mp4',
+      fileName: `${titulo.replace(/[\\/:*?"<>|]/g, '').slice(0, 60)}.mp4`,
       caption: `🎬 *${titulo}*${info.calidad ? `\n📺 Calidad: ${info.calidad}` : ''}`,
     })
   } catch (err) {
