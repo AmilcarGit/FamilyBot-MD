@@ -1,5 +1,13 @@
 import { Innertube, UniversalCache } from 'youtubei.js'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
+import fs from 'fs/promises'
+import os from 'os'
+import path from 'path'
+import { randomUUID } from 'crypto'
 import { extraerIdYoutube } from '../../lib/utils.js'
+
+const execFileAsync = promisify(execFile)
 
 export const desc = 'Busca y descarga un video de YouTube'
 export const alias = ['ytvideo']
@@ -92,6 +100,30 @@ async function intentarDelirius(youtubeUrl) {
   }
 }
 
+async function repararMp4(bufferOriginal) {
+  const carpetaTemp = os.tmpdir()
+  const id = randomUUID()
+  const rutaEntrada = path.join(carpetaTemp, `theyui-video-in-${id}.mp4`)
+  const rutaSalida = path.join(carpetaTemp, `theyui-video-out-${id}.mp4`)
+
+  try {
+    await fs.writeFile(rutaEntrada, bufferOriginal)
+
+    await execFileAsync('ffmpeg', [
+      '-y',
+      '-i', rutaEntrada,
+      '-c', 'copy',
+      '-movflags', '+faststart',
+      rutaSalida,
+    ])
+
+    return await fs.readFile(rutaSalida)
+  } finally {
+    await fs.unlink(rutaEntrada).catch(() => {})
+    await fs.unlink(rutaSalida).catch(() => {})
+  }
+}
+
 export default async function video({ sock, chatId, args }) {
   const entrada = args.join(' ').trim()
 
@@ -144,39 +176,57 @@ export default async function video({ sock, chatId, args }) {
     })
   }
 
+  let bufferDescargado
+  const titulo = info.titulo || tituloBusqueda
+
   try {
     const videoRes = await fetchConTimeout(info.url)
     if (!videoRes.ok) throw new Error(`La descarga respondió ${videoRes.status}`)
 
-    const contentType = videoRes.headers.get('content-type') || ''
-    const buffer = Buffer.from(await videoRes.arrayBuffer())
-    const titulo = info.titulo || tituloBusqueda
-
-    const firma = buffer.subarray(4, 12).toString('ascii')
-    const pareceMp4 = firma.includes('ftyp') || firma.includes('mdat') || firma.includes('moov')
-    const pesoMinimoOk = buffer.length > 50 * 1024
+    bufferDescargado = Buffer.from(await videoRes.arrayBuffer())
 
     console.log(
-      `📦 Archivo recibido (fuente: ${info.fuente}) → tipo: ${contentType}, tamaño: ${(buffer.length / 1024 / 1024).toFixed(2)}MB, firma válida: ${pareceMp4}`
+      `📦 Archivo recibido (fuente: ${info.fuente}) → tamaño: ${(bufferDescargado.length / 1024 / 1024).toFixed(2)}MB`
     )
 
-    if (!pareceMp4 || !pesoMinimoOk) {
-      console.log('⚠️ El archivo descargado no parece un MP4 válido, primeros bytes:', buffer.subarray(0, 40).toString('utf8'))
+    if (bufferDescargado.length < 50 * 1024) {
+      console.log('⚠️ Archivo demasiado pequeño, primeros bytes:', bufferDescargado.subarray(0, 40).toString('utf8'))
       return sock.sendMessage(chatId, {
-        text: `❌ La API devolvió un archivo dañado o inválido (fuente: ${info.fuente}).\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
+        text: `❌ La API devolvió un archivo demasiado pequeño (fuente: ${info.fuente}).\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
       })
     }
+  } catch (err) {
+    console.log(`❌ Falló la descarga del archivo (fuente: ${info.fuente}):`, err.message)
+    return sock.sendMessage(chatId, {
+      text: `❌ No pude descargar el video.\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
+    })
+  }
 
+  let bufferFinal = bufferDescargado
+
+  try {
+    bufferFinal = await repararMp4(bufferDescargado)
+    console.log(`🛠️ Video reparado con ffmpeg → tamaño final: ${(bufferFinal.length / 1024 / 1024).toFixed(2)}MB`)
+  } catch (err) {
+    console.log('⚠️ ffmpeg no pudo reparar el video, se enviará el original:', err.message)
+
+    if (err.code === 'ENOENT') {
+      return sock.sendMessage(chatId, {
+        text: '❌ Falta instalar *ffmpeg* en el servidor.\nEjecuta: pkg install ffmpeg (Termux) o apt install ffmpeg (Linux/hosting).',
+      })
+    }
+  }
+
+  try {
     await sock.sendMessage(chatId, {
-      document: buffer,
+      video: bufferFinal,
       mimetype: 'video/mp4',
-      fileName: `${titulo.replace(/[\\/:*?"<>|]/g, '').slice(0, 60)}.mp4`,
       caption: `🎬 *${titulo}*${info.calidad ? `\n📺 Calidad: ${info.calidad}` : ''}`,
     })
   } catch (err) {
-    console.log(`❌ Falló la descarga del archivo (fuente: ${info.fuente}):`, err.message)
+    console.log('❌ Falló el envío del video:', err.message)
     await sock.sendMessage(chatId, {
-      text: `❌ No pude descargar el video.\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
+      text: `❌ No pude enviar el video.\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
     })
   }
 }
