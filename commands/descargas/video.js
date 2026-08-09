@@ -148,8 +148,24 @@ export default async function video({ sock, chatId, args }) {
     const videoRes = await fetchConTimeout(info.url)
     if (!videoRes.ok) throw new Error(`La descarga respondió ${videoRes.status}`)
 
+    const contentType = videoRes.headers.get('content-type') || ''
     const buffer = Buffer.from(await videoRes.arrayBuffer())
     const titulo = info.titulo || tituloBusqueda
+
+    const firma = buffer.subarray(4, 12).toString('ascii')
+    const pareceMp4 = firma.includes('ftyp') || firma.includes('mdat') || firma.includes('moov')
+    const pesoMinimoOk = buffer.length > 50 * 1024
+
+    console.log(
+      `📦 Archivo recibido (fuente: ${info.fuente}) → tipo: ${contentType}, tamaño: ${(buffer.length / 1024 / 1024).toFixed(2)}MB, firma válida: ${pareceMp4}`
+    )
+
+    if (!pareceMp4 || !pesoMinimoOk) {
+      console.log('⚠️ El archivo descargado no parece un MP4 válido, primeros bytes:', buffer.subarray(0, 40).toString('utf8'))
+      return sock.sendMessage(chatId, {
+        text: `❌ La API devolvió un archivo dañado o inválido (fuente: ${info.fuente}).\n🔗 Puedes verlo directo aquí: ${youtubeUrl}`,
+      })
+    }
 
     await sock.sendMessage(chatId, {
       video: buffer,
