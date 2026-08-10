@@ -10,6 +10,7 @@ import { info, warn, error as logError } from './lib/logger.js'
 import { t, obtenerIdiomaUsuario } from './lib/i18n.js'
 import { mostrarResumenComandos } from './lib/banner.js'
 import { obtenerConfigChat } from './lib/groupSettings.js'
+import { registrarMensaje, limpiarHistorial, MAX_MENSAJES } from './lib/floodControl.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const commandsDir = path.join(__dirname, 'commands')
@@ -149,6 +150,12 @@ export default async function handler(sock, m) {
   let db
   try {
     db = await getDB()
+
+    db.data.blacklist ??= []
+    if (db.data.blacklist.includes(normalizarJid(jidRemitente))) {
+      return
+    }
+
     const jidNormalizado = normalizarJid(jidRemitente)
     db.data.users[jidNormalizado] ??= { mensajes: 0, idioma: config.idiomaPorDefecto }
     db.data.users[jidNormalizado].mensajes++
@@ -176,6 +183,29 @@ export default async function handler(sock, m) {
   if (!texto) return
 
   if (esGrupo) {
+    const numeroMensajesRecientes = registrarMensaje(jidRemitente)
+
+    if (numeroMensajesRecientes > MAX_MENSAJES) {
+      limpiarHistorial(jidRemitente)
+
+      const numeroReal = await resolverNumeroReal(sock, jidRemitente, msg)
+      const esDuenoMsj = esOwner(numeroReal, config.owner)
+
+      if (!esDuenoMsj) {
+        const configChat = obtenerConfigChat(db, chatId)
+        const jidNormalizado = normalizarJid(jidRemitente)
+        configChat.advertencias[jidNormalizado] = (configChat.advertencias[jidNormalizado] || 0) + 1
+        await db.write()
+
+        await sock.sendMessage(chatId, {
+          text: `🚨 @${jidRemitente.split('@')[0]} está enviando mensajes demasiado rápido. Se registró una advertencia por flood.`,
+          mentions: [jidRemitente],
+        })
+
+        return
+      }
+    }
+
     const contieneLink = /chat\.whatsapp\.com\/[a-zA-Z0-9]+/i.test(texto)
 
     if (contieneLink) {
