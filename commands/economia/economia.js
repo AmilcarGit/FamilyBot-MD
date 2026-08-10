@@ -10,6 +10,12 @@ const COOLDOWN_COSECHAR_MS = 45 * 60 * 1000
 const COOLDOWN_ROBAR_MS = 20 * 60 * 1000
 const COOLDOWN_DIARIO_MS = 24 * 60 * 60 * 1000
 
+const TIENDA = {
+  escudo: { nombre: '🛡️ Escudo antirrobo', precio: 800, desc: 'Te protege de robos por 24 horas' },
+  amuleto: { nombre: '🍀 Amuleto de suerte', precio: 1200, desc: 'Duplica tu próxima ganancia de trabajar/minar/cosechar' },
+  multiplicador: { nombre: '✨ Multiplicador diario', precio: 1500, desc: 'Tu próximo diario da el doble' },
+}
+
 const MENSAJES_MINAR = [
   'Encontraste una veta de oro ⛏️',
   'Sacaste unos diamantes brillantes 💎',
@@ -44,6 +50,9 @@ async function obtenerUsuario(db, jid) {
   usuario.economia.ultimoRobar ??= 0
   usuario.economia.ultimoDiario ??= 0
   usuario.economia.racha ??= 0
+  usuario.economia.escudoHasta ??= 0
+  usuario.economia.amuletoActivo ??= false
+  usuario.economia.multiplicadorActivo ??= false
   await db.write()
   return usuario.economia
 }
@@ -77,13 +86,22 @@ async function actividadConCooldown({
   const ganancia = Math.floor(Math.random() * (maxGanancia - minGanancia + 1)) + minGanancia
   const mensaje = mensajes[Math.floor(Math.random() * mensajes.length)]
 
-  eco.saldo += ganancia
+  let gananciaFinal = ganancia
+  let textoAmuleto = ''
+
+  if (eco.amuletoActivo) {
+    gananciaFinal *= 2
+    eco.amuletoActivo = false
+    textoAmuleto = '\n🍀 ¡Tu amuleto de suerte duplicó la ganancia!'
+  }
+
+  eco.saldo += gananciaFinal
   eco[campoCooldown] = ahora
   await db.write()
 
   return {
     ok: true,
-    texto: `${emoji} ${mensaje}\n💵 Ganaste ${ganancia} de efectivo.`,
+    texto: `${emoji} ${mensaje}\n💵 Ganaste ${gananciaFinal} de efectivo.${textoAmuleto}`,
   }
 }
 
@@ -206,6 +224,13 @@ async function robar({ sock, msg, args, chatId, db }) {
 
   const ecoVictima = await obtenerUsuario(db, jidObjetivo)
 
+  if (ecoVictima.escudoHasta > Date.now()) {
+    return sock.sendMessage(chatId, {
+      text: `🛡️ @${jidObjetivo.split('@')[0]} tiene un escudo antirrobo activo, no puedes robarle.`,
+      mentions: [jidObjetivo],
+    })
+  }
+
   if (ecoVictima.saldo < 100) {
     return sock.sendMessage(chatId, { text: '❌ Esa persona no tiene suficiente efectivo para robarle.' })
   }
@@ -320,65 +345,4 @@ async function diario({ sock, msg, chatId, db }) {
   }
 
   const unDiaMs = 24 * 60 * 60 * 1000
-  const rachaActiva = eco.ultimoDiario > 0 && ahora - eco.ultimoDiario <= unDiaMs * 2
-  eco.racha = rachaActiva ? (eco.racha || 0) + 1 : 1
-
-  const bono = Math.min(eco.racha * 50, 500)
-  const ganancia = 200 + bono
-
-  eco.saldo += ganancia
-  eco.ultimoDiario = ahora
-  await db.write()
-
-  await sock.sendMessage(chatId, {
-    text: `🎁 Reclamaste tu recompensa diaria.\n\n💵 Ganaste ${ganancia} de efectivo.\n🔥 Racha: ${eco.racha} día(s)`,
-  })
-}
-
-async function top({ sock, chatId, db }) {
-  const usuarios = Object.entries(db.data.users)
-    .filter(([, u]) => u.economia)
-    .map(([jid, u]) => ({ jid, total: (u.economia.saldo || 0) + (u.economia.banco || 0) }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 10)
-
-  if (!usuarios.length) {
-    return sock.sendMessage(chatId, { text: '❌ Todavía no hay nadie con economía registrada.' })
-  }
-
-  const medallas = ['🥇', '🥈', '🥉']
-  let texto = '🏆 *Top economía*\n\n'
-
-  usuarios.forEach((u, i) => {
-    const medalla = medallas[i] || `${i + 1}.`
-    texto += `${medalla} @${u.jid.split('@')[0]} — ${u.total}\n`
-  })
-
-  await sock.sendMessage(chatId, {
-    text: texto,
-    mentions: usuarios.map((u) => u.jid),
-  })
-}
-
-export const subcomandos = {
-  saldo,
-  depositar,
-  retirar,
-  minar,
-  trabajar,
-  cosechar,
-  robar,
-  apostar,
-  transferir,
-  diario,
-  top,
-}
-
-export default async function economia({ sock, chatId, config }) {
-  await sock.sendMessage(chatId, {
-    text:
-      `💰 *Sistema de economía*\n\n` +
-      `Uso: *${config.prefijo}economia <subcomando>*\n\n` +
-      `▢ saldo\n▢ depositar <monto>\n▢ retirar <monto>\n▢ minar (cada 30 min)\n▢ trabajar (cada 1 hora)\n▢ cosechar (cada 45 min)\n▢ robar @usuario (cada 20 min)\n▢ apostar <monto>\n▢ transferir @usuario <monto>\n▢ diario (cada 24h, con racha)\n▢ top`,
-  })
-}
+  const rachaActiva = eco.ultimoDiario > 0 && ahora - eco.ultimoDia
