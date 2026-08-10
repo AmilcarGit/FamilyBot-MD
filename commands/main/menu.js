@@ -31,7 +31,7 @@ export default async function menu({ sock, chatId, comandos, config }) {
       cat.toLowerCase() === 'grupo' ? '👥' :
       cat.toLowerCase() === 'media' ? '🎬' :
       cat.toLowerCase() === 'owner' ? '👑' :
-      '📂'
+      '🌾'
 
     lista += `
 
