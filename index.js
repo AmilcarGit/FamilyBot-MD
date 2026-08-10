@@ -22,6 +22,14 @@ let intentosReconexion = 0
 let codigoSolicitado = false
 let subbotsCargados = false
 
+process.on('uncaughtException', (err) => {
+  logError('⚠️ Excepción no capturada (el bot sigue corriendo):', err)
+})
+
+process.on('unhandledRejection', (reason) => {
+  logError('⚠️ Promesa rechazada sin capturar (el bot sigue corriendo):', reason)
+})
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
