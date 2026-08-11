@@ -21,6 +21,7 @@ const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
 let codigoSolicitado = false
 let subbotsCargados = false
+let numeroIngresado = null
 
 process.on('uncaughtException', (err) => {
   logError('⚠️ Excepción no capturada (el bot sigue corriendo):', err)
@@ -43,13 +44,14 @@ async function iniciar() {
   )
   const { version } = await fetchLatestBaileysVersion()
 
-  let numero = config.numeroBot
+  let numero = config.numeroBot || numeroIngresado
   if (!state.creds.registered && !numero) {
     numero = await preguntar(
       chalk.green(
         'Ingresa el número de WhatsApp del bot (con código de país, sin +): '
       )
     )
+    numeroIngresado = numero
   }
   if (numero) numero = numero.replace(/\D/g, '')
 
