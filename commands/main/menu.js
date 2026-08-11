@@ -47,8 +47,8 @@ export default async function menu({ sock, chatId, comandos, config }) {
         const requiereReg = cat.toLowerCase() !== 'main' && cat.toLowerCase() !== 'owner'
         const etiqueta = requiereReg ? ' 🔒' : ''
 
-        return `┃ ✦ *${config.prefijo}${c.nombre}*${aliases}${etiqueta}
-┃ 💬 ${c.desc}`
+        return `┃ 🌾 *${config.prefijo}${c.nombre}*${aliases}${etiqueta}
+┃ 🫧> ${c.desc}`
       })
       .join('\n┃\n')
 
