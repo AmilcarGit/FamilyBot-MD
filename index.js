@@ -84,11 +84,29 @@ const rl = readline.createInterface({
 const preguntar = (texto) =>
   new Promise((resolve) => rl.question(texto, resolve))
 
+const cacheGrupos = new Map()
+const RUTA_CACHE_VERSION = path.join(process.cwd(), '.baileys-version.json')
+
+async function obtenerVersionConCache() {
+  try {
+    const { version } = await fetchLatestBaileysVersion()
+    fs.writeFileSync(RUTA_CACHE_VERSION, JSON.stringify({ version, fecha: Date.now() }))
+    return version
+  } catch (err) {
+    if (fs.existsSync(RUTA_CACHE_VERSION)) {
+      warn(chalk.yellow('No se pudo consultar la última versión de Baileys, usando la versión en caché local.'))
+      const cache = JSON.parse(fs.readFileSync(RUTA_CACHE_VERSION, 'utf-8'))
+      return cache.version
+    }
+    throw err
+  }
+}
+
 async function iniciar() {
   const { state, saveCreds } = await useMultiFileAuthState(
     config.sessionFolder
   )
-  const { version } = await fetchLatestBaileysVersion()
+  const version = await obtenerVersionConCache()
 
   let numero = config.numeroBot || numeroIngresado
   if (!state.creds.registered && !numero) {
@@ -101,7 +119,22 @@ async function iniciar() {
   }
   if (numero) numero = numero.replace(/\D/g, '')
 
-  const sock = makeWASocket({
+  let sock
+
+  async function obtenerMetadataConCache(jid) {
+    const entrada = cacheGrupos.get(jid)
+    const ahora = Date.now()
+
+    if (entrada && ahora - entrada.timestamp < config.groupCacheTTL) {
+      return entrada.data
+    }
+
+    const data = await sock.groupMetadata(jid)
+    cacheGrupos.set(jid, { data, timestamp: ahora })
+    return data
+  }
+
+  sock = makeWASocket({
     version,
     logger,
     printQRInTerminal: false,
@@ -110,6 +143,7 @@ async function iniciar() {
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
     browser: ['Ubuntu', 'Chrome', '20.0.04'],
+    cachedGroupMetadata: obtenerMetadataConCache,
   })
 
   sock.contacts = {}
@@ -224,6 +258,8 @@ async function iniciar() {
   sock.ev.on('group-participants.update', async (update) => {
     try {
       const { id: chatId, participants, action } = update
+
+      cacheGrupos.delete(chatId)
 
       const db = await getDB()
       const configChat = obtenerConfigChat(db, chatId)
