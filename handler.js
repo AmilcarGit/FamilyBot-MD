@@ -19,6 +19,13 @@ const comandos = {}
 const listaComandos = []
 const cooldowns = new Map()
 
+setInterval(() => {
+  const ahora = Date.now()
+  for (const [clave, vencimiento] of cooldowns) {
+    if (vencimiento < ahora) cooldowns.delete(clave)
+  }
+}, 15 * 60 * 1000)
+
 function listarArchivosComandos(dir) {
   const resultado = []
   const entradas = fs.readdirSync(dir, { withFileTypes: true })
