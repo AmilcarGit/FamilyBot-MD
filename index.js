@@ -8,6 +8,8 @@ import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
 import readline from 'readline'
+import fs from 'fs'
+import path from 'path'
 import config from './config.js'
 import handler from './handler.js'
 import { delay, backoffDelay } from './lib/utils.js'
@@ -16,12 +18,56 @@ import { mostrarBannerInicio, mostrarConexionExitosa } from './lib/banner.js'
 import { getDB } from './lib/db.js'
 import { obtenerConfigChat } from './lib/groupSettings.js'
 import { reconectarSubbotsGuardados } from './subbots/manager.js'
+import { iniciarBackupsAutomaticos } from './lib/backup.js'
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
 let codigoSolicitado = false
 let subbotsCargados = false
 let numeroIngresado = null
+
+const ARCHIVO_LOCK = path.join(process.cwd(), 'bot.lock')
+
+function procesoActivo(pid) {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function verificarInstanciaUnica() {
+  if (fs.existsSync(ARCHIVO_LOCK)) {
+    const pidAnterior = parseInt(fs.readFileSync(ARCHIVO_LOCK, 'utf-8'), 10)
+
+    if (pidAnterior && procesoActivo(pidAnterior)) {
+      logError(
+        chalk.red(
+          `❌ Ya hay una instancia del bot corriendo (PID ${pidAnterior}). No inicio una segunda para no romper la sesión de WhatsApp.\n` +
+            `Si estás seguro de que no hay ninguna corriendo, borra el archivo bot.lock manualmente.`
+        )
+      )
+      process.exit(1)
+    }
+  }
+
+  fs.writeFileSync(ARCHIVO_LOCK, String(process.pid))
+}
+
+function liberarInstancia() {
+  try {
+    const pidGuardado = parseInt(fs.readFileSync(ARCHIVO_LOCK, 'utf-8'), 10)
+    if (pidGuardado === process.pid) {
+      fs.unlinkSync(ARCHIVO_LOCK)
+    }
+  } catch {}
+}
+
+verificarInstanciaUnica()
+process.on('exit', liberarInstancia)
+process.on('SIGINT', () => process.exit(0))
+process.on('SIGTERM', () => process.exit(0))
 
 process.on('uncaughtException', (err) => {
   logError('⚠️ Excepción no capturada (el bot sigue corriendo):', err)
@@ -211,4 +257,5 @@ async function iniciar() {
 }
 
 mostrarBannerInicio(config.nombreBot, process.env.npm_package_version || "1.0.0")
+iniciarBackupsAutomaticos(6)
 iniciar()
