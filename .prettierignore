@@ -1,0 +1,7 @@
+node_modules/
+session/
+subbots/sesiones/
+backups/
+logs/
+database.json
+database.json.bak*
