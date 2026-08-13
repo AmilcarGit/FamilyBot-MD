@@ -12,7 +12,7 @@ export default {
   maxReconnectDelay: 5 * 60 * 1000,
   maxSubbots: 5,
   subbotsPorUsuario: 1,
-  panelActivo: false,
+  panelActivo: true,
   panelPort: 3000,
   panelToken: 'cambia-este-token',
   bienvenida: {
