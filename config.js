@@ -12,6 +12,9 @@ export default {
   maxReconnectDelay: 5 * 60 * 1000,
   maxSubbots: 5,
   subbotsPorUsuario: 1,
+  panelActivo: false,
+  panelPort: 3000,
+  panelToken: 'cambia-este-token',
   bienvenida: {
     activa: true,
     mensajeEntrada: '👋 ¡Bienvenido/a {mention} a *{grupo}*!\nLee las reglas y disfruta tu estadía 🎉',
