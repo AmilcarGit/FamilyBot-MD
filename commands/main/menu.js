@@ -56,7 +56,7 @@ export default async function menu({ sock, chatId, comandos, config }) {
         const requiereReg = cat.toLowerCase() !== 'main' && cat.toLowerCase() !== 'owner'
         const etiqueta = requiereReg ? ' 🔒' : ''
 
-        return `┃ ✧ *${config.prefijo}${c.nombre}*${aliases}${etiqueta}\n┃   💬 ${c.desc}`
+        return `┃ ✧ *${config.prefijo}${c.nombre}*${aliases}${etiqueta}\n┃   🌾 ${c.desc}`
       })
       .join('\n┃\n')
 
@@ -64,13 +64,13 @@ export default async function menu({ sock, chatId, comandos, config }) {
   })
 
   const texto = `
-╭❀━━━━━━━━━━━━━━━━━━━━━━━━❀╮
+╭❀━━━━━━━━━━━━━━━━━━━❀╮
    ${lineaAdornada()}
    🌈 *${config.nombreBot ?? 'TheYui-MD'}* 🦋
    ${lineaAdornada()}
-╰❀━━━━━━━━━━━━━━━━━━━━━━━━❀╯
+╰❀━━━━━━━━━━━━━━━━━━━❀╯
 
-┃ 👑 Owner  : AmilcarGit
+┃ 👑 Creador  : AmilcarGit
 ┃ 📅 Fecha  : ${fecha}
 ┃ 📚 Comandos : ${comandos.length}
 ┃ ⚡ Prefijo  : ${config.prefijo}
@@ -79,11 +79,11 @@ export default async function menu({ sock, chatId, comandos, config }) {
 🔒 = requiere estar registrado (${config.prefijo}reg Nombre.Edad)
 ${lista}
 
-╭❀━━━━━━━━━━━━━━━━━━━━━━━━❀╮
+╭❀━━━━━━━━━━━━━━━━━━❀╮
    🌾 Gracias por usar 🍃
    🫧 *TheYui-MD* 🦋
    💜 Powered by AmilcarGit
-╰❀━━━━━━━━━━━━━━━━━━━━━━━━❀╯
+╰❀━━━━━━━━━━━━━━━━━━❀╯
 `
 
   const imagen = obtenerImagenMenuAleatoria()
