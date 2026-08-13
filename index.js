@@ -19,6 +19,7 @@ import { getDB } from './lib/db.js'
 import { obtenerConfigChat } from './lib/groupSettings.js'
 import { reconectarSubbotsGuardados } from './subbots/manager.js'
 import { iniciarBackupsAutomaticos } from './lib/backup.js'
+import { iniciarPanel } from './lib/panel.js'
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
@@ -294,4 +295,5 @@ async function iniciar() {
 
 mostrarBannerInicio(config.nombreBot, process.env.npm_package_version || "1.0.0")
 iniciarBackupsAutomaticos(6)
+iniciarPanel()
 iniciar()
