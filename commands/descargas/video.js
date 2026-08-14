@@ -1,5 +1,3 @@
-import { getResult } from '../../lib/tempStore.js'
-
 export const desc = 'Busca y descarga el video de YouTube.'
 export const alias = ['vid', 'v']
 export const cooldown = 10
@@ -15,9 +13,11 @@ export default async function video({ sock, chatId, args, m, config }) {
 
   const index = parseInt(query)
   if (!isNaN(index) && index > 0 && index <= 10) {
-    const result = getResult(chatId, index)
-    if (result) {
-      query = result.url
+    if (global.ytsStore && global.ytsStore[chatId]) {
+      const result = global.ytsStore[chatId][index - 1]
+      if (result) {
+        query = result.url
+      }
     }
   }
 
@@ -81,8 +81,11 @@ export default async function video({ sock, chatId, args, m, config }) {
       return sock.sendMessage(chatId, { text: `❌ Ambas APIs de descarga fallaron. Inténtalo más tarde.` })
     }
 
+    const res = await fetch(videoData.dl)
+    const buffer = Buffer.from(await res.arrayBuffer())
+
     await sock.sendMessage(chatId, {
-      video: { url: videoData.dl },
+      video: buffer,
       caption: `🎬 *Título:* ${videoData.title}\n✨ *Descargado con éxito*`,
       mimetype: 'video/mp4'
     }, { quoted: m })
