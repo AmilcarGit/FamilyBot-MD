@@ -1,94 +1,89 @@
-import { Innertube, UniversalCache } from 'youtubei.js'
-import { extraerIdYoutube } from '../../lib/utils.js'
+export const desc = 'Busca y descarga el audio de un video de YouTube.'
+export const alias = ['musica', 'audio']
+export const cooldown = 10
 
-export const desc = 'Busca y descarga una canción de YouTube en audio'
-export const cooldown = 8
-
-const API_BASE = 'https://dv-yer-api.online/ytmp3'
-const API_KEY = 'dvyer673989047548'
-
-let clienteYt = null
-
-async function obtenerCliente() {
-  if (!clienteYt) {
-    clienteYt = await Innertube.create({ cache: new UniversalCache(false) })
-  }
-  return clienteYt
-}
-
-export default async function play({ sock, chatId, args }) {
-  const entrada = args.join(' ').trim()
-
-  if (!entrada) {
+export default async function play({ sock, chatId, args, m, config }) {
+  const query = args.join(' ').trim()
+  
+  if (!query) {
     return sock.sendMessage(chatId, {
-      text: '❀ Escribe el nombre de la canción o pega un link de YouTube.\nEjemplo: play shape of you',
-    })
-  }
-
-  const idDirecto = extraerIdYoutube(entrada)
-  let youtubeUrl
-  let tituloBusqueda = entrada
-
-  if (idDirecto) {
-    youtubeUrl = `https://www.youtube.com/watch?v=${idDirecto}`
-  } else {
-    await sock.sendMessage(chatId, { text: `🔎 Buscando *${entrada}*...` })
-
-    let yt
-    try {
-      yt = await obtenerCliente()
-    } catch (err) {
-      return sock.sendMessage(chatId, { text: '❌ No pude conectar con YouTube.' })
-    }
-
-    let video
-    try {
-      const busqueda = await yt.search(entrada, { type: 'video' })
-      video = busqueda?.videos?.[0]
-    } catch (err) {
-      return sock.sendMessage(chatId, { text: '❌ Ocurrió un error buscando en YouTube.' })
-    }
-
-    if (!video) {
-      return sock.sendMessage(chatId, { text: '❌ No encontré resultados para esa búsqueda.' })
-    }
-
-    youtubeUrl = `https://www.youtube.com/watch?v=${video.id}`
-    tituloBusqueda = video.title
-  }
-
-  let datos
-  try {
-    const apiUrl = `${API_BASE}?mode=link&url=${encodeURIComponent(youtubeUrl)}&apikey=${API_KEY}`
-    const respuesta = await fetch(apiUrl)
-    datos = await respuesta.json()
-  } catch (err) {
-    console.error('Error consultando la API de play:', err)
-    return sock.sendMessage(chatId, { text: '❌ Ocurrió un error consultando la API de descarga.' })
-  }
-
-  if (!datos?.ok || !datos?.download_url) {
-    return sock.sendMessage(chatId, {
-      text: `❌ No pude obtener el audio.\n🔗 Puedes escucharlo directo aquí: ${youtubeUrl}`,
+      text: `❌ Por favor, ingresa el nombre de una canción o un link de YouTube.\nEjemplo: *${config.prefijo}play William Luna Sin tu Amor*`
     })
   }
 
   try {
-    const audioRes = await fetch(datos.download_url)
-    if (!audioRes.ok) throw new Error(`La API respondió ${audioRes.status}`)
+    const apiKeyEdward = 'EdwardwEqIgrqU'
+    let url = query
 
-    const buffer = Buffer.from(await audioRes.arrayBuffer())
-    const titulo = datos.title || tituloBusqueda
+    if (!query.includes('youtube.com') && !query.includes('youtu.be')) {
+      await sock.sendMessage(chatId, { text: `🔍 Buscando *"${query}"*...` }, { quoted: m })
+      
+      const searchUrl = `https://dv-edward.onrender.com/api/search/youtube?apiKey=${apiKeyEdward}&query=${encodeURIComponent(query)}`
+      const searchRes = await fetch(searchUrl)
+      const searchData = await searchRes.json()
+
+      if (!searchData.status || !searchData.data || searchData.data.length === 0) {
+        return sock.sendMessage(chatId, { text: `❌ No se encontró ninguna canción con ese nombre.` })
+      }
+      
+      url = searchData.data[0].url
+    }
+
+    await sock.sendMessage(chatId, { text: `📥 Obteniendo audio, espera un momento...` }, { quoted: m })
+
+    let audioData = null
+    
+    try {
+      const edwardUrl = `https://dv-edward.onrender.com/api/download/ytaudio?url=${encodeURIComponent(url)}&apiKey=${apiKeyEdward}`
+      const edwardRes = await fetch(edwardUrl)
+      const edwardJson = await edwardRes.json()
+      
+      if (edwardJson.status && edwardJson.result?.download_url) {
+        audioData = {
+          title: edwardJson.result.title,
+          thumbnail: edwardJson.result.thumbnail,
+          dl: edwardJson.result.download_url
+        }
+      }
+    } catch (e) {
+      console.log('API Edward falló, intentando con Delirius...')
+    }
+
+    if (!audioData) {
+      try {
+        const deliriusUrl = `https://api.delirius.store/download/ytmp3?url=${encodeURIComponent(url)}`
+        const deliriusRes = await fetch(deliriusUrl)
+        const deliriusJson = await deliriusRes.json()
+        
+        if (deliriusJson.status && deliriusJson.data?.download?.url) {
+          audioData = {
+            title: deliriusJson.data.title || 'Audio de YouTube',
+            thumbnail: deliriusJson.data.image || deliriusJson.data.thumbnail,
+            dl: deliriusJson.data.download.url
+          }
+        }
+      } catch (e) {
+        console.log('API Delirius también falló.')
+      }
+    }
+
+    if (!audioData) {
+      return sock.sendMessage(chatId, { text: `❌ Ambas APIs de descarga fallaron. Inténtalo más tarde.` })
+    }
 
     await sock.sendMessage(chatId, {
-      audio: buffer,
-      mimetype: datos.mime_type || 'audio/mp4',
-      fileName: `${titulo}.m4a`,
-    })
-  } catch (err) {
-    console.error('Error descargando el audio de la API:', err)
+      image: { url: audioData.thumbnail },
+      caption: `🎵 *Título:* ${audioData.title}\n📥 *Enviando audio...*`
+    }, { quoted: m })
+
     await sock.sendMessage(chatId, {
-      text: `❌ No pude descargar el audio.\n🔗 Puedes escucharlo directo aquí: ${youtubeUrl}`,
-    })
+      audio: { url: audioData.dl },
+      mimetype: 'audio/mpeg',
+      fileName: `${audioData.title}.mp3`
+    }, { quoted: m })
+
+  } catch (error) {
+    console.error('Error en comando play:', error)
+    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error inesperado al procesar tu solicitud.` })
   }
 }
