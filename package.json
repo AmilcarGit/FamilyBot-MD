@@ -7,10 +7,14 @@
   "scripts": {
     "start": "bash start.sh",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "preinstall": "npm config set allow-git true"
   },
   "author": "",
   "license": "MIT",
+  "overrides": {
+    "libsignal": "npm:libsignal-node@latest"
+  },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
     "@whiskeysockets/baileys": "^6.7.9",
