@@ -1,14 +1,24 @@
+import { getResult } from '../../lib/tempStore.js'
+
 export const desc = 'Busca y descarga el audio de un video de YouTube.'
 export const alias = ['musica', 'audio']
 export const cooldown = 10
 
 export default async function play({ sock, chatId, args, m, config }) {
-  const query = args.join(' ').trim()
+  let query = args.join(' ').trim()
   
   if (!query) {
     return sock.sendMessage(chatId, {
-      text: `❌ Por favor, ingresa el nombre de una canción o un link de YouTube.\nEjemplo: *${config.prefijo}play William Luna Sin tu Amor*`
+      text: `❌ Por favor, ingresa el nombre de una canción, un link o el número del buscador.\nEjemplo: *${config.prefijo}play 1*`
     })
+  }
+
+  const index = parseInt(query)
+  if (!isNaN(index) && index > 0 && index <= 10) {
+    const result = getResult(chatId, index)
+    if (result) {
+      query = result.url
+    }
   }
 
   try {
