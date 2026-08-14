@@ -3,6 +3,12 @@ export default {
   prefijo: '.',
   idiomaPorDefecto: 'es',
   owner: ['51910227479'],
+  staff: [
+    '5493875132593',
+    // Agrega aquí los otros 9 números del equipo, mínimo 10 en total,
+    // mismo formato: código de país + número, sin "+", sin espacios ni guiones.
+    // Ejemplo: '51987654321',
+  ],
   numeroBot: '',
   sessionFolder: './session',
   dbFile: './database.json',
