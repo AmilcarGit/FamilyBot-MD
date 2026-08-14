@@ -81,13 +81,16 @@ export default async function play({ sock, chatId, args, m, config }) {
       return sock.sendMessage(chatId, { text: `❌ Ambas APIs de descarga fallaron. Inténtalo más tarde.` })
     }
 
+    const res = await fetch(audioData.dl)
+    const buffer = Buffer.from(await res.arrayBuffer())
+
     await sock.sendMessage(chatId, {
       image: { url: audioData.thumbnail },
       caption: `🎵 *Título:* ${audioData.title}\n📥 *Enviando audio...*`
     }, { quoted: m })
 
     await sock.sendMessage(chatId, {
-      audio: { url: audioData.dl },
+      audio: buffer,
       mimetype: 'audio/mpeg',
       fileName: `${audioData.title}.mp3`
     }, { quoted: m })
