@@ -1,5 +1,3 @@
-import { getResult } from '../../lib/tempStore.js'
-
 export const desc = 'Busca y descarga el audio de un video de YouTube.'
 export const alias = ['musica', 'audio']
 export const cooldown = 10
@@ -15,9 +13,11 @@ export default async function play({ sock, chatId, args, m, config }) {
 
   const index = parseInt(query)
   if (!isNaN(index) && index > 0 && index <= 10) {
-    const result = getResult(chatId, index)
-    if (result) {
-      query = result.url
+    if (global.ytsStore && global.ytsStore[chatId]) {
+      const result = global.ytsStore[chatId][index - 1]
+      if (result) {
+        query = result.url
+      }
     }
   }
 
