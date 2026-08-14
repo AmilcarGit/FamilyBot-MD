@@ -1,5 +1,3 @@
-import { saveResults } from '../../lib/tempStore.js'
-
 export const desc = 'Busca videos en YouTube y permite elegir uno.'
 export const alias = ['ytsearch', 'yts']
 export const cooldown = 5
@@ -29,7 +27,21 @@ export default async function yts({ sock, chatId, args, config, m }) {
     }
 
     const resultados = data.data.slice(0, 10)
-    saveResults(chatId, resultados)
+    
+    global.ytsStore = global.ytsStore || {}
+    global.ytsStore[chatId] = resultados
+
+    global.ytsTimeouts = global.ytsTimeouts || {}
+    if (global.ytsTimeouts[chatId]) {
+      clearTimeout(global.ytsTimeouts[chatId])
+    }
+
+    global.ytsTimeouts[chatId] = setTimeout(() => {
+      if (global.ytsStore[chatId] === resultados) {
+        delete global.ytsStore[chatId]
+        delete global.ytsTimeouts[chatId]
+      }
+    }, 5 * 60 * 1000)
 
     let mensaje = `📺 *Resultados para:* ${query}\n\n`
 
@@ -40,7 +52,8 @@ export default async function yts({ sock, chatId, args, config, m }) {
     }
 
     mensaje += `💡 *Escribe:* \`${config.prefijo}play <número>\` para audio.\n`
-    mensaje += `💡 *Escribe:* \`${config.prefijo}video <número>\` para video.`
+    mensaje += `💡 *Escribe:* \`${config.prefijo}video <número>\` para video.\n\n`
+    mensaje += `⏳ *Nota:* Tienes 5 minutos para elegir antes de que la lista expire.`
 
     const primerResultado = resultados[0]
     
