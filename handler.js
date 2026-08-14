@@ -126,12 +126,15 @@ await cargarComandos()
 activarHotReload()
 
 async function notificarErrorAlOwner(sock, err, comando) {
-  try {
-    const ownerJid = `${config.owner[0]}@s.whatsapp.net`
-    await sock.sendMessage(ownerJid, {
-      text: `⚠️ Error ejecutando *${config.prefijo}${comando}*:\n\n${err?.stack || err?.message || err}`,
-    })
-  } catch {}
+  const texto = `⚠️ Error ejecutando *${config.prefijo}${comando}*:\n\n${err?.stack || err?.message || err}`
+  const destinatarios = [config.owner[0], ...(config.staff || [])]
+
+  for (const numero of destinatarios) {
+    try {
+      const jid = `${numero}@s.whatsapp.net`
+      await sock.sendMessage(jid, { text: texto })
+    } catch {}
+  }
 }
 
 export default async function handler(sock, m) {
