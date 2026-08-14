@@ -19,7 +19,7 @@ import { getDB } from './lib/db.js'
 import { obtenerConfigChat } from './lib/groupSettings.js'
 import { reconectarSubbotsGuardados } from './subbots/manager.js'
 import { iniciarBackupsAutomaticos } from './lib/backup.js'
-import { iniciarPanel } from './lib/panel.js'
+import { iniciarPanel, establecerSockActivo } from './lib/panel.js'
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
@@ -195,6 +195,7 @@ async function iniciar() {
       intentosReconexion = 0
       codigoSolicitado = false
       mostrarConexionExitosa(config.nombreBot)
+      establecerSockActivo(sock)
 
       if (!subbotsCargados) {
         subbotsCargados = true
