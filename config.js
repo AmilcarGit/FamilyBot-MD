@@ -2,12 +2,10 @@ export default {
   nombreBot: 'TheYui-MD',
   prefijo: '.',
   idiomaPorDefecto: 'es',
-  owner: ['51910227479', '5493875132593'],
+  owner: ['51910227479'],
+  // Aquí añades a tu equipo de Staff
   staff: [
-    '5493875132593',
-    // Agrega aquí los otros 9 números del equipo, mínimo 10 en total,
-    // mismo formato: código de país + número, sin "+", sin espacios ni guiones.
-    // Ejemplo: '51987654321',
+    { nombre: 'Benja', numero: '51900000000' } // Cambia el número por el real
   ],
   numeroBot: '',
   sessionFolder: './session',
@@ -19,7 +17,7 @@ export default {
   maxSubbots: 5,
   subbotsPorUsuario: 1,
   panelActivo: true,
-  panelPort: 3001,
+  panelPort: 3000,
   panelToken: 'yui2026-x7k9-panel-unico1',
   bienvenida: {
     activa: true,
