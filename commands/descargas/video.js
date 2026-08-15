@@ -1,4 +1,4 @@
-export const desc = 'Busca y descarga el video de YouTube (Enviado como documento).'
+export const desc = 'Busca y descarga el video de YouTube (Enviado como documento seguro).'
 export const alias = ['vid', 'v']
 export const cooldown = 10
 
@@ -36,7 +36,7 @@ export default async function video({ sock, chatId, args, m, config }) {
       }
     }
 
-    await sock.sendMessage(chatId, { text: `📥 Obteniendo video, espera un momento...` }, { quoted: m })
+    await sock.sendMessage(chatId, { text: `📥 Preparando archivo de video, espera un momento...` }, { quoted: m })
 
     let videoData = null
     const apis = [
@@ -51,9 +51,9 @@ export default async function video({ sock, chatId, args, m, config }) {
         parse: (json) => json.status && json.result?.download_url ? { dl: json.result.download_url, title: json.result.title } : null
       },
       {
-        name: 'Vkrdown',
-        url: `https://api.vkrdown.com/api/ytmp4?url=${encodeURIComponent(url)}`,
-        parse: (json) => json.status && json.data?.url ? { dl: json.data.url, title: json.data.title } : null
+        name: 'Botcahx',
+        url: `https://api.botcahx.eu.org/api/dowloader/ytmp4?url=${encodeURIComponent(url)}&apikey=free`,
+        parse: (json) => json.status && json.result?.url ? { dl: json.result.url, title: json.result.title || 'Video' } : null
       }
     ]
 
@@ -84,18 +84,23 @@ export default async function video({ sock, chatId, args, m, config }) {
     if (!fileRes.ok) throw new Error('Fallo al descargar el archivo de video')
     
     const buffer = Buffer.from(await fileRes.arrayBuffer())
-    
-    if (buffer.length < 1000) throw new Error('Archivo de video corrupto o demasiado pequeño')
+    if (buffer.length < 1000) throw new Error('Archivo de video demasiado pequeño')
+
+    const cleanTitle = videoData.title
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9 ]/g, '')
+      .trim() || 'video'
 
     await sock.sendMessage(chatId, {
       document: buffer,
-      fileName: `${videoData.title}.mp4`,
+      fileName: `${cleanTitle}.mp4`,
       mimetype: 'video/mp4',
-      caption: `🎬 *Título:* ${videoData.title}\n✨ *Descargado con éxito como documento*`
+      caption: `🎬 *Título:* ${videoData.title}\n✨ *Video enviado correctamente*`
     }, { quoted: m })
 
   } catch (error) {
     console.error('Error en comando video:', error)
-    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al procesar el video: ${error.message}` })
+    await sock.sendMessage(chatId, { text: `❌ Error: ${error.message}. Intenta con otro video.` })
   }
 }
