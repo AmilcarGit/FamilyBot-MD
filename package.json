@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "bash start.sh",
+    "pm2": "pm2 start pm2.json",
+    "stop": "pm2 stop TheYui-MD",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
