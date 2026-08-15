@@ -18,6 +18,40 @@ let intentosReconexion = 0
 let codigoSolicitado = false
 let numeroIngresado = null
 
+const ARCHIVO_LOCK = path.join(process.cwd(), 'bot.lock')
+
+function procesoActivo(pid) {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function verificarInstanciaUnica() {
+  if (fs.existsSync(ARCHIVO_LOCK)) {
+    const pidAnterior = parseInt(fs.readFileSync(ARCHIVO_LOCK, 'utf-8'), 10)
+    if (pidAnterior && procesoActivo(pidAnterior)) {
+      logError(chalk.red(`❌ Ya hay una instancia activa (PID ${pidAnterior}).`))
+      process.exit(1)
+    }
+  }
+  fs.writeFileSync(ARCHIVO_LOCK, String(process.pid))
+}
+
+function liberarInstancia() {
+  try {
+    const pidGuardado = parseInt(fs.readFileSync(ARCHIVO_LOCK, 'utf-8'), 10)
+    if (pidGuardado === process.pid) fs.unlinkSync(ARCHIVO_LOCK)
+  } catch {}
+}
+
+verificarInstanciaUnica()
+process.on('exit', liberarInstancia)
+process.on('SIGINT', () => process.exit(0))
+process.on('SIGTERM', () => process.exit(0))
+
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 const preguntar = (texto) => new Promise((resolve) => rl.question(texto, resolve))
 
@@ -56,11 +90,12 @@ async function iniciar() {
 
     if (connection === 'connecting' && !sock.authState.creds.registered && !codigoSolicitado && numero) {
       codigoSolicitado = true
-      await delay(2000)
+      await delay(3000)
       try {
         const codigo = await sock.requestPairingCode(numero)
-        // ESTA LÍNEA ES LA QUE TE DARÁ EL CÓDIGO REAL:
-        console.log(chalk.black(chalk.bgCyan(`\n TU CÓDIGO DE VINCULACIÓN ES: ${codigo} \n`)))
+        console.log('\n' + '='.repeat(40))
+        console.log(chalk.black(chalk.bgCyan(`  TU CÓDIGO DE VINCULACIÓN ES: ${codigo}  `)))
+        console.log('='.repeat(40) + '\n')
       } catch (err) {
         codigoSolicitado = false
       }
