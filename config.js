@@ -1,4 +1,4 @@
-export default {
+const config = {
   nombreBot: 'TheYui-MD',
   prefijo: '.',
   idiomaPorDefecto: 'es',
@@ -26,3 +26,5 @@ export default {
     mensajeSalida: '😢 {mention} salió de *{grupo}*. ¡Hasta pronto!',
   },
 }
+
+export default config
