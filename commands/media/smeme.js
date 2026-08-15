@@ -22,8 +22,8 @@ const AUTOR_STICKER =
 async function convertirAPngWebp(bufferPng) {
   const carpetaTemp = os.tmpdir()
   const id = randomUUID()
-  const rutaPng = path.join(carpetaTemp, \`theyui-\${id}.png\`)
-  const rutaWebp = path.join(carpetaTemp, \`theyui-\${id}.webp\`)
+  const rutaPng = path.join(carpetaTemp, `theyui-${id}.png`)
+  const rutaWebp = path.join(carpetaTemp, `theyui-${id}.webp`)
 
   try {
     await fs.writeFile(rutaPng, bufferPng)
@@ -42,7 +42,7 @@ export default async function smeme({ sock, msg, chatId, args, config }) {
 
   if (tipo !== 'imageMessage' && tipo !== 'stickerMessage') {
     return sock.sendMessage(chatId, {
-      text: \`❀ Responde a una imagen o sticker con *\${config.prefijo}smeme texto arriba | texto abajo*\`,
+      text: `❀ Responde a una imagen o sticker con *${config.prefijo}smeme texto arriba | texto abajo*`,
     })
   }
 
@@ -62,7 +62,7 @@ export default async function smeme({ sock, msg, chatId, args, config }) {
     const imageUrl = await subirACatbox(buffer)
 
     const apiKey = 'sk-c8498d1dfbff805b5c10823a491082714dd76ac6f9a9e03dfe12ffc9b646d9a4'
-    const apiUrl = \`https://api.mitzuki.xyz/maker/smeme?top=\${encodeURIComponent(top)}&bottom=\${encodeURIComponent(bottom)}&image=\${encodeURIComponent(imageUrl)}&apikey=\${apiKey}\`
+    const apiUrl = `https://api.mitzuki.xyz/maker/smeme?top=${encodeURIComponent(top)}&bottom=${encodeURIComponent(bottom)}&image=${encodeURIComponent(imageUrl)}&apikey=${apiKey}`
 
     const res = await fetch(apiUrl)
     if (!res.ok) throw new Error('Error en la API de memes')
