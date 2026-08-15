@@ -12,7 +12,7 @@ export default async function yts({ sock, chatId, args, config, m }) {
   }
 
   try {
-    const apiKey = 'EdwardwEqIgrqU'
+    const apiKey = 'EdwardNDffYyRz'
     const url = `https://dv-edward.onrender.com/api/search/youtube?apiKey=${apiKey}&query=${encodeURIComponent(query)}`
     
     await sock.sendMessage(chatId, { text: `🔍 Buscando *"${query}"* en YouTube...` }, { quoted: m })
