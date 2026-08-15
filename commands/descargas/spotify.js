@@ -54,7 +54,8 @@ export default async function spotify({ sock, chatId, args, config, msg }) {
       mensaje += `*${i + 1}.* ${titulo}\n   👤 ${art}\n\n`
     })
 
-    mensaje += `💡 *Responde con el número* para descargar el audio.\n`
+    mensaje += `💡 *Responde a este mensaje con el número* para descargar el audio.\n` +
+               `💡 *O usa:* \`${config.prefijo}sp <número>\`\n`
     mensaje += `⏳ *Nota:* La lista expira en 5 minutos.`
 
     const imagen = canciones[0].album?.imagen || 'https://api.lempi.lat/spotify-banner.jpg'
