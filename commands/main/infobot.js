@@ -15,42 +15,42 @@ export default async function infobot({ sock, chatId, msg, config }) {
   const ramLibre = (os.freemem() / 1024 / 1024 / 1024).toFixed(2)
   const ramUso = (ramTotal - ramLibre).toFixed(2)
 
-  const infoText = \`
+  const infoText = `
 ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃   💠  *SYSTEM INFORMATION*  💠   ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 🛰️ *PROYECTO:*
-» *Nombre:* \${config.nombreBot}
+» *Nombre:* ${config.nombreBot}
 » *Versión:* 1.0.0
-» *Prefijo:* [ \${config.prefijo} ]
+» *Prefijo:* [ ${config.prefijo} ]
 » *Estado:* Online 🟢
 
 👑 *EQUIPO STAFF:*
 » *Creador:* Amilcar (AmilcarGit)
-» *Lead Dev:* @\${config.owner[0]}
+» *Lead Dev:* @${config.owner[0]}
 » *Soporte:* Comunidad TheYui
 » *Colaboradores:* Manus AI & Ryze
 
 💻 *ESPECIFICACIONES:*
-» *Plataforma:* \${os.platform()}
-» *Arquitectura:* \${os.arch()}
-» *Node.js:* \${process.version}
-» *RAM:* \${ramUso}GB / \${ramTotal}GB
-» *Uptime:* \${uptimeStr}
+» *Plataforma:* ${os.platform()}
+» *Arquitectura:* ${os.arch()}
+» *Node.js:* ${process.version}
+» *RAM:* ${ramUso}GB / ${ramTotal}GB
+» *Uptime:* ${uptimeStr}
 
 📊 *ESTADÍSTICAS:*
 » *Grupos:* Activos
 » *Privados:* Activos
-» *Velocidad:* \${(Math.random() * (0.9 - 0.2) + 0.2).toFixed(3)}s
+» *Velocidad:* ${(Math.random() * (0.9 - 0.2) + 0.2).toFixed(3)}s
 
 🌐 *ENLACES:*
 » *GitHub:* https://github.com/AmilcarGit/TheYui-MD
-» *Dashboard:* http://localhost:\${config.panelPort}
+» *Dashboard:* http://localhost:${config.panelPort}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 ✨ *Powered by TheYui Ecosystem*
-━━━━━━━━━━━━━━━━━━━━━━━━\`.trim()
+━━━━━━━━━━━━━━━━━━━━━━━━`.trim()
 
   await sock.sendMessage(chatId, {
     text: infoText,
