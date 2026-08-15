@@ -1,9 +1,11 @@
 #!/data/data/com.termux/files/usr/bin/bash
+
+set +m
 cd "$(dirname "$0")"
 
 function limpiar() {
     pkill -9 -f "node" > /dev/null 2>&1
-    rm -f bot.lock
+    rm -f bot.lock > /dev/null 2>&1
     if command -v fuser > /dev/null; then
         fuser -k 3000/tcp > /dev/null 2>&1
     fi
@@ -11,7 +13,7 @@ function limpiar() {
 
 function update() {
     while true; do
-        sleep 300
+        sleep 600
         git fetch > /dev/null 2>&1
         L=$(git rev-parse HEAD)
         R=$(git rev-parse @{u})
@@ -27,8 +29,8 @@ update &
 
 while true; do
     if [ ! -d "session" ]; then
-        echo "📢 Sesión reseteada por seguridad. Vincula el bot nuevamente."
-        sleep 2
+        echo "📢 Configurando entorno limpio..."
+        sleep 3
     fi
 
     git add . > /dev/null 2>&1
@@ -37,10 +39,18 @@ while true; do
     git stash pop > /dev/null 2>&1
     
     fuser -k 3000/tcp > /dev/null 2>&1
-    rm -f bot.lock
+    rm -f bot.lock > /dev/null 2>&1
     
     node index.js 2>/dev/null
     
-    limpiar
-    sleep 5
+    ESTADO=$?
+    
+    if [ $ESTADO -ne 0 ]; then
+        echo "⚠️  Reestabilizando sistema neural..."
+        limpiar
+        sleep 10
+    else
+        limpiar
+        sleep 5
+    fi
 done
