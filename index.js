@@ -31,11 +31,13 @@ function procesoActivo(pid) {
 
 function verificarInstanciaUnica() {
   if (fs.existsSync(ARCHIVO_LOCK)) {
-    const pidAnterior = parseInt(fs.readFileSync(ARCHIVO_LOCK, 'utf-8'), 10)
-    if (pidAnterior && procesoActivo(pidAnterior)) {
-      logError(chalk.red(`❌ Ya hay una instancia activa (PID ${pidAnterior}).`))
-      process.exit(1)
-    }
+    try {
+      const pidAnterior = parseInt(fs.readFileSync(ARCHIVO_LOCK, 'utf-8'), 10)
+      if (pidAnterior && pidAnterior !== process.pid && procesoActivo(pidAnterior)) {
+        logError(chalk.red(`❌ Ya hay una instancia activa (PID ${pidAnterior}).`))
+        process.exit(1)
+      }
+    } catch (e) {}
   }
   fs.writeFileSync(ARCHIVO_LOCK, String(process.pid))
 }
@@ -51,6 +53,9 @@ verificarInstanciaUnica()
 
 process.on('uncaughtException', (err) => {
   logError(chalk.red('💥 Error No Capturado:'), err)
+  if (err.message.includes('EADDRINUSE')) {
+    process.exit(1)
+  }
 })
 
 process.on('unhandledRejection', (reason, promise) => {
