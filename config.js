@@ -7,6 +7,7 @@ export default {
     { nombre: 'Benja', numero: '543875132593' }
   ],
   numeroBot: '',
+  prioridad: 0,
   sessionFolder: './session',
   dbFile: './database.json',
   groupCacheTTL: 60 * 1000,
