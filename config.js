@@ -16,7 +16,7 @@ export default {
   maxSubbots: 5,
   subbotsPorUsuario: 1,
   panelActivo: true,
-  panelPort: 3000,
+  panelPort: 3001,
   panelToken: 'AUTO_GENERATE',
   bienvenida: {
     activa: true,
