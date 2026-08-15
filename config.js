@@ -17,7 +17,7 @@ export default {
   subbotsPorUsuario: 1,
   panelActivo: true,
   panelPort: 3000,
-  panelToken: 'yui2026-x7k9-panel-unico1',
+  panelToken: 'AUTO_GENERATE',
   bienvenida: {
     activa: true,
     mensajeEntrada: '👋 ¡Bienvenido/a {mention} a *{grupo}*!\nLee las reglas y disfruta tu estadía 🎉',
