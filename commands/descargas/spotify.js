@@ -33,11 +33,11 @@ export default async function spotify({ sock, chatId, args, config, msg }) {
     const response = await fetch(url)
     const data = await response.json()
 
-    if (!data.status || !data.resultado || !data.resultado.canciones || data.resultado.canciones.length === 0) {
+    if (!data.status || !data.resultados || !data.resultados.canciones || data.resultados.canciones.length === 0) {
       return sock.sendMessage(chatId, { text: `❌ No se encontraron resultados para: *${query}*` })
     }
 
-    const canciones = data.resultado.canciones.slice(0, 10)
+    const canciones = data.resultados.canciones.slice(0, 10)
     global.spotifyStore = global.spotifyStore || {}
     global.spotifyStore[chatId] = canciones
 
@@ -50,13 +50,14 @@ export default async function spotify({ sock, chatId, args, config, msg }) {
     let mensaje = `🌌 *THE YUI-MD: SPOTIFY SYSTEM* 🌌\n\n`
     canciones.forEach((c, i) => {
       const art = c.artistas.map(a => a.nombre).join(', ')
-      mensaje += `*${i + 1}.* ${c.nombre}\n   👤 ${art}\n   ⏱️ ${c.duracion}\n\n`
+      const titulo = c.titulo || c.nombre || 'Sin título'
+      mensaje += `*${i + 1}.* ${titulo}\n   👤 ${art}\n\n`
     })
 
     mensaje += `💡 *Responde con el número* para descargar el audio.\n`
     mensaje += `⏳ *Nota:* La lista expira en 5 minutos.`
 
-    const imagen = canciones[0].imagen || 'https://api.lempi.lat/spotify-banner.jpg'
+    const imagen = canciones[0].album?.imagen || 'https://api.lempi.lat/spotify-banner.jpg'
 
     await sock.sendMessage(chatId, {
       image: { url: imagen },
