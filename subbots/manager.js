@@ -94,11 +94,15 @@ export async function iniciarSubbot({ numero, creadorJid, chatOrigen, sockPrinci
 
         if (sockPrincipal && chatOrigen) {
           await sockPrincipal.sendMessage(chatOrigen, {
-            text:
-              `🔗 *Código de vinculación del subbot*\n\n` +
-              `📱 Número: ${numero}\n` +
-              `🔑 Código: *${codigo}*\n\n` +
-              `Abre WhatsApp en ese número > Dispositivos vinculados > Vincular con número de teléfono, e ingresa el código. Expira en unos minutos.`,
+            text: `🔗 *Vinculación de Subbot*\n\n📱 Número: ${numero}\n🔑 El código se enviará a continuación para que puedas copiarlo fácilmente.`,
+          })
+          await delay(1000)
+          await sockPrincipal.sendMessage(chatOrigen, {
+            text: codigo,
+          })
+          await delay(1000)
+          await sockPrincipal.sendMessage(chatOrigen, {
+            text: '👆 *Toca el código de arriba para copiarlo.*\n\nLuego abre WhatsApp > Dispositivos vinculados > Vincular con número de teléfono e ingrésalo.',
           })
         }
       } catch (err) {
