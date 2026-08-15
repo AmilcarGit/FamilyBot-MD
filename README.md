@@ -1,16 +1,13 @@
 <div align="center">
 
-<!-- HEADER RENDER -->
-<img src="https://capsule-render.vercel.app/api?type=soft&color=auto&customColorList=10,ff007f,00d4ff&height=300&section=header&text=THE%20YUI%20MD&fontSize=90&animation=fadeIn&fontAlignY=40&desc=The%20Ultimate%20WhatsApp%20Evolution&descAlignY=60&descSize=25" width="100%" />
+<img src="https://i.postimg.cc/tJ9hb31m/IMG-20260714-WA0060.jpg" width="100%" alt="TheYui-MD Banner">
 
 <br/>
 
-<!-- DYNAMIC TYPING -->
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=28&pause=1000&color=00D4FF&center=true&vCenter=true&width=900&lines=CORE+SYSTEM+V9+ONLINE;NEURAL+DASHBOARD+ACTIVE;ADVANCED+ECONOMY+RPG;ELITE+AI+INTEGRATION;CYBERPUNK+ECOSYSTEM" alt="Typing SVG"/>
+  <img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=35&pause=1000&color=00D4FF&center=true&vCenter=true&width=900&lines=THE+YUI-MD+V9+CORE;NEURAL+WHATSAPP+ECOSYSTEM;ELITE+DASHBOARD+ACTIVE;POWERED+BY+AMILCARGIT" alt="Typing SVG"/>
 </p>
 
-<!-- BADGES -->
 <p align="center">
   <a href="https://github.com/AmilcarGit/TheYui-MD/stargazers"><img src="https://img.shields.io/github/stars/AmilcarGit/TheYui-MD?style=for-the-badge&logo=github&color=ff007f&labelColor=0a0a0a" alt="Stars"/></a>
   <a href="https://github.com/AmilcarGit/TheYui-MD/network/members"><img src="https://img.shields.io/github/forks/AmilcarGit/TheYui-MD?style=for-the-badge&logo=github&color=00d4ff&labelColor=0a0a0a" alt="Forks"/></a>
@@ -22,62 +19,103 @@
 
 ---
 
-## 🌌 **MISION DEL PROYECTO**
-**TheYui-MD** nace de la necesidad de fusionar la potencia de la **Inteligencia Artificial** con la gestión social en **WhatsApp**. Es un ecosistema diseñado para ser visualmente impactante, técnicamente robusto y extremadamente fácil de administrar a través de su **Interfaz Neural V9**.
+# 🌌 **THE YUI-MD: INFRAESTRUCTURA NEURAL**
+
+**TheYui-MD** es un ecosistema de automatización y entretenimiento para WhatsApp Multi-Device. Diseñado con una arquitectura modular y una interfaz **Cyberpunk**, este bot ofrece una integración sin precedentes entre la **Inteligencia Artificial**, la **Economía RPG** y la **Gestión Web**.
 
 ---
 
-## 🚀 **CENTRO DE CONTROL (DASHBOARD V9)**
-Hemos reinventado la forma de interactuar con tu bot. Ya no necesitas mirar la terminal de Termux constantemente.
+## 🚀 **CENTRO DE MANDO: DASHBOARD V9**
+El bot incluye un panel web exclusivo optimizado para dispositivos móviles y escritorio, permitiendo una administración total sin necesidad de acceder a la terminal.
 
-| ⚡ **TIEMPO REAL** | 🛡️ **SEGURIDAD** | 🎮 **CONTROL** |
-| :--- | :--- | :--- |
-| Logs en vivo cada 2s. | Tokens únicos cifrados. | Reinicio remoto total. |
-| Monitor de RAM dinámico. | Protección de Creador. | Gestión de Staff web. |
-| Estadísticas de uso. | Bypass de media blocks. | Broadcast en un clic. |
-
----
-
-## 🛠️ **TECNOLOGÍAS DE ÉLITE**
-<p align="center">
-  <img src="https://skillicons.dev/icons?i=nodejs,js,express,npm,git,github,linux,md,docker,vscode" />
-</p>
+*   📡 **Monitor en Tiempo Real:** Visualización de logs y rendimiento (RAM/Uptime) con refresco de 2 segundos.
+*   🔐 **Neural Security Gate:** Autenticación mediante **Tokens Únicos** generados automáticamente por cada instalación.
+*   👑 **Protección de Identidad:** El número del Creador y el nombre del bot están blindados contra modificaciones externas.
+*   ⚙️ **Configuración Remota:** Gestión de Staff, Owners, Prefijos y Comandos desde la web.
+*   📢 **Broadcast Center:** Difusión de anuncios globales a todos los chats registrados.
 
 ---
 
-## 🌹 **CARACTERÍSTICAS ÚNICAS**
-
-### 💰 **Economía RPG Industrial**
-Un sistema financiero completo dentro de tus grupos. Los usuarios pueden **minar**, **trabajar**, **apostar** y **robar**, creando una comunidad activa y competitiva.
-
-### 🤖 **Inteligencia Artificial Neural**
-Integración profunda con **Gemini AI** y motores de generación de imágenes **Text-to-Image**. Respuestas inteligentes y creación de arte digital al instante.
-
-### 📥 **Media Downloader Pro**
-Descargas de alta velocidad para TikTok, Instagram, Facebook y YouTube. Gracias a la **Lempi API**, los archivos se envían como documentos para evitar el error de "formato inusual" de WhatsApp.
+## 🛠️ **ESPECIFICACIONES TÉCNICAS**
+*   **Lenguaje:** Node.js (ESM)
+*   **Motor:** Baileys (Multi-Device)
+*   **Base de Datos:** LowDB (JSON persistente)
+*   **Servidor Web:** Express.js
+*   **Estilo Visual:** Cyberpunk / Neon / Glassmorphism
 
 ---
 
-## 📦 **DESPLIEGUE TÁCTICO**
+## 🌹 **MÓDULOS Y COMANDOS**
 
-### **Termux / Linux / VPS**
+### 💰 **Sistema de Economía RPG (17 Comandos)**
+Un ecosistema financiero completo para fomentar la competencia y el juego en los grupos.
+*   `minar`: Obtención de recursos y experiencia.
+*   `trabajar`: Generación de ingresos mediante empleos dinámicos.
+*   `apostar`: Casino, ruleta y juegos de azar.
+*   `rob`: Interacción competitiva entre usuarios.
+*   `banco`: Almacenamiento seguro de activos.
+
+### 🤖 **Inteligencia Artificial & Herramientas**
+Integración con los modelos más avanzados del mercado.
+*   `gemini`: Chat interactivo con la IA de Google.
+*   `text2img`: Generación de imágenes artísticas mediante prompts.
+*   `lyrics`: Búsqueda avanzada de letras de canciones.
+*   `clima`: Reportes meteorológicos en tiempo real (EvoGB API).
+
+### 📥 **Media Downloader Elite (11 Comandos)**
+Descargas optimizadas para saltar las restricciones de WhatsApp.
+*   `tiktok`: Descarga de videos sin marca de agua.
+*   `instagram`: Reels, historias y posts.
+*   `facebook`: Videos en alta resolución.
+*   `youtube`: Videos y audios enviados como **Documentos** (Bypass de bloqueos).
+*   `pinterest`: Búsqueda y descarga masiva de imágenes.
+
+### 👥 **Gestión de Grupos (16 Comandos)**
+Control absoluto sobre tu comunidad.
+*   `antilink`: Bloqueo automático de enlaces externos.
+*   `welcome / goodbye`: Mensajes de bienvenida y despedida personalizados.
+*   `floodcontrol`: Protección contra spam y mensajes masivos.
+*   `advertencias`: Sistema de sanciones para usuarios.
+
+---
+
+## 📥 **GUÍA DE INSTALACIÓN**
+
+### **Requisitos Previos**
+- Node.js v18 o superior.
+- FFmpeg (para el manejo de media).
+- Git.
+
+### **Despliegue en Termux**
 ```bash
-# 1. Clonar el núcleo
+pkg update && pkg upgrade -y
+pkg install git nodejs ffmpeg -y
 git clone https://github.com/AmilcarGit/TheYui-MD
-
-# 2. Acceder al directorio
 cd TheYui-MD
-
-# 3. Instalar dependencias
 npm install
+npm start
+```
 
-# 4. Iniciar el ecosistema
+### **Despliegue en VPS / Linux**
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install git nodejs ffmpeg -y
+git clone https://github.com/AmilcarGit/TheYui-MD
+cd TheYui-MD
+npm install
 npm start
 ```
 
 ---
 
-## 📊 **ANÁLISIS DE ACTIVIDAD**
+## 🛡️ **SEGURIDAD Y PRIVACIDAD**
+*   **Owner Lock:** El número `51910227479` está pre-configurado como Creador Inamovible.
+*   **Unique Token:** Cada clon del repositorio genera su propia clave de acceso al panel web.
+*   **Bypass de Media:** Todos los archivos pesados se gestionan a través de la **Lempi API** y se entregan en formatos seguros para evitar baneos o errores de lectura.
+
+---
+
+## 📊 **ACTIVIDAD DEL NÚCLEO**
 <div align="center">
   <img src="https://github-readme-stats.vercel.app/api?username=AmilcarGit&show_icons=true&theme=tokyonight&hide_border=true&bg_color=050508&title_color=00d4ff&text_color=eee&icon_color=ff007f" width="49%">
   <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=AmilcarGit&layout=compact&theme=tokyonight&hide_border=true&bg_color=050508&title_color=00d4ff&text_color=eee" width="49%">
@@ -105,8 +143,8 @@ npm start
 
 ---
 
-## 💖 **CONTRIBUCIONES & SOPORTE**
-¿Te gusta el proyecto? ¡Hazlo brillar! Deja una ⭐ en el repositorio y comparte TheYui-MD con el mundo.
+## 💖 **CONTRIBUCIONES**
+Si **TheYui-MD** aporta valor a tu comunidad, considera dejar una ⭐ en este repositorio. Las contribuciones mediante Pull Requests son bienvenidas para seguir expandiendo este ecosistema.
 
 <div align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&height=150&color=ff007f&section=footer&text=THE%20YUI%20MD%20%7C%202026&fontSize=35&fontAlignY=60&fontColor=ffffff" alt="Footer"/>
