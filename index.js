@@ -12,6 +12,7 @@ import { info, warn, error as logError } from './lib/logger.js'
 import { mostrarBannerInicio, mostrarConexionExitosa } from './lib/banner.js'
 import { iniciarBackupsAutomaticos } from './lib/backup.js'
 import { iniciarPanel, establecerSockActivo } from './lib/panel.js'
+import { iniciarAutoUpdate } from './lib/autoupdate.js'
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
@@ -52,13 +53,21 @@ function liberarInstancia() {
 verificarInstanciaUnica()
 
 process.on('uncaughtException', (err) => {
-  logError(chalk.red('💥 Error No Capturado:'), err)
   if (err.message.includes('EADDRINUSE')) {
     process.exit(1)
   }
+  
+  if (err.message.includes('Bad MAC')) {
+    logError(chalk.red('🚨 Error Crítico: Sesión Corrupta (Bad MAC).'))
+    logError(chalk.yellow('Sugerencia: Borra la carpeta session y reinicia el bot.'))
+    return
+  }
+
+  logError(chalk.red('💥 Error No Capturado:'), err)
 })
 
 process.on('unhandledRejection', (reason, promise) => {
+  if (reason?.message?.includes('Bad MAC')) return
   logError(chalk.red('💥 Promesa No Manejada:'), reason)
 })
 
@@ -105,6 +114,27 @@ async function iniciar() {
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
     browser: ['Ubuntu', 'Chrome', '20.0.04'],
+    patchMessageBeforeSending: (message) => {
+      const requiresPatch = !!(
+        message.buttonsMessage ||
+        message.templateMessage ||
+        message.listMessage
+      )
+      if (requiresPatch) {
+        message = {
+          viewOnceMessage: {
+            message: {
+              messageContextInfo: {
+                deviceListMetadata: {},
+                deviceListMetadataVersion: 2,
+              },
+              ...message,
+            },
+          },
+        }
+      }
+      return message
+    },
   })
 
   establecerSockActivo(sock)
@@ -128,14 +158,23 @@ async function iniciar() {
     if (connection === 'open') {
       intentosReconexion = 0
       mostrarConexionExitosa(config.nombreBot)
+      iniciarAutoUpdate(sock)
     }
 
     if (connection === 'close') {
       const statusCode = new Boom(lastDisconnect?.error)?.output?.statusCode
+      
       if (statusCode === DisconnectReason.loggedOut) {
-        logError(chalk.red('Sesión cerrada. Borra la carpeta session y reinicia.'))
-        return
+        logError(chalk.red('Sesión cerrada. Borrando carpeta session...'))
+        fs.rmSync(config.sessionFolder, { recursive: true, force: true })
+        process.exit(0)
       }
+      
+      if (lastDisconnect?.error?.message?.includes('Bad MAC')) {
+        logError(chalk.red('🚨 Sesión corrupta detectada. Reiniciando núcleo...'))
+        process.exit(1)
+      }
+
       if (intentosReconexion < config.maxReconnectAttempts) {
         intentosReconexion++
         setTimeout(iniciar, backoffDelay(intentosReconexion, config.maxReconnectDelay))
@@ -145,7 +184,10 @@ async function iniciar() {
 
   sock.ev.on('creds.update', saveCreds)
   sock.ev.on('messages.upsert', async (m) => {
-    try { await handler(sock, m) } catch (err) { console.error(err) }
+    try { await handler(sock, m) } catch (err) { 
+      if (err.message.includes('Bad MAC')) return
+      console.error(err) 
+    }
   })
 
   return sock
