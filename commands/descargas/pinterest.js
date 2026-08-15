@@ -14,20 +14,21 @@ export default async function pinterest({ sock, chatId, args, msg, config }) {
   try {
     await sock.sendMessage(chatId, { text: `🔍 Buscando imágenes de *"${query}"* en Pinterest...` }, { quoted: msg })
 
-    const apiUrl = `https://api.delirius.store/search/pinterestv2?text=${encodeURIComponent(query)}`
+    const apiKey = 'lem954'
+    const apiUrl = `https://api.lempi.lat/s/pin?q=${encodeURIComponent(query)}&limit=5&apikey=${apiKey}`
     const res = await fetch(apiUrl)
     const data = await res.json()
 
-    if (!data.status || !data.data || data.data.length === 0) {
+    if (!data.status || !data.results || data.results.length === 0) {
       return sock.sendMessage(chatId, { text: `❌ No se encontraron resultados para *"${query}"*.` })
     }
 
-    const results = data.data.slice(0, 5)
+    const results = data.results.slice(0, 5)
     
     for (const item of results) {
       await sock.sendMessage(chatId, {
-        image: { url: item.image },
-        caption: `📌 *Pinterest:* ${query}`
+        image: { url: item.descarga },
+        caption: `📌 *Autor:* ${item.autor || 'Desconocido'}\n🔗 *Pin:* ${item.url}`
       }, { quoted: msg })
     }
 
