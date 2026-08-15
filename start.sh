@@ -3,40 +3,31 @@
 set +m
 cd "$(dirname "$0")"
 
-function limpiar() {
-    pkill -15 -f "node index.js" > /dev/null 2>&1
-    sleep 1
+echo "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓"
+echo "┃                                                ┃"
+echo "┃   💠  THE YUI-MD: SYSTEM STABLE V11  💠        ┃"
+echo "┃                                                ┃"
+echo "┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛"
+
+termux-wake-lock
+
+while true; do
+    echo "🧹 Limpiando procesos e instancias antiguas..."
     pkill -9 -f "node index.js" > /dev/null 2>&1
     rm -f bot.lock > /dev/null 2>&1
     if command -v fuser > /dev/null; then
         fuser -k 3000/tcp > /dev/null 2>&1
     fi
-}
-
-limpiar
-termux-wake-lock
-
-echo "🚀 Iniciando TheYui-MD en modo optimizado..."
-
-while true; do
-    if [ ! -d "session" ]; then
-        echo "📢 Preparando entorno de sesión..."
-        sleep 2
-    fi
-
+    
+    echo "📥 Verificando actualizaciones en GitHub..."
     git add . > /dev/null 2>&1
     git stash > /dev/null 2>&1
     git pull > /dev/null 2>&1
     git stash pop > /dev/null 2>&1
     
-    fuser -k 3000/tcp > /dev/null 2>&1
-    rm -f bot.lock > /dev/null 2>&1
-    
+    echo "🌸 Lanzando núcleo del sistema..."
     node index.js
     
-    ESTADO=$?
-    
-    echo "⚠️ Reiniciando sistema neural..."
-    limpiar
-    sleep 3
+    echo "⚠️ El bot se ha detenido. Reiniciando en 5 segundos..."
+    sleep 5
 done
