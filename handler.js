@@ -229,8 +229,13 @@ export default async function handler(sock, m) {
   if (!texto) return
 
   const esNumero = /^[1-9][0-9]*$/.test(texto.trim())
-  const citadoPorMi = msg.message.extendedTextMessage?.contextInfo?.participant === sock.user.id
+  const infoContexto = msg.message.extendedTextMessage?.contextInfo
+  const citadoPorMi = infoContexto?.participant === sock.user.id
   
+  if (infoContexto?.stanzaId) {
+    comandosRespondidos.set(infoContexto.stanzaId, true)
+  }
+
   if (esNumero && citadoPorMi) {
     const num = parseInt(texto.trim())
     if (num >= 1 && num <= 10) {
@@ -331,10 +336,11 @@ export default async function handler(sock, m) {
   const entrada = comando && comandos[comando]
   if (!entrada) return
 
-  const prioridad = config.prioridad || 0
+  const prioridad = sock.isSubbot ? (config.prioridad || 1) : 0
   if (prioridad > 0) {
-    await new Promise((resolve) => setTimeout(resolve, prioridad * 1500))
+    await new Promise((resolve) => setTimeout(resolve, prioridad * 2000))
     if (comandosRespondidos.has(msg.key.id)) {
+      info(chalk.yellow(`🚫 Anti-Spam: ${entrada.nombre} cancelado (ya respondido por otro bot)`))
       return
     }
   }
@@ -416,7 +422,7 @@ export default async function handler(sock, m) {
       chatId,
       esDueno,
       comandos: listaComandos,
-      config,
+      config: { ...config, prioridad: sock.isSubbot ? (config.prioridad || 1) : 0 },
       db,
       idioma,
       t: (clave, vars) => t(idioma, clave, vars),
