@@ -51,6 +51,7 @@ setInterval(() => {
 function listarArchivosComandos(dir) {
   const resultado = []
   const entradas = fs.readdirSync(dir, { withFileTypes: true })
+
   for (const entrada of entradas) {
     const rutaCompleta = path.join(dir, entrada.name)
     if (entrada.isDirectory()) {
@@ -59,14 +60,17 @@ function listarArchivosComandos(dir) {
       resultado.push(rutaCompleta)
     }
   }
+
   return resultado
 }
 
 function quitarComando(nombre) {
   const entradaVieja = comandos[nombre]
   if (!entradaVieja) return
+
   delete comandos[nombre]
   for (const a of entradaVieja.alias) delete comandos[a]
+
   const idx = listaComandos.findIndex((c) => c.nombre === nombre)
   if (idx !== -1) listaComandos.splice(idx, 1)
 }
@@ -76,8 +80,11 @@ async function cargarComandoIndividual(rutaCompleta, avisar = false) {
   const relPath = path.relative(commandsDir, rutaCompleta).split(path.sep).join('/')
   const dirRelativo = path.dirname(relPath)
   const categoria = dirRelativo === '.' ? 'general' : dirRelativo
+
   quitarComando(nombre)
+
   const mod = await import(`./commands/${relPath}?update=${Date.now()}`)
+
   const entrada = {
     nombre,
     categoria,
@@ -90,9 +97,11 @@ async function cargarComandoIndividual(rutaCompleta, avisar = false) {
     soloAdmin: mod.soloAdmin || false,
     oculto: mod.oculto || false,
   }
+
   comandos[nombre] = entrada
   for (const a of entrada.alias) comandos[a] = entrada
   listaComandos.push(entrada)
+
   if (avisar) {
     info(chalk.magenta(`♻️  Comando recargado: ${nombre}`))
   }
@@ -100,6 +109,7 @@ async function cargarComandoIndividual(rutaCompleta, avisar = false) {
 
 async function cargarComandos() {
   const archivos = listarArchivosComandos(commandsDir)
+
   for (const rutaCompleta of archivos) {
     try {
       await cargarComandoIndividual(rutaCompleta)
@@ -107,25 +117,30 @@ async function cargarComandos() {
       logError(`Error cargando el comando "${rutaCompleta}":`, err)
     }
   }
+
   mostrarResumenComandos(listaComandos)
 }
 
 function activarHotReload() {
   fs.watch(commandsDir, { recursive: true }, (evento, nombreArchivo) => {
     if (!nombreArchivo || !nombreArchivo.endsWith('.js')) return
+
     const rutaCompleta = path.join(commandsDir, nombreArchivo)
+
     if (!fs.existsSync(rutaCompleta)) {
       const nombre = path.basename(nombreArchivo, '.js')
       quitarComando(nombre)
       warn(chalk.yellow(`🗑️  Comando eliminado: ${nombre}`))
       return
     }
+
     setTimeout(() => {
       cargarComandoIndividual(rutaCompleta, true).catch((err) => {
         logError(`Error recargando "${nombreArchivo}":`, err)
       })
     }, 150)
   })
+
   info(chalk.blue('👀 Vigilando /commands para hot-reload...'))
 }
 
@@ -159,12 +174,14 @@ export default async function handler(sock, m) {
   }
 
   const esAutorespuesta = msg.key.fromMe
+
   if (esAutorespuesta) {
     const posibleTexto =
       msg.message.conversation ||
       msg.message.extendedTextMessage?.text ||
       msg.message.imageMessage?.caption ||
       ''
+
     const esComando = config.prefijo && posibleTexto.startsWith(config.prefijo)
     if (!esComando) return
   }
@@ -175,12 +192,16 @@ export default async function handler(sock, m) {
   let db
   try {
     db = await getDB()
+
     db.data.blacklist ??= []
     db.data.stats ??= {}
     db.data.stats.mensajesPorHora ??= Array(24).fill(0)
     const horaActual = new Date().getHours()
     db.data.stats.mensajesPorHora[horaActual] = (db.data.stats.mensajesPorHora[horaActual] || 0) + 1
-    if (db.data.blacklist.includes(normalizarJid(jidRemitente))) return
+    if (db.data.blacklist.includes(normalizarJid(jidRemitente))) {
+      return
+    }
+
     const jidNormalizado = normalizarJid(jidRemitente)
     db.data.users[jidNormalizado] ??= { mensajes: 0, idioma: config.idiomaPorDefecto }
     db.data.users[jidNormalizado].mensajes++
@@ -190,6 +211,7 @@ export default async function handler(sock, m) {
   }
 
   const idioma = obtenerIdiomaUsuario(db, jidRemitente, config)
+
   const texto =
     msg.message.conversation ||
     msg.message.extendedTextMessage?.text ||
@@ -206,37 +228,92 @@ export default async function handler(sock, m) {
 
   if (!texto) return
 
+  const esNumero = /^[1-9][0-9]*$/.test(texto.trim())
+  const citadoPorMi = msg.message.extendedTextMessage?.contextInfo?.participant === sock.user.id
+  
+  if (esNumero && citadoPorMi) {
+    const num = parseInt(texto.trim())
+    if (num >= 1 && num <= 10) {
+      const quotedText = msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.conversation || 
+                         msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.extendedTextMessage?.text ||
+                         msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage?.caption || ''
+      
+      if (quotedText.includes('SPOTIFY SYSTEM') || quotedText.includes('spotify search')) {
+        const cmd = comandos['sp']
+        if (cmd) {
+          return cmd.run({
+            sock, msg, args: [texto.trim()], chatId, esDueno: esOwner(await resolverNumeroReal(sock, jidRemitente, msg), config.owner),
+            comandos: listaComandos, config, db, idioma, t: (clave, vars) => t(idioma, clave, vars)
+          })
+        }
+      }
+
+      if (quotedText.includes('Resultados para:') && (quotedText.includes('YouTube') || quotedText.includes('yts'))) {
+        const cmd = comandos['play']
+        if (cmd) {
+          return cmd.run({
+            sock, msg, args: [texto.trim()], chatId, esDueno: esOwner(await resolverNumeroReal(sock, jidRemitente, msg), config.owner),
+            comandos: listaComandos, config, db, idioma, t: (clave, vars) => t(idioma, clave, vars)
+          })
+        }
+      }
+
+      if (quotedText.includes('Resultados de Deezer')) {
+        const cmd = comandos['dz']
+        if (cmd) {
+          return cmd.run({
+            sock, msg, args: [texto.trim()], chatId, esDueno: esOwner(await resolverNumeroReal(sock, jidRemitente, msg), config.owner),
+            comandos: listaComandos, config, db, idioma, t: (clave, vars) => t(idioma, clave, vars)
+          })
+        }
+      }
+    }
+  }
+
   if (esGrupo) {
     const numeroMensajesRecientes = registrarMensaje(jidRemitente)
+
     if (numeroMensajesRecientes > MAX_MENSAJES) {
       limpiarHistorial(jidRemitente)
+
       const numeroReal = await resolverNumeroReal(sock, jidRemitente, msg)
       const esDuenoMsj = esOwner(numeroReal, config.owner)
+
       if (!esDuenoMsj) {
         const configChat = obtenerConfigChat(db, chatId)
         const jidNormalizado = normalizarJid(jidRemitente)
         configChat.advertencias[jidNormalizado] = (configChat.advertencias[jidNormalizado] || 0) + 1
         await db.write()
+
         await sock.sendMessage(chatId, {
           text: `🚨 @${jidRemitente.split('@')[0]} está enviando mensajes demasiado rápido. Se registró una advertencia por flood.`,
           mentions: [jidRemitente],
         })
+
         return
       }
     }
+
     const contieneLink = /chat\.whatsapp\.com\/[a-zA-Z0-9]+/i.test(texto)
+
     if (contieneLink) {
       const configChat = obtenerConfigChat(db, chatId)
+
       if (configChat.antilink) {
         const numeroReal = await resolverNumeroReal(sock, jidRemitente, msg)
         const esDuenoMsj = esOwner(numeroReal, config.owner)
         const esAdminMsj = esDuenoMsj ? true : await esAdminGrupo(sock, chatId, jidRemitente)
+
         if (!esDuenoMsj && !esAdminMsj) {
-          try { await sock.sendMessage(chatId, { delete: msg.key }) } catch {}
+          try {
+            await sock.sendMessage(chatId, { delete: msg.key })
+          } catch {}
+
           await sock.sendMessage(chatId, {
             text: `🔗 @${jidRemitente.split('@')[0]} no se permiten links de invitación en este grupo.`,
             mentions: [jidRemitente],
           })
+
           return
         }
       }
@@ -250,13 +327,16 @@ export default async function handler(sock, m) {
 
   const [comandoRaw, ...args] = cuerpo.trim().split(/\s+/)
   const comando = comandoRaw?.toLowerCase()
+
   const entrada = comando && comandos[comando]
   if (!entrada) return
 
   const prioridad = config.prioridad || 0
   if (prioridad > 0) {
     await new Promise((resolve) => setTimeout(resolve, prioridad * 1500))
-    if (comandosRespondidos.has(msg.key.id)) return
+    if (comandosRespondidos.has(msg.key.id)) {
+      return
+    }
   }
 
   const numeroRealRemitente = await resolverNumeroReal(sock, jidRemitente, msg)
@@ -269,23 +349,33 @@ export default async function handler(sock, m) {
   if (!esDueno && !categoriasSinRegistro.includes(entrada.categoria)) {
     const jidNormalizado = normalizarJid(jidRemitente)
     const usuarioDB = db.data.users[jidNormalizado]
+
     if (!usuarioDB?.registrado) {
       return sock.sendMessage(chatId, {
-        text: `📝 Debes registrarte antes de usar comandos.\n\nUsa: *${config.prefijo}reg Nombre.Edad*\nEjemplo: *${config.prefijo}reg Amilcar.21*`,
+        text:
+          `📝 Debes registrarte antes de usar comandos.\n\n` +
+          `Usa: *${config.prefijo}reg Nombre.Edad*\n` +
+          `Ejemplo: *${config.prefijo}reg Amilcar.21*`,
       })
     }
   }
 
-  if (entrada.soloOwner && !esDueno) return sock.sendMessage(chatId, { text: t(idioma, 'soloOwner') })
+  if (entrada.soloOwner && !esDueno) {
+    return sock.sendMessage(chatId, { text: t(idioma, 'soloOwner') })
+  }
+
   if (entrada.soloAdmin && !esDueno) {
     const esAdmin = await esAdminGrupo(sock, chatId, jidRemitente)
-    if (!esAdmin) return sock.sendMessage(chatId, { text: t(idioma, 'soloAdmin') })
+    if (!esAdmin) {
+      return sock.sendMessage(chatId, { text: t(idioma, 'soloAdmin') })
+    }
   }
 
   if (entrada.cooldown > 0 && !esDueno) {
     const clave = `${entrada.nombre}:${jidRemitente}`
     const ahora = Date.now()
     const vencimiento = cooldowns.get(clave)
+
     if (vencimiento && ahora < vencimiento) {
       const restante = Math.ceil((vencimiento - ahora) / 1000)
       return sock.sendMessage(chatId, {
@@ -297,6 +387,7 @@ export default async function handler(sock, m) {
 
   let ejecutar = entrada.run
   let argsFinal = args
+
   if (entrada.subcomandos && args[0]) {
     const nombreSub = args[0].toLowerCase()
     if (entrada.subcomandos[nombreSub]) {
@@ -311,7 +402,13 @@ export default async function handler(sock, m) {
     db.data.stats.comandosPorNombre ??= {}
     db.data.stats.comandosPorNombre[entrada.nombre] = (db.data.stats.comandosPorNombre[entrada.nombre] || 0) + 1
     await db.write()
-    info(chalk.green('⚡ Comando:'), `${config.prefijo}${entrada.nombre}`, chalk.gray(`(${jidRemitente.split('@')[0]})`))
+
+    info(
+      chalk.green('⚡ Comando:'),
+      `${config.prefijo}${entrada.nombre}`,
+      chalk.gray(`(${jidRemitente.split('@')[0]})`)
+    )
+
     await ejecutar({
       sock,
       msg,
