@@ -1,4 +1,3 @@
-export const desc = 'Busca videos en YouTube y permite elegir uno.'
 export const alias = ['ytsearch', 'yts']
 export const cooldown = 5
 
