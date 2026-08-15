@@ -17,7 +17,8 @@ export default {
   subbotsPorUsuario: 1,
   panelActivo: true,
   panelPort: 3000,
-  panelToken: 'AUTO_GENERATE',
+  panelToken: 'auto',
+  comandosDesactivados: [],
   bienvenida: {
     activa: true,
     mensajeEntrada: '👋 ¡Bienvenido/a {mention} a *{grupo}*!\nLee las reglas y disfruta tu estadía 🎉',
