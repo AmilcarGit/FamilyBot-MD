@@ -3,9 +3,8 @@ export default {
   prefijo: '.',
   idiomaPorDefecto: 'es',
   owner: ['51910227479'],
-  // Aquí añades a tu equipo de Staff
   staff: [
-    { nombre: 'Benja', numero: '543875132593' } 
+    { nombre: 'Benja', numero: '543875132593' }
   ],
   numeroBot: '',
   sessionFolder: './session',
