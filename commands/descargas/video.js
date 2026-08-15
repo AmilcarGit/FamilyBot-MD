@@ -1,8 +1,8 @@
-export const desc = 'Busca y descarga el video de YouTube (Enviado como documento compatible).'
-export const alias = ['vid', 'v']
-export const cooldown = 10
+export const desc = 'Busca y descarga el video de YouTube (Enviado como documento seguro).'
+export const alias = ['vid', 'v', 'ytvideo']
+export const cooldown = 15
 
-export default async function video({ sock, chatId, args, m, config }) {
+export default async function video({ sock, chatId, args, msg, config }) {
   let query = args.join(' ').trim()
   
   if (!query) {
@@ -25,58 +25,32 @@ export default async function video({ sock, chatId, args, m, config }) {
     let url = query
 
     if (!query.includes('youtube.com') && !query.includes('youtu.be')) {
-      await sock.sendMessage(chatId, { text: `🔍 Buscando *"${query}"*...` }, { quoted: m })
+      await sock.sendMessage(chatId, { text: `🔍 Buscando *"${query}"*...` }, { quoted: msg })
       const searchUrl = `https://dv-edward.onrender.com/api/search/youtube?apiKey=EdwardwEqIgrqU&query=${encodeURIComponent(query)}`
       const searchRes = await fetch(searchUrl)
       const searchData = await searchRes.json()
       if (searchData.status && searchData.data?.length > 0) {
         url = searchData.data[0].url
       } else {
-        return sock.sendMessage(chatId, { text: `❌ No se encontró ningún video.` })
+        return sock.sendMessage(chatId, { text: `❌ No se encontró ningún video con ese nombre.` })
       }
     }
 
-    await sock.sendMessage(chatId, { text: `📥 Preparando descarga segura...` }, { quoted: m })
+    await sock.sendMessage(chatId, { text: `📥 Preparando descarga segura del video...` }, { quoted: msg })
 
-    let videoData = null
-    const apis = [
-      {
-        name: 'Delirius',
-        url: `https://api.delirius.store/download/ytmp4?url=${encodeURIComponent(url)}`,
-        parse: (json) => json.status && json.data?.download?.url ? { dl: json.data.download.url, title: json.data.title } : null
-      },
-      {
-        name: 'Edward',
-        url: `https://dv-edward.onrender.com/api/download/ytvideo?url=${encodeURIComponent(url)}&apiKey=EdwardwEqIgrqU`,
-        parse: (json) => json.status && json.result?.download_url ? { dl: json.result.download_url, title: json.result.title } : null
-      }
-    ]
+    const apiKey = 'lem954'
+    const apiUrl = `https://api.lempi.lat/dl/ytv?url=${encodeURIComponent(url)}&apikey=${apiKey}`
+    
+    const res = await fetch(apiUrl)
+    const data = await res.json()
 
-    for (const api of apis) {
-      try {
-        const res = await fetch(api.url)
-        const json = await res.json()
-        const parsed = api.parse(json)
-        if (parsed) {
-          videoData = parsed
-          break
-        }
-      } catch (e) {}
+    if (!data.status || !data.datos?.url) {
+      return sock.sendMessage(chatId, { text: `❌ No se pudo procesar la descarga. La API podría estar saturada.` })
     }
 
-    if (!videoData) {
-      return sock.sendMessage(chatId, { text: `❌ No se pudo obtener el video. Intenta con otro link.` })
-    }
-
-    const fileRes = await fetch(videoData.dl, {
-      headers: { 'User-Agent': 'Mozilla/5.0' }
-    })
+    const { titulo, canal, duracion, datos } = data
     
-    if (!fileRes.ok) throw new Error('Error al descargar')
-    
-    const buffer = Buffer.from(await fileRes.arrayBuffer())
-    
-    const cleanName = videoData.title
+    const cleanName = titulo
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-zA-Z0-9]/g, '_')
@@ -84,14 +58,14 @@ export default async function video({ sock, chatId, args, m, config }) {
       .substring(0, 30)
 
     await sock.sendMessage(chatId, {
-      document: buffer,
+      document: { url: datos.url },
       fileName: `${cleanName}.mp4`,
-      mimetype: 'application/octet-stream',
-      caption: `🎬 *Video:* ${videoData.title}\n✅ *Listo para abrir*`
-    }, { quoted: m })
+      mimetype: 'video/mp4',
+      caption: `🎬 *Título:* ${titulo}\n👤 *Canal:* ${canal}\n⏱️ *Duración:* ${duracion}\n⚖️ *Tamaño:* ${datos.tamaño}\n✅ *Enviado como documento para evitar errores de WhatsApp.*`
+    }, { quoted: msg })
 
   } catch (error) {
-    console.error('Error en video:', error)
-    await sock.sendMessage(chatId, { text: `❌ Error al procesar el video.` })
+    console.error('Error en comando video:', error)
+    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al procesar el video.` })
   }
 }
