@@ -2,7 +2,7 @@ export const desc = 'Descarga canciones de Deezer (Full Song) usando un link o e
 export const alias = ['deezer', 'dldz']
 export const cooldown = 10
 
-export default async function dz({ sock, chatId, args, m, config }) {
+export default async function dz({ sock, chatId, args, msg, config }) {
   let input = args.join(' ').trim()
   
   if (!input) {
@@ -28,7 +28,7 @@ export default async function dz({ sock, chatId, args, m, config }) {
   } else if (input.includes('deezer.com')) {
     deezerUrl = input
   } else {
-    await sock.sendMessage(chatId, { text: `🔍 Buscando enlace para *"${input}"*...` }, { quoted: m })
+    await sock.sendMessage(chatId, { text: `🔍 Buscando enlace para *"${input}"*...` }, { quoted: msg })
     try {
       const searchRes = await fetch(`https://api.evogb.org/search/deezer?query=${encodeURIComponent(input)}&apikey=evogb-jRhjmDSp`)
       const searchData = await searchRes.json()
@@ -43,7 +43,7 @@ export default async function dz({ sock, chatId, args, m, config }) {
   }
 
   try {
-    await sock.sendMessage(chatId, { text: `📥 Obteniendo información de Deezer...` }, { quoted: m })
+    await sock.sendMessage(chatId, { text: `📥 Obteniendo información de Deezer...` }, { quoted: msg })
 
     const infoRes = await fetch(`https://api.evogb.org/dl/deezer?url=${encodeURIComponent(deezerUrl)}&key=evogb-jRhjmDSp`)
     const infoData = await infoRes.json()
@@ -58,7 +58,7 @@ export default async function dz({ sock, chatId, args, m, config }) {
     await sock.sendMessage(chatId, { 
       image: { url: cover || 'https://i.ibb.co/G7k4v4z/deezer.png' },
       caption: `🎵 *Título:* ${title}\n👤 *Artista:* ${artist}\n\n🚀 *Descargando versión completa (Full Song)...*`
-    }, { quoted: m })
+    }, { quoted: msg })
 
     let audioBuffer = null
     let success = false
@@ -115,7 +115,7 @@ export default async function dz({ sock, chatId, args, m, config }) {
       audio: audioBuffer,
       mimetype: 'audio/mpeg',
       fileName: `${title}.mp3`
-    }, { quoted: m })
+    }, { quoted: msg })
 
   } catch (error) {
     console.error('Error en comando dz:', error)
