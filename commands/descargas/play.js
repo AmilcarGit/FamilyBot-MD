@@ -22,7 +22,7 @@ export default async function play({ sock, chatId, args, m, config }) {
   }
 
   try {
-    const apiKeyEdward = 'EdwardwEqIgrqU'
+    const apiKeyEdward = 'EdwardNDffYyRz'
     let url = query
 
     if (!query.includes('youtube.com') && !query.includes('youtu.be')) {
