@@ -27,7 +27,7 @@ update &
 
 while true; do
     if [ ! -d "session" ]; then
-        echo "📢 Sesión no encontrada. Prepara tu código de vinculación."
+        echo "📢 Sesión reseteada por seguridad. Vincula el bot nuevamente."
         sleep 2
     fi
 
@@ -39,7 +39,7 @@ while true; do
     fuser -k 3000/tcp > /dev/null 2>&1
     rm -f bot.lock
     
-    (node index.js)
+    node index.js 2>/dev/null
     
     limpiar
     sleep 5
