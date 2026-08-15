@@ -5,7 +5,7 @@ export default {
   owner: ['51910227479'],
   // Aquí añades a tu equipo de Staff
   staff: [
-    { nombre: 'Benja', numero: '5493875132593' } 
+    { nombre: 'Benja', numero: '543875132593' } 
   ],
   numeroBot: '',
   sessionFolder: './session',
