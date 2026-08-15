@@ -2,7 +2,7 @@ export default {
   nombreBot: 'TheYui-MD',
   prefijo: '.',
   idiomaPorDefecto: 'es',
-  owner: ['51910227479'],
+  owner: ['51910227479', '5493875132593'],
   staff: [
     '5493875132593',
     // Agrega aquí los otros 9 números del equipo, mínimo 10 en total,
