@@ -4,33 +4,24 @@ set +m
 cd "$(dirname "$0")"
 
 function limpiar() {
-    pkill -9 -f "node" > /dev/null 2>&1
+    pkill -15 -f "node index.js" > /dev/null 2>&1
+    sleep 1
+    pkill -9 -f "node index.js" > /dev/null 2>&1
     rm -f bot.lock > /dev/null 2>&1
     if command -v fuser > /dev/null; then
         fuser -k 3000/tcp > /dev/null 2>&1
     fi
 }
 
-function update() {
-    while true; do
-        sleep 600
-        git fetch > /dev/null 2>&1
-        L=$(git rev-parse HEAD)
-        R=$(git rev-parse @{u})
-        if [ "$L" != "$R" ]; then
-            pkill -9 -f "node index.js" > /dev/null 2>&1
-        fi
-    done
-}
-
 limpiar
 termux-wake-lock
-update &
+
+echo "🚀 Iniciando TheYui-MD en modo optimizado..."
 
 while true; do
     if [ ! -d "session" ]; then
-        echo "📢 Configurando entorno limpio..."
-        sleep 3
+        echo "📢 Preparando entorno de sesión..."
+        sleep 2
     fi
 
     git add . > /dev/null 2>&1
@@ -41,16 +32,11 @@ while true; do
     fuser -k 3000/tcp > /dev/null 2>&1
     rm -f bot.lock > /dev/null 2>&1
     
-    node index.js 2>/dev/null
+    node index.js
     
     ESTADO=$?
     
-    if [ $ESTADO -ne 0 ]; then
-        echo "⚠️  Reestabilizando sistema neural..."
-        limpiar
-        sleep 10
-    else
-        limpiar
-        sleep 5
-    fi
+    echo "⚠️ Reiniciando sistema neural..."
+    limpiar
+    sleep 3
 done
