@@ -24,13 +24,18 @@ while true; do
         sleep 2
     fi
 
+    git add . > /dev/null 2>&1
+    git stash > /dev/null 2>&1
+    git pull > /dev/null 2>&1
+    git stash pop > /dev/null 2>&1
+    
     fuser -k 3000/tcp > /dev/null 2>&1
     rm -f bot.lock > /dev/null 2>&1
-
+    
     node index.js
-
+    
     ESTADO=$?
-
+    
     echo "⚠️ Reiniciando sistema neural..."
     limpiar
     sleep 3
