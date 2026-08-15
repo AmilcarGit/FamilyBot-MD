@@ -18,25 +18,15 @@ const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
 let codigoSolicitado = false
 let numeroIngresado = null
-let badMacCount = 0
 
 const ARCHIVO_LOCK = path.join(process.cwd(), 'bot.lock')
-
-function procesoActivo(pid) {
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch {
-    return false
-  }
-}
 
 function verificarInstanciaUnica() {
   if (fs.existsSync(ARCHIVO_LOCK)) {
     try {
-      const pidAnterior = parseInt(fs.readFileSync(ARCHIVO_LOCK, 'utf-8'), 10)
-      if (pidAnterior && pidAnterior !== process.pid && procesoActivo(pidAnterior)) {
-        process.exit(1)
+      const pid = parseInt(fs.readFileSync(ARCHIVO_LOCK, 'utf-8'), 10)
+      if (pid && pid !== process.pid) {
+        try { process.kill(pid, 0); process.exit(1) } catch (e) {}
       }
     } catch (e) {}
   }
@@ -45,34 +35,32 @@ function verificarInstanciaUnica() {
 
 function liberarInstancia() {
   try {
-    const pidGuardado = parseInt(fs.readFileSync(ARCHIVO_LOCK, 'utf-8'), 10)
-    if (pidGuardado === process.pid) fs.unlinkSync(ARCHIVO_LOCK)
+    if (fs.existsSync(ARCHIVO_LOCK)) {
+      const pid = parseInt(fs.readFileSync(ARCHIVO_LOCK, 'utf-8'), 10)
+      if (pid === process.pid) fs.unlinkSync(ARCHIVO_LOCK)
+    }
   } catch {}
 }
 
 verificarInstanciaUnica()
 
+function nuclearReset() {
+  try {
+    if (fs.existsSync(config.sessionFolder)) {
+      fs.rmSync(config.sessionFolder, { recursive: true, force: true })
+    }
+  } catch (e) {}
+  liberarInstancia()
+  process.exit(1)
+}
+
 process.on('uncaughtException', (err) => {
   if (err.message.includes('EADDRINUSE')) process.exit(1)
-  if (err.message.includes('Bad MAC')) {
-    badMacCount++
-    if (badMacCount >= 5) {
-      try { fs.rmSync(config.sessionFolder, { recursive: true, force: true }) } catch (e) {}
-      process.exit(1)
-    }
-    return
-  }
+  if (err.message.includes('Bad MAC')) nuclearReset()
 })
 
 process.on('unhandledRejection', (reason) => {
-  if (reason?.message?.includes('Bad MAC')) {
-    badMacCount++
-    if (badMacCount >= 5) {
-      try { fs.rmSync(config.sessionFolder, { recursive: true, force: true }) } catch (e) {}
-      process.exit(1)
-    }
-    return
-  }
+  if (reason?.message?.includes('Bad MAC')) nuclearReset()
 })
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
@@ -131,25 +119,18 @@ async function iniciar() {
 
     if (connection === 'open') {
       intentosReconexion = 0
-      badMacCount = 0
       mostrarConexionExitosa(config.nombreBot)
       iniciarAutoUpdate(sock)
     }
 
     if (connection === 'close') {
       const statusCode = new Boom(lastDisconnect?.error)?.output?.statusCode
-      if (statusCode === DisconnectReason.loggedOut) {
-        try { fs.rmSync(config.sessionFolder, { recursive: true, force: true }) } catch (e) {}
-        process.exit(0)
+      const errorMsg = lastDisconnect?.error?.message || ''
+      
+      if (statusCode === DisconnectReason.loggedOut || errorMsg.includes('Bad MAC')) {
+        nuclearReset()
       }
-      if (lastDisconnect?.error?.message?.includes('Bad MAC')) {
-        badMacCount++
-        if (badMacCount >= 3) {
-          try { fs.rmSync(config.sessionFolder, { recursive: true, force: true }) } catch (e) {}
-          process.exit(1)
-        }
-        process.exit(1)
-      }
+      
       if (intentosReconexion < config.maxReconnectAttempts) {
         intentosReconexion++
         setTimeout(iniciar, backoffDelay(intentosReconexion, config.maxReconnectDelay))
@@ -159,7 +140,7 @@ async function iniciar() {
 
   sock.ev.on('creds.update', saveCreds)
   sock.ev.on('messages.upsert', async (m) => {
-    try { await handler(sock, m) } catch (err) { if (err.message.includes('Bad MAC')) badMacCount++ }
+    try { await handler(sock, m) } catch (err) { if (err.message.includes('Bad MAC')) nuclearReset() }
   })
 
   return sock
