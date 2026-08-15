@@ -14,20 +14,20 @@ export default async function tiktok({ sock, chatId, args, msg, config }) {
   try {
     await sock.sendMessage(chatId, { text: `⏳ Descargando video de TikTok...` }, { quoted: msg })
 
-    const apiUrl = `https://api.delirius.store/download/tiktok?url=${encodeURIComponent(url)}`
+    const apiKey = 'lem954'
+    const apiUrl = `https://api.lempi.lat/dl/tiktok?url=${encodeURIComponent(url)}&apikey=${apiKey}`
     const res = await fetch(apiUrl)
     const data = await res.json()
 
-    if (!data.status || !data.data) {
-      return sock.sendMessage(chatId, { text: `❌ No se pudo descargar el video de TikTok.` })
+    if (!data.status || !data.datos || !data.datos.url) {
+      return sock.sendMessage(chatId, { text: `❌ No se pudo descargar el video de TikTok. Verifica el enlace.` })
     }
 
-    const { author, duration, music, meta } = data.data
-    const videoUrl = meta.media[0].url
+    const { titulo, autor, duracion, datos } = data
 
     await sock.sendMessage(chatId, {
-      video: { url: videoUrl },
-      caption: `🎬 *Autor:* ${author.nickname} (@${author.username})\n🎵 *Música:* ${music.title}\n⏱️ *Duración:* ${duration}s\n✅ *Sin marca de agua*`,
+      video: { url: datos.url },
+      caption: `🎬 *Título:* ${titulo || 'TikTok Video'}\n👤 *Autor:* ${autor.nombre} (@${autor.usuario})\n⏱️ *Duración:* ${duracion}s\n✅ *Sin marca de agua*`,
       mimetype: 'video/mp4'
     }, { quoted: msg })
 
