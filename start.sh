@@ -5,31 +5,47 @@ cd "$(dirname "$0")"
 printf "\033[1;35m"
 echo "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓"
 echo "┃                                                ┃"
-echo "┃   💠  THE YUI-MD: NEURAL CLEANUP V4  💠        ┃"
+echo "┃   💠  THE YUI-MD: NEURAL SYSTEM V5  💠         ┃"
 echo "┃                                                ┃"
 echo "┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛"
 printf "\033[0m"
 
-echo "🧹 Iniciando protocolo de limpieza ultra-agresiva..."
+echo "🧹 Iniciando protocolo de limpieza neural..."
 
 pkill -9 -f "node" > /dev/null 2>&1
+rm -f bot.lock
 
 if command -v fuser > /dev/null; then
     fuser -k 3000/tcp > /dev/null 2>&1
-    fuser -k 3001/tcp > /dev/null 2>&1
 fi
 
-rm -f bot.lock
 termux-wake-lock
 
 if command -v termux-api > /dev/null; then
     am start --user 0 -a android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS > /dev/null 2>&1
 fi
 
-echo "🔋 Estabilizando sistema y liberando memoria..."
-sleep 5
+echo "🔋 Optimizando energía y recursos..."
+sleep 3
 
 while true; do
+    echo "🔍 Verificando estado del puerto 3000..."
+    
+    while true; do
+        if command -v lsof > /dev/null; then
+            if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null ; then
+                echo "⚠️  Puerto ocupado. Limpiando y esperando..."
+                fuser -k 3000/tcp > /dev/null 2>&1
+                pkill -9 -f "node" > /dev/null 2>&1
+                sleep 2
+            else
+                break
+            fi
+        else
+            break
+        fi
+    done
+
     rm -f bot.lock
     
     echo "🌸 Lanzando núcleo del sistema..."
@@ -38,15 +54,15 @@ while true; do
     CODIGO=$?
     
     if [ $CODIGO -ne 0 ]; then
-        echo "⚠️  Falla detectada. Limpiando recursos..."
+        echo "⚠️  Inestabilidad detectada (Código: $CODIGO). Limpiando..."
         pkill -9 -f "node" > /dev/null 2>&1
         if command -v fuser > /dev/null; then
             fuser -k 3000/tcp > /dev/null 2>&1
         fi
-        sleep 8
-    else
-        echo "✅ Reinicio solicitado. Preparando entorno..."
-        pkill -9 -f "node" > /dev/null 2>&1
         sleep 5
+    else
+        echo "✅ Reinicio exitoso. Preparando nuevo ciclo..."
+        pkill -9 -f "node" > /dev/null 2>&1
+        sleep 3
     fi
 done
