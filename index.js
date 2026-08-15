@@ -18,6 +18,7 @@ const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
 let codigoSolicitado = false
 let numeroIngresado = null
+let badMacCount = 0
 
 const ARCHIVO_LOCK = path.join(process.cwd(), 'bot.lock')
 
@@ -35,7 +36,6 @@ function verificarInstanciaUnica() {
     try {
       const pidAnterior = parseInt(fs.readFileSync(ARCHIVO_LOCK, 'utf-8'), 10)
       if (pidAnterior && pidAnterior !== process.pid && procesoActivo(pidAnterior)) {
-        logError(chalk.red(`❌ Ya hay una instancia activa (PID ${pidAnterior}).`))
         process.exit(1)
       }
     } catch (e) {}
@@ -53,36 +53,26 @@ function liberarInstancia() {
 verificarInstanciaUnica()
 
 process.on('uncaughtException', (err) => {
-  if (err.message.includes('EADDRINUSE')) {
-    process.exit(1)
-  }
-  
+  if (err.message.includes('EADDRINUSE')) process.exit(1)
   if (err.message.includes('Bad MAC')) {
-    logError(chalk.red('🚨 Error Crítico: Sesión Corrupta (Bad MAC).'))
-    logError(chalk.yellow('Sugerencia: Borra la carpeta session y reinicia el bot.'))
+    badMacCount++
+    if (badMacCount >= 5) {
+      try { fs.rmSync(config.sessionFolder, { recursive: true, force: true }) } catch (e) {}
+      process.exit(1)
+    }
     return
   }
-
-  logError(chalk.red('💥 Error No Capturado:'), err)
 })
 
-process.on('unhandledRejection', (reason, promise) => {
-  if (reason?.message?.includes('Bad MAC')) return
-  logError(chalk.red('💥 Promesa No Manejada:'), reason)
-})
-
-process.on('SIGINT', () => {
-  liberarInstancia()
-  process.exit(0)
-})
-
-process.on('SIGTERM', () => {
-  liberarInstancia()
-  process.exit(0)
-})
-
-process.on('exit', () => {
-  liberarInstancia()
+process.on('unhandledRejection', (reason) => {
+  if (reason?.message?.includes('Bad MAC')) {
+    badMacCount++
+    if (badMacCount >= 5) {
+      try { fs.rmSync(config.sessionFolder, { recursive: true, force: true }) } catch (e) {}
+      process.exit(1)
+    }
+    return
+  }
 })
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
@@ -94,15 +84,13 @@ async function iniciar() {
 
   let numero = config.numeroBot || numeroIngresado
   if (!state.creds.registered && !numero) {
-    numero = await preguntar(chalk.green('Ingresa el número del bot (con código de país): '))
+    numero = await preguntar(chalk.green('Ingresa el número del bot: '))
     numeroIngresado = numero
   }
 
   if (numero) {
     numero = numero.replace(/\D/g, '')
-    if (numero.startsWith('54') && !numero.startsWith('549')) {
-      numero = '549' + numero.slice(2)
-    }
+    if (numero.startsWith('54') && !numero.startsWith('549')) numero = '549' + numero.slice(2)
   }
 
   const sock = makeWASocket({
@@ -115,23 +103,9 @@ async function iniciar() {
     },
     browser: ['Ubuntu', 'Chrome', '20.0.04'],
     patchMessageBeforeSending: (message) => {
-      const requiresPatch = !!(
-        message.buttonsMessage ||
-        message.templateMessage ||
-        message.listMessage
-      )
+      const requiresPatch = !!(message.buttonsMessage || message.templateMessage || message.listMessage)
       if (requiresPatch) {
-        message = {
-          viewOnceMessage: {
-            message: {
-              messageContextInfo: {
-                deviceListMetadata: {},
-                deviceListMetadataVersion: 2,
-              },
-              ...message,
-            },
-          },
-        }
+        message = { viewOnceMessage: { message: { messageContextInfo: { deviceListMetadata: {}, deviceListMetadataVersion: 2 }, ...message } } }
       }
       return message
     },
@@ -157,24 +131,25 @@ async function iniciar() {
 
     if (connection === 'open') {
       intentosReconexion = 0
+      badMacCount = 0
       mostrarConexionExitosa(config.nombreBot)
       iniciarAutoUpdate(sock)
     }
 
     if (connection === 'close') {
       const statusCode = new Boom(lastDisconnect?.error)?.output?.statusCode
-      
       if (statusCode === DisconnectReason.loggedOut) {
-        logError(chalk.red('Sesión cerrada. Borrando carpeta session...'))
-        fs.rmSync(config.sessionFolder, { recursive: true, force: true })
+        try { fs.rmSync(config.sessionFolder, { recursive: true, force: true }) } catch (e) {}
         process.exit(0)
       }
-      
       if (lastDisconnect?.error?.message?.includes('Bad MAC')) {
-        logError(chalk.red('🚨 Sesión corrupta detectada. Reiniciando núcleo...'))
+        badMacCount++
+        if (badMacCount >= 3) {
+          try { fs.rmSync(config.sessionFolder, { recursive: true, force: true }) } catch (e) {}
+          process.exit(1)
+        }
         process.exit(1)
       }
-
       if (intentosReconexion < config.maxReconnectAttempts) {
         intentosReconexion++
         setTimeout(iniciar, backoffDelay(intentosReconexion, config.maxReconnectDelay))
@@ -184,10 +159,7 @@ async function iniciar() {
 
   sock.ev.on('creds.update', saveCreds)
   sock.ev.on('messages.upsert', async (m) => {
-    try { await handler(sock, m) } catch (err) { 
-      if (err.message.includes('Bad MAC')) return
-      console.error(err) 
-    }
+    try { await handler(sock, m) } catch (err) { if (err.message.includes('Bad MAC')) badMacCount++ }
   })
 
   return sock
