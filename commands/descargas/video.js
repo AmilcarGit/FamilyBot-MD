@@ -22,76 +22,80 @@ export default async function video({ sock, chatId, args, m, config }) {
   }
 
   try {
-    const apiKeyEdward = 'EdwardwEqIgrqU'
     let url = query
 
     if (!query.includes('youtube.com') && !query.includes('youtu.be')) {
       await sock.sendMessage(chatId, { text: `🔍 Buscando *"${query}"*...` }, { quoted: m })
-      
-      const searchUrl = `https://dv-edward.onrender.com/api/search/youtube?apiKey=${apiKeyEdward}&query=${encodeURIComponent(query)}`
+      const searchUrl = `https://dv-edward.onrender.com/api/search/youtube?apiKey=EdwardwEqIgrqU&query=${encodeURIComponent(query)}`
       const searchRes = await fetch(searchUrl)
       const searchData = await searchRes.json()
-
-      if (!searchData.status || !searchData.data || searchData.data.length === 0) {
+      if (searchData.status && searchData.data?.length > 0) {
+        url = searchData.data[0].url
+      } else {
         return sock.sendMessage(chatId, { text: `❌ No se encontró ningún video con ese nombre.` })
       }
-      
-      url = searchData.data[0].url
     }
 
     await sock.sendMessage(chatId, { text: `📥 Obteniendo video, espera un momento...` }, { quoted: m })
 
     let videoData = null
-    
-    try {
-      const edwardUrl = `https://dv-edward.onrender.com/api/download/ytvideo?url=${encodeURIComponent(url)}&apiKey=${apiKeyEdward}`
-      const edwardRes = await fetch(edwardUrl)
-      const edwardJson = await edwardRes.json()
-      
-      if (edwardJson.status && edwardJson.result?.download_url) {
-        videoData = {
-          title: edwardJson.result.title,
-          thumbnail: edwardJson.result.thumbnail,
-          dl: edwardJson.result.download_url
-        }
+    const apis = [
+      {
+        name: 'Delirius',
+        url: `https://api.delirius.store/download/ytmp4?url=${encodeURIComponent(url)}`,
+        parse: (json) => json.status && json.data?.download?.url ? { dl: json.data.download.url, title: json.data.title } : null
+      },
+      {
+        name: 'Edward',
+        url: `https://dv-edward.onrender.com/api/download/ytvideo?url=${encodeURIComponent(url)}&apiKey=EdwardwEqIgrqU`,
+        parse: (json) => json.status && json.result?.download_url ? { dl: json.result.download_url, title: json.result.title } : null
+      },
+      {
+        name: 'Vkrdown',
+        url: `https://api.vkrdown.com/api/ytmp4?url=${encodeURIComponent(url)}`,
+        parse: (json) => json.status && json.data?.url ? { dl: json.data.url, title: json.data.title } : null
       }
-    } catch (e) {
-      console.log('API Edward falló para video, intentando con Delirius...')
-    }
+    ]
 
-    if (!videoData) {
+    for (const api of apis) {
       try {
-        const deliriusUrl = `https://api.delirius.store/download/ytmp4?url=${encodeURIComponent(url)}`
-        const deliriusRes = await fetch(deliriusUrl)
-        const deliriusJson = await deliriusRes.json()
-        
-        if (deliriusJson.status && deliriusJson.data?.download?.url) {
-          videoData = {
-            title: deliriusJson.data.title || 'Video de YouTube',
-            thumbnail: deliriusJson.data.image || deliriusJson.data.thumbnail,
-            dl: deliriusJson.data.download.url
-          }
+        const res = await fetch(api.url)
+        const json = await res.json()
+        const parsed = api.parse(json)
+        if (parsed) {
+          videoData = parsed
+          break
         }
       } catch (e) {
-        console.log('API Delirius también falló para video.')
+        console.log(`Error en API ${api.name}:`, e.message)
       }
     }
 
     if (!videoData) {
-      return sock.sendMessage(chatId, { text: `❌ Ambas APIs de descarga fallaron. Inténtalo más tarde.` })
+      return sock.sendMessage(chatId, { text: `❌ No se pudo obtener el video de ninguna fuente. Inténtalo más tarde.` })
     }
 
-    const res = await fetch(videoData.dl)
-    const buffer = Buffer.from(await res.arrayBuffer())
+    const fileRes = await fetch(videoData.dl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    })
+    
+    if (!fileRes.ok) throw new Error('Fallo al descargar el archivo de video')
+    
+    const buffer = Buffer.from(await fileRes.arrayBuffer())
+    
+    if (buffer.length < 1000) throw new Error('Archivo de video corrupto o demasiado pequeño')
 
     await sock.sendMessage(chatId, {
       video: buffer,
       caption: `🎬 *Título:* ${videoData.title}\n✨ *Descargado con éxito*`,
-      mimetype: 'video/mp4'
+      mimetype: 'video/mp4',
+      fileName: `${videoData.title}.mp4`
     }, { quoted: m })
 
   } catch (error) {
     console.error('Error en comando video:', error)
-    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error inesperado al procesar el video.` })
+    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al procesar el video: ${error.message}` })
   }
 }
