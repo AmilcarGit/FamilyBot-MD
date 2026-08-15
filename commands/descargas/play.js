@@ -1,4 +1,3 @@
-export const desc = 'Busca y descarga el audio de un video de YouTube.'
 export const alias = ['musica', 'audio']
 export const cooldown = 10
 
@@ -22,81 +21,51 @@ export default async function play({ sock, chatId, args, m, config }) {
   }
 
   try {
-    const apiKeyEdward = 'EdwardNDffYyRz'
     let url = query
 
     if (!query.includes('youtube.com') && !query.includes('youtu.be')) {
       await sock.sendMessage(chatId, { text: `🔍 Buscando *"${query}"*...` }, { quoted: m })
-      
-      const searchUrl = `https://dv-edward.onrender.com/api/search/youtube?apiKey=${apiKeyEdward}&query=${encodeURIComponent(query)}`
+      const searchUrl = `https://dv-edward.onrender.com/api/search/youtube?apiKey=EdwardNDffYyRz&query=${encodeURIComponent(query)}`
       const searchRes = await fetch(searchUrl)
       const searchData = await searchRes.json()
-
-      if (!searchData.status || !searchData.data || searchData.data.length === 0) {
+      if (searchData.status && searchData.data?.length > 0) {
+        url = searchData.data[0].url
+      } else {
         return sock.sendMessage(chatId, { text: `❌ No se encontró ninguna canción con ese nombre.` })
       }
-      
-      url = searchData.data[0].url
     }
 
     await sock.sendMessage(chatId, { text: `📥 Obteniendo audio, espera un momento...` }, { quoted: m })
 
-    let audioData = null
+    const apiKey = 'lem954'
+    const apiUrl = `https://api.lempi.lat/dl/yta?url=${encodeURIComponent(url)}&apikey=${apiKey}`
     
-    try {
-      const edwardUrl = `https://dv-edward.onrender.com/api/download/ytaudio?url=${encodeURIComponent(url)}&apiKey=${apiKeyEdward}`
-      const edwardRes = await fetch(edwardUrl)
-      const edwardJson = await edwardRes.json()
-      
-      if (edwardJson.status && edwardJson.result?.download_url) {
-        audioData = {
-          title: edwardJson.result.title,
-          thumbnail: edwardJson.result.thumbnail,
-          dl: edwardJson.result.download_url
-        }
+    const res = await fetch(apiUrl)
+    const data = await res.json()
+
+    if (!data.status || !data.datos?.url) {
+      return sock.sendMessage(chatId, { text: `❌ No se pudo obtener el audio. La API podría estar saturada.` })
+    }
+
+    const { titulo, datos } = data
+
+    const fileRes = await fetch(datos.url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       }
-    } catch (e) {
-      console.log('API Edward falló, intentando con Delirius...')
-    }
-
-    if (!audioData) {
-      try {
-        const deliriusUrl = `https://api.delirius.store/download/ytmp3?url=${encodeURIComponent(url)}`
-        const deliriusRes = await fetch(deliriusUrl)
-        const deliriusJson = await deliriusRes.json()
-        
-        if (deliriusJson.status && deliriusJson.data?.download?.url) {
-          audioData = {
-            title: deliriusJson.data.title || 'Audio de YouTube',
-            thumbnail: deliriusJson.data.image || deliriusJson.data.thumbnail,
-            dl: deliriusJson.data.download.url
-          }
-        }
-      } catch (e) {
-        console.log('API Delirius también falló.')
-      }
-    }
-
-    if (!audioData) {
-      return sock.sendMessage(chatId, { text: `❌ Ambas APIs de descarga fallaron. Inténtalo más tarde.` })
-    }
-
-    const res = await fetch(audioData.dl)
-    const buffer = Buffer.from(await res.arrayBuffer())
-
-    await sock.sendMessage(chatId, {
-      image: { url: audioData.thumbnail },
-      caption: `🎵 *Título:* ${audioData.title}\n📥 *Enviando audio...*`
-    }, { quoted: m })
+    })
+    
+    if (!fileRes.ok) throw new Error('Fallo al descargar el archivo de audio')
+    const buffer = Buffer.from(await fileRes.arrayBuffer())
 
     await sock.sendMessage(chatId, {
       audio: buffer,
       mimetype: 'audio/mpeg',
-      fileName: `${audioData.title}.mp3`
+      fileName: `${titulo}.mp3`
     }, { quoted: m })
 
   } catch (error) {
     console.error('Error en comando play:', error)
-    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error inesperado al procesar tu solicitud.` })
+    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al procesar el audio.` })
   }
 }
