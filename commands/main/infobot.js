@@ -15,14 +15,17 @@ export default async function infobot({ sock, chatId, msg, config }) {
   const ramLibre = (os.freemem() / 1024 / 1024 / 1024).toFixed(2)
   const ramUso = (ramTotal - ramLibre).toFixed(2)
 
-  const staffList = config.staff && config.staff.length > 0 
-    ? config.staff.map(s => `» *${s.nombre}:* @${s.numero}`).join('\n')
-    : '» *Sin staff asignado*'
+  let staffList = ''
+  let mentions = [config.owner[0] + '@s.whatsapp.net']
 
-  const mentions = [
-    config.owner[0] + '@s.whatsapp.net',
-    ...(config.staff || []).map(s => s.numero + '@s.whatsapp.net')
-  ]
+  if (config.staff && config.staff.length > 0) {
+    staffList = config.staff.map(s => {
+      mentions.push(s.numero + '@s.whatsapp.net')
+      return `» *${s.nombre}:* @${s.numero}`
+    }).join('\n')
+  } else {
+    staffList = '» *Sin staff asignado*'
+  }
 
   const infoText = `
 ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
