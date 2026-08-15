@@ -36,6 +36,7 @@ export default async function menu({ sock, chatId, comandos, config }) {
 
     for (const c of comandos) {
       if (c.oculto) continue
+      if ((config.comandosDesactivados || []).includes(c.nombre)) continue
       const cat = c.categoria || 'main'
       if (!porCategoria[cat]) porCategoria[cat] = []
       porCategoria[cat].push(c)
@@ -76,7 +77,7 @@ export default async function menu({ sock, chatId, comandos, config }) {
 
 ┃ 👑 Creador  : AmilcarGit
 ┃ 📅 Fecha  : ${fecha}
-┃ 📚 Comandos : ${comandos.length}
+┃ 📚 Comandos : ${comandos.filter((c) => !c.oculto && !(config.comandosDesactivados || []).includes(c.nombre)).length}
 ┃ ⚡ Prefijo  : ${config.prefijo}
 
 📜 *MENÚ DE COMANDOS*
