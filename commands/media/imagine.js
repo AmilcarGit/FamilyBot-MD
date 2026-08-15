@@ -2,7 +2,7 @@ export const desc = 'Genera una imagen a partir de texto usando IA.'
 export const alias = ['dalle', 'iaimg', 'gen']
 export const cooldown = 15
 
-export default async function imagine({ sock, chatId, args, config }) {
+export default async function imagine({ sock, chatId, args, msg, config }) {
   const text = args.join(' ').trim()
   
   if (!text) {
@@ -13,9 +13,9 @@ export default async function imagine({ sock, chatId, args, config }) {
 
   try {
     const apiKey = 'nyx_52Mp5ITkf_L7Nt9uO7bxsZ2vW5sh3jQu'
-    const url = `https://nyxdlapi.vercel.app/api/tools/text2img?prompt=${encodeURIComponent(text)}&apikey=${apiKey}`
+    const url = `https://nyxdlapi.vercel.app/api/tools/text2img?text=${encodeURIComponent(text)}&apikey=${apiKey}`
     
-    await sock.sendMessage(chatId, { text: `🎨 Generando tu imagen de *${text}*, espera un momento...` })
+    await sock.sendMessage(chatId, { text: `🎨 Generando tu imagen de *${text}*, espera un momento...` }, { quoted: msg })
 
     const response = await fetch(url)
     const data = await response.json()
@@ -29,7 +29,7 @@ export default async function imagine({ sock, chatId, args, config }) {
     await sock.sendMessage(chatId, {
       image: { url: data.result.image },
       caption: `✨ *Resultado para:* ${text}\n🎨 *IA:* NyxDLaPI`
-    })
+    }, { quoted: msg })
 
   } catch (error) {
     console.error('Error en comando imagine:', error)
