@@ -19,6 +19,20 @@ const comandos = {}
 const listaComandos = []
 const cooldowns = new Map()
 
+export function obtenerComandosPanel() {
+  return listaComandos.map(({ nombre, categoria, desc, alias, cooldown, soloOwner, soloAdmin, oculto }) => ({
+    nombre,
+    categoria,
+    desc,
+    alias,
+    cooldown,
+    soloOwner,
+    soloAdmin,
+    oculto,
+    activo: !(config.comandosDesactivados || []).includes(nombre),
+  }))
+}
+
 setInterval(() => {
   const ahora = Date.now()
   for (const [clave, vencimiento] of cooldowns) {
@@ -126,15 +140,12 @@ await cargarComandos()
 activarHotReload()
 
 async function notificarErrorAlOwner(sock, err, comando) {
-  const texto = `⚠️ Error ejecutando *${config.prefijo}${comando}*:\n\n${err?.stack || err?.message || err}`
-  const destinatarios = [config.owner[0], ...(config.staff || [])]
-
-  for (const numero of destinatarios) {
-    try {
-      const jid = `${numero}@s.whatsapp.net`
-      await sock.sendMessage(jid, { text: texto })
-    } catch {}
-  }
+  try {
+    const ownerJid = `${config.owner[0]}@s.whatsapp.net`
+    await sock.sendMessage(ownerJid, {
+      text: `⚠️ Error ejecutando *${config.prefijo}${comando}*:\n\n${err?.stack || err?.message || err}`,
+    })
+  } catch {}
 }
 
 export default async function handler(sock, m) {
@@ -162,6 +173,10 @@ export default async function handler(sock, m) {
     db = await getDB()
 
     db.data.blacklist ??= []
+    db.data.stats ??= {}
+    db.data.stats.mensajesPorHora ??= Array(24).fill(0)
+    const horaActual = new Date().getHours()
+    db.data.stats.mensajesPorHora[horaActual] = (db.data.stats.mensajesPorHora[horaActual] || 0) + 1
     if (db.data.blacklist.includes(normalizarJid(jidRemitente))) {
       return
     }
@@ -255,6 +270,9 @@ export default async function handler(sock, m) {
 
   const numeroRealRemitente = await resolverNumeroReal(sock, jidRemitente, msg)
   const esDueno = esOwner(numeroRealRemitente, config.owner)
+  if (!esDueno && (config.comandosDesactivados || []).includes(entrada.nombre)) {
+    return sock.sendMessage(chatId, { text: `⛔ El comando *${config.prefijo}${entrada.nombre}* está temporalmente desactivado.` })
+  }
 
   const categoriasSinRegistro = ['main', 'owner']
   if (!esDueno && !categoriasSinRegistro.includes(entrada.categoria)) {
@@ -309,7 +327,9 @@ export default async function handler(sock, m) {
 
   try {
     db.data.stats ??= { comandosEjecutados: 0 }
-    db.data.stats.comandosEjecutados++
+    db.data.stats.comandosEjecutados = (db.data.stats.comandosEjecutados || 0) + 1
+    db.data.stats.comandosPorNombre ??= {}
+    db.data.stats.comandosPorNombre[entrada.nombre] = (db.data.stats.comandosPorNombre[entrada.nombre] || 0) + 1
     await db.write()
 
     info(
