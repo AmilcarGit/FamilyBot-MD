@@ -1,16 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
-
 cd "$(dirname "$0")"
 
-printf "\033[1;35m"
-echo "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓"
-echo "┃                                                ┃"
-echo "┃   💠  THE YUI-MD: AUTO-EVOLVE V6  💠           ┃"
-echo "┃                                                ┃"
-echo "┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛"
-printf "\033[0m"
-
-function limpiar_recursos() {
+function limpiar() {
     pkill -9 -f "node" > /dev/null 2>&1
     rm -f bot.lock
     if command -v fuser > /dev/null; then
@@ -18,69 +9,38 @@ function limpiar_recursos() {
     fi
 }
 
-function verificar_actualizacion() {
+function update() {
     while true; do
         sleep 300
         git fetch > /dev/null 2>&1
-        LOCAL=$(git rev-parse HEAD)
-        REMOTE=$(git rev-parse @{u})
-        if [ "$LOCAL" != "$REMOTE" ]; then
-            echo "🔄 Nueva versión detectada en GitHub. Aplicando..."
+        L=$(git rev-parse HEAD)
+        R=$(git rev-parse @{u})
+        if [ "$L" != "$R" ]; then
             pkill -9 -f "node index.js" > /dev/null 2>&1
         fi
     done
 }
 
-limpiar_recursos
+limpiar
 termux-wake-lock
-
-if command -v termux-api > /dev/null; then
-    am start --user 0 -a android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS > /dev/null 2>&1
-fi
-
-verificar_actualizacion &
-WATCHER_PID=$!
-
-echo "🔋 Sistema optimizado. Iniciando ciclo de vida..."
-sleep 3
+update &
 
 while true; do
-    echo "📥 Revisando actualizaciones pendientes..."
+    if [ ! -d "session" ]; then
+        echo "📢 Sesión no encontrada. Prepara tu código de vinculación."
+        sleep 2
+    fi
+
     git add . > /dev/null 2>&1
     git stash > /dev/null 2>&1
     git pull > /dev/null 2>&1
     git stash pop > /dev/null 2>&1
     
-    echo "🔍 Verificando puerto 3000..."
-    while true; do
-        if command -v lsof > /dev/null; then
-            if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null ; then
-                fuser -k 3000/tcp > /dev/null 2>&1
-                pkill -9 -f "node" > /dev/null 2>&1
-                sleep 2
-            else
-                break
-            fi
-        else
-            break
-        fi
-    done
-
+    fuser -k 3000/tcp > /dev/null 2>&1
     rm -f bot.lock
-    echo "🌸 Lanzando núcleo del sistema..."
-    node index.js
     
-    CODIGO=$?
+    (node index.js)
     
-    if [ $CODIGO -ne 0 ]; then
-        echo "⚠️  Reinicio por inestabilidad. Limpiando..."
-        limpiar_recursos
-        sleep 5
-    else
-        echo "✅ Reinicio programado o por actualización..."
-        limpiar_recursos
-        sleep 3
-    fi
+    limpiar
+    sleep 5
 done
-
-trap "kill $WATCHER_PID" EXIT
