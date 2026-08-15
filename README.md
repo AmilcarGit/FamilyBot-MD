@@ -2,187 +2,42 @@
 
 <img src="https://i.postimg.cc/tJ9hb31m/IMG-20260714-WA0060.jpg" width="100%" alt="TheYui-MD Banner">
 
-<h1>🌸 TheYui-MD 🌸</h1>
+# 🌌 **THE YUI-MD V9** 🌌
+### *The Next Generation of WhatsApp Ecosystem*
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Poppins&weight=700&size=30&pause=1000&color=FF4DA6&center=true&vCenter=true&width=900&lines=TheYui-MD;WhatsApp+Bot+Multi-Device;Powered+by+Baileys;IA+%7C+Descargas+%7C+Juegos+%7C+Grupos;Created+by+AmilcarGit" alt="Typing SVG"/>
+  <img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=35&pause=1000&color=00D4FF&center=true&vCenter=true&width=900&lines=NEURAL+DASHBOARD+V9;ADVANCED+ECONOMY+SYSTEM;ELITE+AI+INTEGRATION;CYBERPUNK+INTERFACE;ULTIMATE+WHATSAPP+BOT" alt="Typing SVG"/>
 </p>
 
-<p align="center">
-  <img src="https://img.shields.io/github/stars/AmilcarGit/TheYui-MD?style=for-the-badge&logo=github&color=ff69b4" />
-  <img src="https://img.shields.io/github/forks/AmilcarGit/TheYui-MD?style=for-the-badge&logo=github&color=ff69b4" />
-  <img src="https://img.shields.io/github/license/AmilcarGit/TheYui-MD?style=for-the-badge" />
-  <img src="https://img.shields.io/github/repo-size/AmilcarGit/TheYui-MD?style=for-the-badge" />
-  <img src="https://komarev.com/ghpvc/?username=AmilcarGit&style=for-the-badge&color=ff69b4" />
-</p>
+[![Stars](https://img.shields.io/github/stars/AmilcarGit/TheYui-MD?style=for-the-badge&logo=github&color=ff007f&labelColor=111)](https://github.com/AmilcarGit/TheYui-MD)
+[![Forks](https://img.shields.io/github/forks/AmilcarGit/TheYui-MD?style=for-the-badge&logo=github&color=00d4ff&labelColor=111)](https://github.com/AmilcarGit/TheYui-MD)
+[![License](https://img.shields.io/github/license/AmilcarGit/TheYui-MD?style=for-the-badge&color=00ff00&labelColor=111)](https://github.com/AmilcarGit/TheYui-MD)
+[![Activity](https://img.shields.io/github/last-commit/AmilcarGit/TheYui-MD?style=for-the-badge&color=ffff00&labelColor=111)](https://github.com/AmilcarGit/TheYui-MD)
 
 </div>
 
 ---
 
-# ✨ Sobre el proyecto
-
-**TheYui-MD** es un bot de WhatsApp Multi-Device creado con **Node.js** y **Baileys**.  
-Está pensado para ofrecer una experiencia rápida, visual y completa con funciones para grupos, diversión, descargas, IA y más.
+## 💎 **SOBRE LA RED YUI**
+**TheYui-MD** no es simplemente un bot de WhatsApp. Es una infraestructura de **Inteligencia Artificial** y **Entretenimiento** diseñada bajo una estética **Cyberpunk/Neon**. Construido con el motor **Baileys** y optimizado para una latencia ultra baja, ofrece control absoluto a través de su exclusivo panel web.
 
 ---
 
-# 🚀 Instalación rápida
+## ⚡ **DASHBOARD CORE V9 (NEURAL GATE)**
+Hemos desarrollado el panel web más avanzado para Termux. Olvida los comandos complejos, ahora tú tienes el mando desde tu navegador.
 
-```bash
-git clone https://github.com/AmilcarGit/TheYui-MD
-cd TheYui-MD
-npm install
-npm start
-```
-
----
-
-# 💻 Requisitos
-
-- Node.js 18 o superior
-- Git
-- Conexión estable a Internet
-- WhatsApp activo para el enlace del bot
+*   🔵 **Real-Time Logs:** Visualiza la actividad del bot cada 2 segundos.
+*   💗 **Security Shield:** Tokens únicos autogenerados y protección de identidad de Creador.
+*   🟢 **Remote Control:** Reinicia, configura dueños y gestiona el Staff sin tocar una línea de código.
+*   🟡 **Broadcast Center:** Envía anuncios masivos a toda tu comunidad con un clic.
 
 ---
 
-# 🌹 Características principales
-
-<table align="center">
-  <tr>
-    <td>🤖 IA</td>
-    <td>📥 Descargas</td>
-    <td>🎮 Juegos</td>
-  </tr>
-  <tr>
-    <td>👥 Administración</td>
-    <td>🎨 Stickers</td>
-    <td>💰 Economía</td>
-  </tr>
-  <tr>
-    <td>👑 Owner</td>
-    <td>🔍 Buscadores</td>
-    <td>⚡ Optimización</td>
-  </tr>
-</table>
-
----
-
-# 📦 Funciones
+## 🚀 **DESPLIEGUE RÁPIDO**
 
 <details>
-<summary>🤖 Inteligencia Artificial</summary>
+<summary><b>📲 Instalación en Termux (Android)</b></summary>
 
-- Chat IA
-- Gemini
-- GPT
-- Generador de imágenes
-- Traductor
-
-</details>
-
-<details>
-<summary>📥 Descargas</summary>
-
-- YouTube
-- TikTok
-- Facebook
-- Instagram
-- Spotify
-
-</details>
-
-<details>
-<summary>👥 Grupo</summary>
-
-- Antilink
-- Welcome
-- Goodbye
-- Antispam
-- Antifake
-
-</details>
-
-<details>
-<summary>🎮 Juegos</summary>
-
-- Trivia
-- RPG
-- Ruleta
-- Casino
-- Ranking
-
-</details>
-
-<details>
-<summary>👑 Owner</summary>
-
-- Eval
-- Shell
-- Restart
-- Backup
-- Plugins
-
-</details>
-
----
-
-# 🛠️ Tecnologías
-
-<p align="center">
-  <img src="https://skillicons.dev/icons?i=nodejs,javascript,npm,git,github,vscode,linux,mongodb" />
-</p>
-
----
-
-# 📊 Estadísticas de GitHub
-
-<div align="center">
-
-<img height="180" src="https://github-readme-stats.vercel.app/api?username=AmilcarGit&show_icons=true&theme=tokyonight&cache_seconds=1800" alt="GitHub Stats" />
-
-<img height="180" src="https://streak-stats.demolab.com?user=AmilcarGit&theme=tokyonight" alt="GitHub Streak" />
-
-<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=AmilcarGit&layout=compact&theme=tokyonight" alt="Top Languages" />
-
-</div>
-
----
-
-# 📈 Actividad
-
-<div align="center">
-
-<img src="https://github-readme-activity-graph.vercel.app/graph?username=AmilcarGit&theme=tokyo-night" alt="Activity Graph" />
-
-</div>
-
----
-
-# 🏆 Logros
-
-<div align="center">
-
-<img src="https://github-profile-trophy.vercel.app/?username=AmilcarGit&theme=tokyonight&no-frame=true&margin-w=12&row=2&column=4" alt="Trophies" />
-
-</div>
-
----
-
-# 🖼️ Galería
-
-<div align="center">
-
-<img src="https://i.postimg.cc/tJ9hb31m/IMG-20260714-WA0060.jpg" width="85%" alt="Preview">
-
-</div>
-
----
-
-# ⚙️ Deploy
-
-### Termux / Android
 ```bash
 pkg update && pkg upgrade -y
 pkg install git nodejs ffmpeg -y
@@ -191,8 +46,11 @@ cd TheYui-MD
 npm install
 npm start
 ```
+</details>
 
-### Linux / VPS
+<details>
+<summary><b>💻 Instalación en VPS (Linux)</b></summary>
+
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install git nodejs ffmpeg -y
@@ -201,60 +59,54 @@ cd TheYui-MD
 npm install
 npm start
 ```
-
-### Docker
-```bash
-docker build -t theyui-md .
-docker run -it theyui-md
-```
-
----
-
-# ❓ FAQ
-
-<details>
-<summary>¿Cómo escaneo el QR?</summary>
-
-Ejecuta el bot y escanea el código desde WhatsApp vinculado.
-
-</details>
-
-<details>
-<summary>¿Necesito Node.js?</summary>
-
-Sí, se recomienda Node.js 18+.
-
-</details>
-
-<details>
-<summary>¿Puedo modificar el menú?</summary>
-
-Sí, el menú se puede personalizar fácilmente en el archivo correspondiente.
-
 </details>
 
 ---
 
-# 🤝 Contribuir
+## 🛡️ **CARACTERÍSTICAS PREMIUM**
 
-Las contribuciones son bienvenidas.  
-Puedes hacer Fork, abrir Issues o enviar Pull Requests para mejorar el proyecto.
+| Módulo | Descripción | Tecnología |
+| :--- | :--- | :--- |
+| **🧠 Inteligencia Artificial** | Gemini AI, Text-to-Image y Chat GPT integrados. | NyxDLaPI / Gemini |
+| **💰 Economía RPG** | Sistema de minería, robos, bancos y casino global. | LocalDB v2 |
+| **📥 Media Downloader** | Descargas de IG, TikTok, FB y YT sin bloqueos. | Lempi API |
+| **🎭 Sticker Engine** | Stickers animados, memes y personalización WM. | Mitzuki API |
+| **👮 Seguridad Grupal** | Antilink, Antispam, Antifake y Welcome Pro. | Baileys Core |
 
 ---
 
-# 💖 Apóyame
-
-Si te gusta **TheYui-MD**, deja una ⭐ en GitHub y comparte el proyecto con más personas.
-
----
-
-# 👑 Créditos
-
-Desarrollado por **AmilcarGit**  
-Bot de WhatsApp AI para la comunidad.
+## 📊 **ESTADÍSTICAS DEL SISTEMA**
 
 <div align="center">
+  <img src="https://github-readme-stats.vercel.app/api?username=AmilcarGit&show_icons=true&theme=tokyonight&hide_border=true" width="48%">
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=AmilcarGit&layout=compact&theme=tokyonight&hide_border=true" width="48%">
+</div>
 
-<img src="https://capsule-render.vercel.app/api?type=waving&height=150&color=FF4DA6&section=footer" alt="Footer"/>
+---
 
+## 👑 **EQUIPO DE DESARROLLO**
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/AmilcarGit">
+          <img src="https://github.com/AmilcarGit.png" width="100px;" alt="AmilcarGit"/><br />
+          <sub><b>Amilcar (Owner)</b></sub>
+        </a>
+      </td>
+      <td align="center">
+        <img src="https://i.postimg.cc/tJ9hb31m/IMG-20260714-WA0060.jpg" width="100px;" alt="Staff"/><br />
+        <sub><b>Benja (Staff)</b></sub>
+      </td>
+    </tr>
+  </table>
+</div>
+
+---
+
+## 💖 **APOYA EL PROYECTO**
+Si **TheYui-MD** te ha servido, no olvides dejar una ⭐ en este repositorio. Tu apoyo nos ayuda a seguir innovando en el ecosistema de WhatsApp.
+
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&height=150&color=00D4FF&section=footer&text=THE%20YUI%20ECOSYSTEM&fontSize=40&fontAlignY=60" alt="Footer"/>
 </div>
