@@ -39,7 +39,7 @@ export default async function dz({ sock, chatId, args, m, config }) {
   }
 
   if (!deezerUrl) {
-    return sock.sendMessage(chatId, { text: `❌ No se pudo obtener un enlace de Deezer válido. Por favor, pega el link directamente.` })
+    return sock.sendMessage(chatId, { text: `❌ No se pudo obtener un enlace de Deezer válido.` })
   }
 
   try {
@@ -51,13 +51,13 @@ export default async function dz({ sock, chatId, args, m, config }) {
     const dlRes = await fetch(dlApiUrl)
     const dlData = await dlRes.json()
 
-    if (!dlData.status || !dlData.data?.url) {
-      return sock.sendMessage(chatId, { text: `❌ La API de Deezer no pudo procesar este enlace. Intenta con otra canción.` })
+    if (!dlData.status || !dlData.data?.dl) {
+      return sock.sendMessage(chatId, { text: `❌ La API de Deezer no pudo procesar este enlace en este momento.` })
     }
 
-    const { title, artist, image, url: downloadUrl } = dlData.data
+    const { title, artist, cover, dl } = dlData.data
 
-    const fileRes = await fetch(downloadUrl)
+    const fileRes = await fetch(dl)
     if (!fileRes.ok) throw new Error('Error al descargar el archivo')
     const buffer = Buffer.from(await fileRes.arrayBuffer())
 
@@ -69,8 +69,8 @@ export default async function dz({ sock, chatId, args, m, config }) {
       .substring(0, 30)
 
     await sock.sendMessage(chatId, {
-      image: { url: image },
-      caption: `🎵 *Título:* ${title}\n👤 *Artista:* ${artist}\n✅ *Enviando audio...*`
+      image: { url: cover || 'https://i.ibb.co/G7k4v4z/deezer.png' },
+      caption: `🎵 *Título:* ${title}\n👤 *Artista:* ${artist}\n✅ *Enviando audio seguro...*`
     }, { quoted: m })
 
     await sock.sendMessage(chatId, {
@@ -81,6 +81,6 @@ export default async function dz({ sock, chatId, args, m, config }) {
 
   } catch (error) {
     console.error('Error en comando dz:', error)
-    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al procesar la descarga de Deezer.` })
+    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al procesar la descarga.` })
   }
 }
