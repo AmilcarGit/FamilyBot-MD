@@ -1,4 +1,4 @@
-export const desc = 'Descarga canciones de Deezer usando un link o el número del buscador.'
+export const desc = 'Descarga canciones de Deezer (Full Song) usando un link o el número del buscador.'
 export const alias = ['deezer', 'dldz']
 export const cooldown = 10
 
@@ -43,66 +43,82 @@ export default async function dz({ sock, chatId, args, m, config }) {
   }
 
   try {
-    await sock.sendMessage(chatId, { text: `📥 Obteniendo audio de Deezer, espera un momento...` }, { quoted: m })
+    await sock.sendMessage(chatId, { text: `📥 Obteniendo información de Deezer...` }, { quoted: m })
 
-    let audioData = null
-    const apis = [
-      {
-        name: 'Delirius',
-        url: `https://api.delirius.store/download/deezer?url=${encodeURIComponent(deezerUrl)}`,
-        parse: (json) => json.status && json.data?.download?.url ? { dl: json.data.download.url, title: json.data.title, artist: json.data.artist, cover: json.data.image } : null
-      },
-      {
-        name: 'EvoGB',
-        url: `https://api.evogb.org/dl/deezer?url=${encodeURIComponent(deezerUrl)}&key=evogb-jRhjmDSp`,
-        parse: (json) => json.status && json.data?.dl ? { dl: json.data.dl, title: json.data.title, artist: json.data.artist, cover: json.data.cover } : null
-      }
-    ]
+    const infoRes = await fetch(`https://api.evogb.org/dl/deezer?url=${encodeURIComponent(deezerUrl)}&key=evogb-jRhjmDSp`)
+    const infoData = await infoRes.json()
 
-    for (const api of apis) {
-      try {
-        const res = await fetch(api.url)
-        const json = await res.json()
-        const parsed = api.parse(json)
-        if (parsed) {
-          audioData = parsed
-          break
-        }
-      } catch (e) {
-        console.log(`Error en API Deezer ${api.name}:`, e.message)
-      }
+    if (!infoData.status || !infoData.data) {
+      return sock.sendMessage(chatId, { text: `❌ No se pudo obtener información de esta canción.` })
     }
 
-    if (!audioData) {
-      return sock.sendMessage(chatId, { text: `❌ No se pudo obtener el audio de Deezer. La API podría estar caída o el enlace es inválido.` })
-    }
+    const { title, artist, cover } = infoData.data
+    const searchQuery = `${title} ${artist}`
 
-    const fileRes = await fetch(audioData.dl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
-    })
-    
-    if (!fileRes.ok) throw new Error('Fallo al descargar el archivo de audio')
-    const buffer = Buffer.from(await fileRes.arrayBuffer())
-
-    if (buffer.length < 10000) {
-      throw new Error('El archivo es demasiado pequeño (posiblemente solo un preview de 30s)')
-    }
-
-    await sock.sendMessage(chatId, {
-      image: { url: audioData.cover || 'https://i.ibb.co/G7k4v4z/deezer.png' },
-      caption: `🎵 *Título:* ${audioData.title}\n👤 *Artista:* ${audioData.artist}\n✅ *Enviando audio...*`
+    await sock.sendMessage(chatId, { 
+      image: { url: cover || 'https://i.ibb.co/G7k4v4z/deezer.png' },
+      caption: `🎵 *Título:* ${title}\n👤 *Artista:* ${artist}\n\n🚀 *Descargando versión completa (Full Song)...*`
     }, { quoted: m })
 
+    let audioBuffer = null
+    let success = false
+
+    const ytSearchUrl = `https://dv-edward.onrender.com/api/search/youtube?apiKey=EdwardwEqIgrqU&query=${encodeURIComponent(searchQuery)}`
+    const ytSearchRes = await fetch(ytSearchUrl)
+    const ytSearchData = await ytSearchRes.json()
+
+    if (ytSearchData.status && ytSearchData.data?.length > 0) {
+      const ytUrl = ytSearchData.data[0].url
+      
+      const dlApis = [
+        `https://api.delirius.store/download/ytmp3?url=${encodeURIComponent(ytUrl)}`,
+        `https://dv-edward.onrender.com/api/download/ytaudio?url=${encodeURIComponent(ytUrl)}&apiKey=EdwardwEqIgrqU`
+      ]
+
+      for (const api of dlApis) {
+        try {
+          const res = await fetch(api)
+          const json = await res.json()
+          const dlUrl = json.data?.download?.url || json.result?.download_url
+          
+          if (dlUrl) {
+            const fileRes = await fetch(dlUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+            if (fileRes.ok) {
+              audioBuffer = Buffer.from(await fileRes.arrayBuffer())
+              if (audioBuffer.length > 50000) {
+                success = true
+                break
+              }
+            }
+          }
+        } catch (e) {
+          console.log('Error en fallback API:', e.message)
+        }
+      }
+    }
+
+    if (!success) {
+      try {
+        const directRes = await fetch(infoData.data.dl)
+        if (directRes.ok) {
+          audioBuffer = Buffer.from(await directRes.arrayBuffer())
+          success = true
+        }
+      } catch (e) {}
+    }
+
+    if (!success || !audioBuffer) {
+      return sock.sendMessage(chatId, { text: `❌ No se pudo descargar la canción completa. Inténtalo más tarde.` })
+    }
+
     await sock.sendMessage(chatId, {
-      audio: buffer,
+      audio: audioBuffer,
       mimetype: 'audio/mpeg',
-      fileName: `${audioData.title}.mp3`
+      fileName: `${title}.mp3`
     }, { quoted: m })
 
   } catch (error) {
     console.error('Error en comando dz:', error)
-    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error: ${error.message}` })
+    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al procesar la descarga.` })
   }
 }
