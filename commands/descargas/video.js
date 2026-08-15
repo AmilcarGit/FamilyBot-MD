@@ -1,4 +1,4 @@
-export const desc = 'Busca y descarga el video de YouTube.'
+export const desc = 'Busca y descarga el video de YouTube (Enviado como documento).'
 export const alias = ['vid', 'v']
 export const cooldown = 10
 
@@ -88,10 +88,10 @@ export default async function video({ sock, chatId, args, m, config }) {
     if (buffer.length < 1000) throw new Error('Archivo de video corrupto o demasiado pequeño')
 
     await sock.sendMessage(chatId, {
-      video: buffer,
-      caption: `🎬 *Título:* ${videoData.title}\n✨ *Descargado con éxito*`,
+      document: buffer,
+      fileName: `${videoData.title}.mp4`,
       mimetype: 'video/mp4',
-      fileName: `${videoData.title}.mp4`
+      caption: `🎬 *Título:* ${videoData.title}\n✨ *Descargado con éxito como documento*`
     }, { quoted: m })
 
   } catch (error) {
