@@ -42,7 +42,7 @@ function verificarInstanciaUnica() {
   if (fs.existsSync(ARCHIVO_LOCK)) {
     const pidAnterior = parseInt(fs.readFileSync(ARCHIVO_LOCK, 'utf-8'), 10)
     if (pidAnterior && procesoActivo(pidAnterior)) {
-      logError(chalk.red(`❌ Ya hay una instancia activa (PID \${pidAnterior}).`))
+      logError(chalk.red(`❌ Ya hay una instancia activa (PID ${pidAnterior}).`))
       process.exit(1)
     }
   }
@@ -102,7 +102,8 @@ async function iniciar() {
       await delay(1500)
       try {
         const codigo = await sock.requestPairingCode(numero)
-        info(chalk.cyan(`\nTu código de vinculación es: \${codigo}\n`))
+        // CORRECCIÓN AQUÍ: Ahora mostrará los números reales
+        console.log(chalk.cyan(`\nTu código de vinculación es: ${codigo}\n`))
       } catch (err) {
         codigoSolicitado = false
       }
