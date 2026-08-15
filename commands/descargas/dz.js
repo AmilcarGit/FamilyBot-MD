@@ -17,8 +17,8 @@ export default async function dz({ sock, chatId, args, m, config }) {
   if (!isNaN(index) && index > 0 && index <= 10) {
     if (global.dzStore && global.dzStore[chatId]) {
       const selected = global.dzStore[chatId][index - 1]
-      if (selected && selected.url) {
-        deezerUrl = selected.url
+      if (selected && (selected.url || selected.link)) {
+        deezerUrl = selected.url || selected.link
       } else {
         return sock.sendMessage(chatId, { text: `❌ No encontré el enlace para el número *${index}*. Intenta buscar de nuevo con *${config.prefijo}dzs*.` })
       }
@@ -33,7 +33,7 @@ export default async function dz({ sock, chatId, args, m, config }) {
       const searchRes = await fetch(`https://api.evogb.org/search/deezer?query=${encodeURIComponent(input)}&apikey=evogb-jRhjmDSp`)
       const searchData = await searchRes.json()
       if (searchData.status && searchData.data?.length > 0) {
-        deezerUrl = searchData.data[0].url
+        deezerUrl = searchData.data[0].url || searchData.data[0].link
       }
     } catch (e) {}
   }
@@ -43,44 +43,66 @@ export default async function dz({ sock, chatId, args, m, config }) {
   }
 
   try {
-    await sock.sendMessage(chatId, { text: `📥 Preparando descarga de Deezer...` }, { quoted: m })
+    await sock.sendMessage(chatId, { text: `📥 Obteniendo audio de Deezer, espera un momento...` }, { quoted: m })
 
-    const apiKey = 'evogb-jRhjmDSp'
-    const dlApiUrl = `https://api.evogb.org/dl/deezer?url=${encodeURIComponent(deezerUrl)}&key=${apiKey}`
-    
-    const dlRes = await fetch(dlApiUrl)
-    const dlData = await dlRes.json()
+    let audioData = null
+    const apis = [
+      {
+        name: 'Delirius',
+        url: `https://api.delirius.store/download/deezer?url=${encodeURIComponent(deezerUrl)}`,
+        parse: (json) => json.status && json.data?.download?.url ? { dl: json.data.download.url, title: json.data.title, artist: json.data.artist, cover: json.data.image } : null
+      },
+      {
+        name: 'EvoGB',
+        url: `https://api.evogb.org/dl/deezer?url=${encodeURIComponent(deezerUrl)}&key=evogb-jRhjmDSp`,
+        parse: (json) => json.status && json.data?.dl ? { dl: json.data.dl, title: json.data.title, artist: json.data.artist, cover: json.data.cover } : null
+      }
+    ]
 
-    if (!dlData.status || !dlData.data?.dl) {
-      return sock.sendMessage(chatId, { text: `❌ La API de Deezer no pudo procesar este enlace en este momento.` })
+    for (const api of apis) {
+      try {
+        const res = await fetch(api.url)
+        const json = await res.json()
+        const parsed = api.parse(json)
+        if (parsed) {
+          audioData = parsed
+          break
+        }
+      } catch (e) {
+        console.log(`Error en API Deezer ${api.name}:`, e.message)
+      }
     }
 
-    const { title, artist, cover, dl } = dlData.data
+    if (!audioData) {
+      return sock.sendMessage(chatId, { text: `❌ No se pudo obtener el audio de Deezer. La API podría estar caída o el enlace es inválido.` })
+    }
 
-    const fileRes = await fetch(dl)
-    if (!fileRes.ok) throw new Error('Error al descargar el archivo')
+    const fileRes = await fetch(audioData.dl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    })
+    
+    if (!fileRes.ok) throw new Error('Fallo al descargar el archivo de audio')
     const buffer = Buffer.from(await fileRes.arrayBuffer())
 
-    const cleanTitle = title
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-zA-Z0-9]/g, '_')
-      .toLowerCase()
-      .substring(0, 30)
+    if (buffer.length < 10000) {
+      throw new Error('El archivo es demasiado pequeño (posiblemente solo un preview de 30s)')
+    }
 
     await sock.sendMessage(chatId, {
-      image: { url: cover || 'https://i.ibb.co/G7k4v4z/deezer.png' },
-      caption: `🎵 *Título:* ${title}\n👤 *Artista:* ${artist}\n✅ *Enviando audio seguro...*`
+      image: { url: audioData.cover || 'https://i.ibb.co/G7k4v4z/deezer.png' },
+      caption: `🎵 *Título:* ${audioData.title}\n👤 *Artista:* ${audioData.artist}\n✅ *Enviando audio...*`
     }, { quoted: m })
 
     await sock.sendMessage(chatId, {
-      document: buffer,
-      fileName: `${cleanTitle}.mp3`,
-      mimetype: 'application/octet-stream'
+      audio: buffer,
+      mimetype: 'audio/mpeg',
+      fileName: `${audioData.title}.mp3`
     }, { quoted: m })
 
   } catch (error) {
     console.error('Error en comando dz:', error)
-    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al procesar la descarga.` })
+    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error: ${error.message}` })
   }
 }
