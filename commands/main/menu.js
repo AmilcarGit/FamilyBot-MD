@@ -15,6 +15,8 @@ const ICONOS_CATEGORIA = {
   juegos: '🫧',
   perfil: '🌸',
   subbot: '🤖',
+  herramientas: '🛠️',
+  ia: '🤖',
 }
 
 const ADORNOS = ['🌾', '🍃', '🫧', '🦋']
@@ -45,46 +47,46 @@ export default async function menu({ sock, chatId, comandos, config }) {
     const emoji = ICONOS_CATEGORIA[cat.toLowerCase()] || '📂'
     const adorno = ADORNOS[indice % ADORNOS.length]
 
-    lista += `\n\n╭─❀ ${adorno} 〔 ${emoji} *${cat.toUpperCase()}* 〕${adorno} ❀─╮\n`
+    lista += `\n\n╭─❀ \${adorno} 〔 \${emoji} *\${cat.toUpperCase()}* 〕\${adorno} ❀─╮\n`
 
     lista += porCategoria[cat]
       .map((c) => {
         const aliases = c.alias?.length
-          ? ` (${c.alias.map((a) => config.prefijo + a).join(', ')})`
+          ? ` (\${c.alias.map((a) => config.prefijo + a).join(', ')})`
           : ''
 
         const requiereReg = cat.toLowerCase() !== 'main' && cat.toLowerCase() !== 'owner'
         const etiqueta = requiereReg ? ' 🔒' : ''
 
-        return `┃ ✧ *${config.prefijo}${c.nombre}*${aliases}${etiqueta}\n┃   🌾 ${c.desc}`
+        return `┃ ✧ *\${config.prefijo}\${c.nombre}*\${aliases}\${etiqueta}\n┃   🌾 \${c.desc}`
       })
       .join('\n┃\n')
 
-    lista += `\n╰${'─'.repeat(30)}╯`
+    lista += `\n╰\${'─'.repeat(30)}╯`
   })
 
-  const texto = `
-╭❀━━━━━━━━━━━━━━━━━━━❀╮
-   ${lineaAdornada()}
-   🌈 *${config.nombreBot ?? 'TheYui-MD'}* 🦋
-   ${lineaAdornada()}
-╰❀━━━━━━━━━━━━━━━━━━━❀╯
+  const texto = \`
+╭❀━━━━━━━━━━━━━━━━━❀╮
+   \${lineaAdornada()}
+   🌈 *\${config.nombreBot ?? 'TheYui-MD'}* 🦋
+   \${lineaAdornada()}
+╰❀━━━━━━━━━━━━━━━━━❀╯
 
 ┃ 👑 Creador  : AmilcarGit
-┃ 📅 Fecha  : ${fecha}
-┃ 📚 Comandos : ${comandos.length}
-┃ ⚡ Prefijo  : ${config.prefijo}
+┃ 📅 Fecha  : \${fecha}
+┃ 📚 Comandos : \${comandos.length}
+┃ ⚡ Prefijo  : \${config.prefijo}
 
 📜 *MENÚ DE COMANDOS*
-🔒 = requiere estar registrado (${config.prefijo}reg Nombre.Edad)
-${lista}
+🔒 = requiere estar registrado (\${config.prefijo}reg Nombre.Edad)
+\${lista}
 
-╭❀━━━━━━━━━━━━━━━━━━❀╮
+╭❀━━━━━━━━━━━━━━━━━❀╮
    🌾 Gracias por usar 🍃
    🫧 *TheYui-MD* 🦋
    💜 Powered by AmilcarGit
-╰❀━━━━━━━━━━━━━━━━━━❀╯
-`
+╰❀━━━━━━━━━━━━━━━━━❀╯
+\`
 
   const imagen = obtenerImagenMenuAleatoria()
 
