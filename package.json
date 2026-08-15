@@ -7,10 +7,9 @@
   "scripts": {
     "start": "bash start.sh",
     "lint": "eslint .",
-    "format": "prettier --write .",
-    "preinstall": "npm config set allow-git true"
+    "format": "prettier --write ."
   },
-  "author": "",
+  "author": "AmilcarGit",
   "license": "MIT",
   "overrides": {
     "libsignal": "npm:libsignal-node@latest"
@@ -21,9 +20,11 @@
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "formdata-node": "^6.0.3",
     "jimp": "^1.6.0",
     "lowdb": "^7.0.1",
     "mongodb": "^6.9.0",
+    "node-fetch": "^3.3.2",
     "node-webpmux": "^3.1.7",
     "pino": "^9.3.2",
     "qrcode-terminal": "^0.12.0",
