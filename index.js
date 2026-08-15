@@ -48,9 +48,28 @@ function liberarInstancia() {
 }
 
 verificarInstanciaUnica()
-process.on('exit', liberarInstancia)
-process.on('SIGINT', () => process.exit(0))
-process.on('SIGTERM', () => process.exit(0))
+
+process.on('uncaughtException', (err) => {
+  logError(chalk.red('💥 Error No Capturado:'), err)
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  logError(chalk.red('💥 Promesa No Manejada:'), reason)
+})
+
+process.on('SIGINT', () => {
+  liberarInstancia()
+  process.exit(0)
+})
+
+process.on('SIGTERM', () => {
+  liberarInstancia()
+  process.exit(0)
+})
+
+process.on('exit', () => {
+  liberarInstancia()
+})
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 const preguntar = (texto) => new Promise((resolve) => rl.question(texto, resolve))
