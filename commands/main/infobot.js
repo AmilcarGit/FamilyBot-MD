@@ -15,6 +15,17 @@ export default async function infobot({ sock, chatId, msg, config }) {
   const ramLibre = (os.freemem() / 1024 / 1024 / 1024).toFixed(2)
   const ramUso = (ramTotal - ramLibre).toFixed(2)
 
+  // Genera la lista de staff dinámicamente
+  const staffList = config.staff && config.staff.length > 0 
+    ? config.staff.map(s => `» *${s.nombre}:* @${s.numero}`).join('\n')
+    : '» *Sin staff asignado*'
+
+  // Prepara las menciones para que los números salgan en azul
+  const mentions = [
+    config.owner[0] + '@s.whatsapp.net',
+    ...(config.staff || []).map(s => s.numero + '@s.whatsapp.net')
+  ]
+
   const infoText = `
 ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃   💠  *SYSTEM INFORMATION*  💠   ┃
@@ -29,8 +40,8 @@ export default async function infobot({ sock, chatId, msg, config }) {
 👑 *EQUIPO STAFF:*
 » *Creador:* Amilcar (AmilcarGit)
 » *Lead Dev:* @${config.owner[0]}
+${staffList}
 » *Soporte:* Comunidad TheYui
-» *Colaboradores:* Manus AI & Ryze
 
 💻 *ESPECIFICACIONES:*
 » *Plataforma:* ${os.platform()}
@@ -54,6 +65,6 @@ export default async function infobot({ sock, chatId, msg, config }) {
 
   await sock.sendMessage(chatId, {
     text: infoText,
-    mentions: [config.owner[0] + '@s.whatsapp.net']
+    mentions: mentions
   }, { quoted: msg })
 }
