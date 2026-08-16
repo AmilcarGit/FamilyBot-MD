@@ -1,4 +1,4 @@
-import { normalizarJid, obtenerJidMencionado } from '../../lib/utils.js'
+import { normalizarJid, obtenerJidMencionado, resolverNumeroReal } from '../../lib/utils.js'
 
 export const desc = 'Calcula el porcentaje de compatibilidad entre dos personas'
 export const cooldown = 3
@@ -51,11 +51,13 @@ export default async function ship({ sock, msg, args, chatId }) {
 
   const claveHash = [normalizarJid(jidA), normalizarJid(jidB)].sort().join('-')
   const porcentaje = hashPorcentaje(claveHash)
+  const numeroA = await resolverNumeroReal(sock, jidA, msg)
+  const numeroB = await resolverNumeroReal(sock, jidB)
 
   await sock.sendMessage(chatId, {
     text:
       `💘 *Ship*\n\n` +
-      `@${jidA.split('@')[0]} 💞 @${jidB.split('@')[0]}\n\n` +
+      `@${numeroA} 💞 @${numeroB}\n\n` +
       `${barraCorazones(porcentaje)}\n` +
       `${porcentaje}% de compatibilidad\n\n` +
       `${fraseSegunPorcentaje(porcentaje)}`,
