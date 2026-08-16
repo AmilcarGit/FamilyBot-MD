@@ -1,4 +1,4 @@
-import { normalizarJid, obtenerJidMencionado } from '../../lib/utils.js'
+import { normalizarJid, obtenerJidMencionado, resolverNumeroReal } from '../../lib/utils.js'
 import { obtenerPerfilSocial } from '../../lib/social.js'
 
 export const desc = 'Propón matrimonio a otro usuario (ambos deben usar el comando)'
@@ -54,8 +54,11 @@ export default async function casarse({ sock, msg, args, chatId, db }) {
     delete db.data.propuestasMatrimonio[jidPropioNorm]
     await db.write()
 
+    const numeroRemitente = await resolverNumeroReal(sock, jidRemitente, msg)
+    const numeroObjetivo = await resolverNumeroReal(sock, jidObjetivo)
+
     return sock.sendMessage(chatId, {
-      text: `💍 ¡@${jidRemitente.split('@')[0]} y @${jidObjetivo.split('@')[0]} se casaron! 🎉💕`,
+      text: `💍 ¡@${numeroRemitente} y @${numeroObjetivo} se casaron! 🎉💕`,
       mentions: [jidRemitente, jidObjetivo],
     })
   }
@@ -66,10 +69,13 @@ export default async function casarse({ sock, msg, args, chatId, db }) {
   }
   await db.write()
 
+  const numeroRemitente = await resolverNumeroReal(sock, jidRemitente, msg)
+  const numeroObjetivo = await resolverNumeroReal(sock, jidObjetivo)
+
   await sock.sendMessage(chatId, {
     text:
-      `💍 @${jidRemitente.split('@')[0]} le propuso matrimonio a @${jidObjetivo.split('@')[0]}.\n\n` +
-      `Si @${jidObjetivo.split('@')[0]} también usa *casarse @${jidRemitente.split('@')[0]}* dentro de 10 minutos, quedan casados.`,
+      `💍 @${numeroRemitente} le propuso matrimonio a @${numeroObjetivo}.\n\n` +
+      `Si @${numeroObjetivo} también usa *casarse @${numeroRemitente}* dentro de 10 minutos, quedan casados.`,
     mentions: [jidRemitente, jidObjetivo],
   })
 }
