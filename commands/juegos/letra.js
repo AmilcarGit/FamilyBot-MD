@@ -1,5 +1,6 @@
 import { obtenerAhorcadoActivo, finalizarAhorcado, dibujarAhorcado, normalizarTexto } from '../../lib/juegos.js'
 import { obtenerUsuario } from '../../lib/economia.js'
+import { resolverNumeroReal } from '../../lib/utils.js'
 
 export const desc = 'Adivina una letra en el ahorcado activo'
 export const cooldown = 2
@@ -47,8 +48,9 @@ export default async function letra({ sock, msg, args, chatId, db, config }) {
 
     finalizarAhorcado(chatId)
 
+    const numero = await resolverNumeroReal(sock, jidRemitente, msg)
     return sock.sendMessage(chatId, {
-      text: `🎉 ¡@${jidRemitente.split('@')[0]} completó la palabra *${juego.palabra}* y ganó ${PREMIO} de efectivo!`,
+      text: `🎉 ¡@${numero} completó la palabra *${juego.palabra}* y ganó ${PREMIO} de efectivo!`,
       mentions: [jidRemitente],
     })
   }
