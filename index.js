@@ -47,11 +47,46 @@ verificarInstanciaUnica()
 function nuclearReset() {
   try {
     if (fs.existsSync(config.sessionFolder)) {
-      fs.rmSync(config.sessionFolder, { recursive: true, force: true })
+      fs.rmSync(config.sessionFolder, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 })
     }
-  } catch (e) {}
+  } catch (e) {
+    logError('No se pudo eliminar la carpeta de sesión en nuclearReset:', e)
+  }
   liberarInstancia()
   process.exit(1)
+}
+
+let contadorBadMac = 0
+let temporizadorBadMac = null
+let reseteando = false
+
+function vigilarBadMac(texto) {
+  if (reseteando || !texto || !texto.includes('Bad MAC')) return
+  contadorBadMac++
+  if (!temporizadorBadMac) {
+    temporizadorBadMac = setTimeout(() => {
+      contadorBadMac = 0
+      temporizadorBadMac = null
+    }, 15000)
+  }
+  if (contadorBadMac >= 5) {
+    reseteando = true
+    consoleLogOriginal(chalk.red('⚠️ Demasiados errores Bad MAC seguidos, la sesión está corrupta. Ejecutando Nuclear Reset...'))
+    nuclearReset()
+  }
+}
+
+const consoleLogOriginal = console.log
+const consoleErrorOriginal = console.error
+
+console.log = (...args) => {
+  vigilarBadMac(args.map((a) => (a instanceof Error ? a.message : String(a))).join(' '))
+  consoleLogOriginal(...args)
+}
+
+console.error = (...args) => {
+  vigilarBadMac(args.map((a) => (a instanceof Error ? a.message : String(a))).join(' '))
+  consoleErrorOriginal(...args)
 }
 
 process.on('uncaughtException', (err) => {
