@@ -1,4 +1,4 @@
-import { obtenerJidMencionado } from '../../lib/utils.js'
+import { obtenerJidMencionado, resolverNumeroReal } from '../../lib/utils.js'
 import { esBotAdminGrupo } from '../../lib/groupPermissions.js'
 
 export const desc = 'Expulsa a un miembro del grupo'
@@ -32,8 +32,9 @@ export default async function kick({ sock, msg, args, chatId }) {
   await new Promise((r) => setTimeout(r, 800))
 
   try {
+    const numero = await resolverNumeroReal(sock, jid)
     await sock.sendMessage(chatId, {
-      text: `✅ @${jid.split('@')[0]} fue expulsado del grupo.`,
+      text: `✅ @${numero} fue expulsado del grupo.`,
       mentions: [jid],
     })
   } catch (err) {
