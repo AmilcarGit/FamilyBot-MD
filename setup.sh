@@ -12,42 +12,41 @@ echo "🚀 Iniciando configuración neural..."
 
 cat << 'EOF' > start.sh
 #!/data/data/com.termux/files/usr/bin/bash
+
+set +m
 cd "$(dirname "$0")"
 
 function limpiar() {
-    pkill -9 -f "node" > /dev/null 2>&1
-    rm -f bot.lock
+    pkill -15 -f "node index.js" > /dev/null 2>&1
+    sleep 1
+    pkill -9 -f "node index.js" > /dev/null 2>&1
+    rm -f bot.lock > /dev/null 2>&1
     if command -v fuser > /dev/null; then
         fuser -k 3000/tcp > /dev/null 2>&1
     fi
 }
 
-function update() {
-    while true; do
-        sleep 300
-        git fetch > /dev/null 2>&1
-        L=$(git rev-parse HEAD)
-        R=$(git rev-parse @{u})
-        if [ "$L" != "$R" ]; then
-            pkill -9 -f "node index.js"
-        fi
-    done
-}
-
 limpiar
 termux-wake-lock
-update &
+
+echo "🚀 Iniciando TheYui-MD en modo optimizado..."
 
 while true; do
-    git add . > /dev/null 2>&1
-    git stash > /dev/null 2>&1
-    git pull > /dev/null 2>&1
-    git stash pop > /dev/null 2>&1
+    if [ ! -d "session" ]; then
+        echo "📢 Preparando entorno de sesión..."
+        sleep 2
+    fi
+
     fuser -k 3000/tcp > /dev/null 2>&1
-    rm -f bot.lock
+    rm -f bot.lock > /dev/null 2>&1
+
     node index.js
+
+    ESTADO=$?
+
+    echo "⚠️ Reiniciando sistema neural..."
     limpiar
-    sleep 5
+    sleep 3
 done
 EOF
 
@@ -71,7 +70,7 @@ fi
 
 echo "✅ CONFIGURACIÓN COMPLETADA ✅"
 echo "----------------------------------------"
-echo "1. Auto-Update cada 5 minutos activo."
+echo "1. Auto-Update seguro cada 5 minutos activo (desde el bot)."
 echo "2. Auto-Arranque en Termux:Boot activo."
 echo "3. Wake Lock y Batería optimizados."
 echo "----------------------------------------"
