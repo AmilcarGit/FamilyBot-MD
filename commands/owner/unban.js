@@ -1,4 +1,4 @@
-import { normalizarJid, obtenerJidMencionado } from '../../lib/utils.js'
+import { normalizarJid, obtenerJidMencionado, resolverNumeroReal } from '../../lib/utils.js'
 
 export const desc = 'Desbloquea a un usuario'
 export const soloOwner = true
@@ -20,8 +20,9 @@ export default async function unban({ sock, msg, args, chatId, db }) {
   db.data.blacklist = db.data.blacklist.filter((j) => j !== jidNormalizado)
   await db.write()
 
+  const numero = await resolverNumeroReal(sock, jid)
   await sock.sendMessage(chatId, {
-    text: `✅ @${jid.split('@')[0]} fue desbloqueado.`,
+    text: `✅ @${numero} fue desbloqueado.`,
     mentions: [jid],
   })
 }
