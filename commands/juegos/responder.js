@@ -1,5 +1,6 @@
 import { obtenerTriviaActiva, finalizarTrivia, normalizarTexto } from '../../lib/juegos.js'
 import { obtenerUsuario } from '../../lib/economia.js'
+import { resolverNumeroReal } from '../../lib/utils.js'
 
 export const desc = 'Responde la trivia activa en el chat'
 export const alias = ['r']
@@ -29,8 +30,9 @@ export default async function responder({ sock, msg, args, chatId, db }) {
 
   finalizarTrivia(chatId)
 
+  const numero = await resolverNumeroReal(sock, jidRemitente, msg)
   await sock.sendMessage(chatId, {
-    text: `🎉 @${jidRemitente.split('@')[0]} respondió correctamente y ganó ${trivia.premio} de efectivo.`,
+    text: `🎉 @${numero} respondió correctamente y ganó ${trivia.premio} de efectivo.`,
     mentions: [jidRemitente],
   })
 }
