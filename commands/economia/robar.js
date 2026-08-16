@@ -1,4 +1,4 @@
-import { normalizarJid, obtenerJidMencionado } from '../../lib/utils.js'
+import { normalizarJid, obtenerJidMencionado, resolverNumeroReal } from '../../lib/utils.js'
 import { obtenerUsuario, formatearTiempoRestante, COOLDOWN_ROBAR_MS } from '../../lib/economia.js'
 
 export const desc = 'Intenta robarle efectivo a otro usuario (cada 20 min)'
@@ -31,8 +31,9 @@ export default async function robar({ sock, msg, args, chatId, db }) {
   const ecoVictima = await obtenerUsuario(db, jidObjetivo)
 
   if (ecoVictima.escudoHasta > Date.now()) {
+    const numeroObjetivo = await resolverNumeroReal(sock, jidObjetivo)
     return sock.sendMessage(chatId, {
-      text: `🛡️ @${jidObjetivo.split('@')[0]} tiene un escudo antirrobo activo, no puedes robarle.`,
+      text: `🛡️ @${numeroObjetivo} tiene un escudo antirrobo activo, no puedes robarle.`,
       mentions: [jidObjetivo],
     })
   }
@@ -52,8 +53,9 @@ export default async function robar({ sock, msg, args, chatId, db }) {
     ecoLadron.saldo += monto
     await db.write()
 
+    const numeroObjetivo = await resolverNumeroReal(sock, jidObjetivo)
     return sock.sendMessage(chatId, {
-      text: `🦹 Robaste ${monto} de efectivo a @${jidObjetivo.split('@')[0]}.`,
+      text: `🦹 Robaste ${monto} de efectivo a @${numeroObjetivo}.`,
       mentions: [jidObjetivo],
     })
   }
@@ -62,8 +64,9 @@ export default async function robar({ sock, msg, args, chatId, db }) {
   ecoLadron.saldo = Math.max(0, ecoLadron.saldo - multa)
   await db.write()
 
+  const numeroObjetivo = await resolverNumeroReal(sock, jidObjetivo)
   await sock.sendMessage(chatId, {
-    text: `🚨 Te atraparon robando a @${jidObjetivo.split('@')[0]} y pagaste una multa de ${multa}.`,
+    text: `🚨 Te atraparon robando a @${numeroObjetivo} y pagaste una multa de ${multa}.`,
     mentions: [jidObjetivo],
   })
 }
