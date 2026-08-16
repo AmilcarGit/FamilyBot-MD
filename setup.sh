@@ -40,7 +40,7 @@ while true; do
     fuser -k 3000/tcp > /dev/null 2>&1
     rm -f bot.lock > /dev/null 2>&1
 
-    node index.js
+    node --max-old-space-size=250 index.js
 
     ESTADO=$?
 
