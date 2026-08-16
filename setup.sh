@@ -64,6 +64,29 @@ EOF
 chmod +x ~/.termux/boot/start-yui.sh
 termux-wake-lock
 
+cat << 'EOF' > watchdog.sh
+#!/data/data/com.termux/files/usr/bin/bash
+
+cd ~/TheYui-MD
+
+if ! pgrep -f "node --max-old-space-size=250 index.js" > /dev/null; then
+    termux-wake-lock
+    nohup bash start.sh > logs/watchdog.log 2>&1 &
+    if command -v termux-notification > /dev/null; then
+        termux-notification --title "TheYui-MD" --content "El bot se habia caido, lo reinicie automaticamente." --priority high
+    fi
+fi
+EOF
+
+chmod +x watchdog.sh
+
+if command -v termux-job-scheduler > /dev/null; then
+    termux-job-scheduler --script "$HOME/TheYui-MD/watchdog.sh" --period-ms 900000 --persisted true
+    echo "🐕 Watchdog programado cada 15 minutos con termux-job-scheduler."
+else
+    echo "⚠️ No se encontró termux-job-scheduler. Instala Termux:API (pkg install termux-api) para activar el watchdog automático."
+fi
+
 if command -v termux-api > /dev/null; then
     am start --user 0 -a android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS > /dev/null 2>&1
 fi
