@@ -1,4 +1,5 @@
 import { obtenerPerfilSocial, formatearDuracion } from '../../lib/social.js'
+import { resolverNumeroReal } from '../../lib/utils.js'
 
 export const desc = 'Muestra tu pareja actual'
 export const cooldown = 3
@@ -14,9 +15,10 @@ export default async function pareja({ sock, msg, chatId, db }) {
   }
 
   const duracion = formatearDuracion(Date.now() - perfil.fechaMatrimonio)
+  const numeroPareja = await resolverNumeroReal(sock, perfil.pareja)
 
   await sock.sendMessage(chatId, {
-    text: `💑 Estás casado/a con @${perfil.pareja.split('@')[0]}\n⏳ Llevan juntos: ${duracion}`,
+    text: `💑 Estás casado/a con @${numeroPareja}\n⏳ Llevan juntos: ${duracion}`,
     mentions: [perfil.pareja],
   })
 }
