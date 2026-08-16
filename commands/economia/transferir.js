@@ -1,4 +1,4 @@
-import { normalizarJid, obtenerJidMencionado } from '../../lib/utils.js'
+import { normalizarJid, obtenerJidMencionado, resolverNumeroReal } from '../../lib/utils.js'
 import { obtenerUsuario } from '../../lib/economia.js'
 
 export const desc = 'Transfiere efectivo a otro usuario'
@@ -35,8 +35,9 @@ export default async function transferir({ sock, msg, args, chatId, db }) {
   ecoDestino.saldo += monto
   await db.write()
 
+  const numeroObjetivo = await resolverNumeroReal(sock, jidObjetivo)
   await sock.sendMessage(chatId, {
-    text: `✅ Transferiste ${monto} a @${jidObjetivo.split('@')[0]}.`,
+    text: `✅ Transferiste ${monto} a @${numeroObjetivo}.`,
     mentions: [jidObjetivo],
   })
 }
