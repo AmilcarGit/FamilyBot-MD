@@ -1,4 +1,4 @@
-import { normalizarJid, obtenerJidMencionado, esOwner } from '../../lib/utils.js'
+import { normalizarJid, obtenerJidMencionado, esOwner, resolverNumeroReal } from '../../lib/utils.js'
 
 export const desc = 'Bloquea a un usuario, el bot ignora todos sus mensajes'
 export const soloOwner = true
@@ -10,7 +10,7 @@ export default async function ban({ sock, msg, args, chatId, db, config }) {
     return sock.sendMessage(chatId, { text: '❀ Menciona, responde o escribe el número a bloquear.' })
   }
 
-  const numero = jid.split('@')[0]
+  const numero = await resolverNumeroReal(sock, jid)
   if (esOwner(numero, config.owner)) {
     return sock.sendMessage(chatId, { text: '❌ No puedes bloquear al owner.' })
   }
