@@ -1,4 +1,5 @@
 import { obtenerPerfilSocial, formatearDuracion } from '../../lib/social.js'
+import { resolverNumeroReal } from '../../lib/utils.js'
 
 export const desc = 'Muestra tu pareja y mascota juntos'
 export const cooldown = 3
@@ -11,7 +12,8 @@ export default async function familia({ sock, msg, chatId, db }) {
 
   if (perfil.pareja) {
     const duracion = formatearDuracion(Date.now() - perfil.fechaMatrimonio)
-    texto += `💑 Pareja: @${perfil.pareja.split('@')[0]} (${duracion} juntos)\n`
+    const numeroPareja = await resolverNumeroReal(sock, perfil.pareja)
+    texto += `💑 Pareja: @${numeroPareja} (${duracion} juntos)\n`
   } else {
     texto += `💔 Sin pareja\n`
   }
