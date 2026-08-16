@@ -1,4 +1,5 @@
 import { obtenerPerfilSocial } from '../../lib/social.js'
+import { resolverNumeroReal } from '../../lib/utils.js'
 
 export const desc = 'Termina tu matrimonio actual'
 export const alias = ['divorcio']
@@ -21,8 +22,11 @@ export default async function divorciarse({ sock, msg, chatId, db }) {
   perfilPareja.fechaMatrimonio = null
   await db.write()
 
+  const numeroRemitente = await resolverNumeroReal(sock, jidRemitente, msg)
+  const numeroPareja = await resolverNumeroReal(sock, jidPareja)
+
   await sock.sendMessage(chatId, {
-    text: `💔 @${jidRemitente.split('@')[0]} se divorció de @${jidPareja.split('@')[0]}.`,
+    text: `💔 @${numeroRemitente} se divorció de @${numeroPareja}.`,
     mentions: [jidRemitente, jidPareja],
   })
 }
