@@ -1,4 +1,4 @@
-import { obtenerJidMencionado, normalizarJid } from '../../lib/utils.js'
+import { obtenerJidMencionado, normalizarJid, resolverNumeroReal } from '../../lib/utils.js'
 import { obtenerConfigChat } from '../../lib/groupSettings.js'
 import { esBotAdminGrupo } from '../../lib/groupPermissions.js'
 
@@ -32,8 +32,9 @@ async function dar({ sock, msg, args, chatId, db }) {
     configChat.advertencias[jidNormalizado] = 0
     await db.write()
 
+    const numero = await resolverNumeroReal(sock, jid)
     await sock.sendMessage(chatId, {
-      text: `🚨 @${jid.split('@')[0]} llegó a ${MAX_ADVERTENCIAS} advertencias y fue expulsado.`,
+      text: `🚨 @${numero} llegó a ${MAX_ADVERTENCIAS} advertencias y fue expulsado.`,
       mentions: [jid],
     })
 
@@ -45,8 +46,9 @@ async function dar({ sock, msg, args, chatId, db }) {
     return
   }
 
+  const numero = await resolverNumeroReal(sock, jid)
   await sock.sendMessage(chatId, {
-    text: `⚠️ @${jid.split('@')[0]} recibió una advertencia (${cantidad}/${MAX_ADVERTENCIAS}).`,
+    text: `⚠️ @${numero} recibió una advertencia (${cantidad}/${MAX_ADVERTENCIAS}).`,
     mentions: [jid],
   })
 }
@@ -62,8 +64,9 @@ async function quitar({ sock, msg, args, chatId, db }) {
   configChat.advertencias[jidNormalizado] = Math.max(0, (configChat.advertencias[jidNormalizado] || 0) - 1)
   await db.write()
 
+  const numero = await resolverNumeroReal(sock, jid)
   await sock.sendMessage(chatId, {
-    text: `✅ Se quitó una advertencia a @${jid.split('@')[0]} (${configChat.advertencias[jidNormalizado]}/${MAX_ADVERTENCIAS}).`,
+    text: `✅ Se quitó una advertencia a @${numero} (${configChat.advertencias[jidNormalizado]}/${MAX_ADVERTENCIAS}).`,
     mentions: [jid],
   })
 }
@@ -74,8 +77,9 @@ async function ver({ sock, msg, args, chatId, db }) {
   const jidNormalizado = normalizarJid(jid)
   const cantidad = configChat.advertencias[jidNormalizado] || 0
 
+  const numero = await resolverNumeroReal(sock, jid, msg)
   await sock.sendMessage(chatId, {
-    text: `⚠️ @${jid.split('@')[0]} tiene ${cantidad}/${MAX_ADVERTENCIAS} advertencias.`,
+    text: `⚠️ @${numero} tiene ${cantidad}/${MAX_ADVERTENCIAS} advertencias.`,
     mentions: [jid],
   })
 }
