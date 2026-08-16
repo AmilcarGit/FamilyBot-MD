@@ -181,10 +181,11 @@ async function iniciar() {
         }
       }
 
-      if (intentosReconexion < config.maxReconnectAttempts) {
-        intentosReconexion++
-        setTimeout(iniciar, backoffDelay(intentosReconexion, config.maxReconnectDelay))
+      intentosReconexion++
+      if (intentosReconexion > config.maxReconnectAttempts) {
+        console.log(`⚠️ Ya van ${intentosReconexion} intentos de reconexión, pero se sigue intentando (nunca nos rendimos).`)
       }
+      setTimeout(iniciar, backoffDelay(intentosReconexion, config.maxReconnectDelay))
     }
   })
 
