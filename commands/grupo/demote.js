@@ -1,4 +1,4 @@
-import { obtenerJidMencionado } from '../../lib/utils.js'
+import { obtenerJidMencionado, resolverNumeroReal } from '../../lib/utils.js'
 import { esBotAdminGrupo } from '../../lib/groupPermissions.js'
 
 export const desc = 'Quita el admin a un miembro'
@@ -24,8 +24,9 @@ export default async function demote({ sock, msg, args, chatId }) {
 
   try {
     await sock.groupParticipantsUpdate(chatId, [jid], 'demote')
+    const numero = await resolverNumeroReal(sock, jid)
     await sock.sendMessage(chatId, {
-      text: `📉 @${jid.split('@')[0]} ya no es administrador.`,
+      text: `📉 @${numero} ya no es administrador.`,
       mentions: [jid],
     })
   } catch (err) {
