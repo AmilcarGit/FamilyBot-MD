@@ -1,3 +1,5 @@
+import { resolverNumeroReal } from '../../lib/utils.js'
+
 export const desc = 'Reporta un error o problema al equipo de staff'
 export const alias = ['report', 'bug']
 export const cooldown = 60
@@ -20,7 +22,7 @@ export default async function reporte({ sock, msg, args, chatId, config }) {
   }
 
   const jidRemitente = msg.key.participant || msg.key.remoteJid
-  const numero = jidRemitente.split('@')[0]
+  const numero = await resolverNumeroReal(sock, jidRemitente, msg)
   const esGrupo = chatId.endsWith('@g.us')
   const fecha = new Date().toLocaleString('es-PE')
 
@@ -41,7 +43,9 @@ export default async function reporte({ sock, msg, args, chatId, config }) {
 
   let enviados = 0
 
-  for (const numeroStaff of staff) {
+  for (const s of staff) {
+    const numeroStaff = typeof s === 'string' ? s : s?.numero
+    if (!numeroStaff) continue
     try {
       const jidStaff = `${numeroStaff}@s.whatsapp.net`
       await sock.sendMessage(jidStaff, { text: mensajeReporte, mentions: [jidRemitente] })
