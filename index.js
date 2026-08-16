@@ -16,6 +16,7 @@ import { iniciarAutoUpdate } from './lib/autoupdate.js'
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
+let cierresLoggedOutSeguidos = 0
 let codigoSolicitado = false
 let numeroIngresado = null
 
@@ -156,6 +157,7 @@ async function iniciar() {
 
     if (connection === 'open') {
       intentosReconexion = 0
+      cierresLoggedOutSeguidos = 0
       mostrarConexionExitosa(config.nombreBot)
       iniciarAutoUpdate(sock)
     }
@@ -163,11 +165,22 @@ async function iniciar() {
     if (connection === 'close') {
       const statusCode = new Boom(lastDisconnect?.error)?.output?.statusCode
       const errorMsg = lastDisconnect?.error?.message || ''
-      
-      if (statusCode === DisconnectReason.loggedOut || errorMsg.includes('Bad MAC')) {
+
+      if (errorMsg.includes('Bad MAC')) {
+        console.error('Nuclear Reset disparado por: Bad MAC en el cierre de conexión')
         nuclearReset()
       }
-      
+
+      if (statusCode === DisconnectReason.loggedOut) {
+        cierresLoggedOutSeguidos++
+        if (cierresLoggedOutSeguidos >= 2) {
+          console.error(`Nuclear Reset disparado por: loggedOut confirmado (${cierresLoggedOutSeguidos} veces seguidas)`)
+          nuclearReset()
+        } else {
+          console.log('⚠️ Cierre con código loggedOut, reintentando una vez antes de resetear la sesión...')
+        }
+      }
+
       if (intentosReconexion < config.maxReconnectAttempts) {
         intentosReconexion++
         setTimeout(iniciar, backoffDelay(intentosReconexion, config.maxReconnectDelay))
@@ -177,7 +190,14 @@ async function iniciar() {
 
   sock.ev.on('creds.update', saveCreds)
   sock.ev.on('messages.upsert', async (m) => {
-    try { await handler(sock, m) } catch (err) { if (err.message.includes('Bad MAC')) nuclearReset() }
+    try {
+      await handler(sock, m)
+    } catch (err) {
+      if (err.message.includes('Bad MAC')) {
+        console.error('Nuclear Reset disparado por: Bad MAC procesando un mensaje')
+        nuclearReset()
+      }
+    }
   })
 
   return sock
