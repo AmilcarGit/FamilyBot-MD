@@ -1,3 +1,5 @@
+import { resolverNumeroReal } from '../../lib/utils.js'
+
 export const desc = 'Muestra el top 10 de economía'
 export const cooldown = 5
 
@@ -15,10 +17,12 @@ export default async function top({ sock, chatId, db }) {
   const medallas = ['🥇', '🥈', '🥉']
   let texto = '🏆 *Top economía*\n\n'
 
-  usuarios.forEach((u, i) => {
+  for (let i = 0; i < usuarios.length; i++) {
+    const u = usuarios[i]
     const medalla = medallas[i] || `${i + 1}.`
-    texto += `${medalla} @${u.jid.split('@')[0]} — ${u.total}\n`
-  })
+    const numero = await resolverNumeroReal(sock, u.jid)
+    texto += `${medalla} @${numero} — ${u.total}\n`
+  }
 
   await sock.sendMessage(chatId, {
     text: texto,
