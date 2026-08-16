@@ -1,4 +1,4 @@
-import { obtenerJidMencionado } from '../../lib/utils.js'
+import { obtenerJidMencionado, resolverNumeroReal } from '../../lib/utils.js'
 import { esBotAdminGrupo } from '../../lib/groupPermissions.js'
 
 export const desc = 'Asciende a un miembro a administrador'
@@ -24,8 +24,9 @@ export default async function promote({ sock, msg, args, chatId }) {
 
   try {
     await sock.groupParticipantsUpdate(chatId, [jid], 'promote')
+    const numero = await resolverNumeroReal(sock, jid)
     await sock.sendMessage(chatId, {
-      text: `👑 @${jid.split('@')[0]} ahora es administrador.`,
+      text: `👑 @${numero} ahora es administrador.`,
       mentions: [jid],
     })
   } catch (err) {
