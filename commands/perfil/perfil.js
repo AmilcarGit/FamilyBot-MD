@@ -1,4 +1,4 @@
-import { normalizarJid, obtenerJidMencionado } from '../../lib/utils.js'
+import { normalizarJid, obtenerJidMencionado, resolverNumeroReal } from '../../lib/utils.js'
 import { calcularNivel, mensajesParaNivel, barraProgresoNivel } from '../../lib/perfil.js'
 
 export const desc = 'Muestra tu perfil o el de otro usuario'
@@ -21,7 +21,7 @@ export default async function perfil({ sock, msg, args, chatId, db }) {
   const siguiente = mensajesParaNivel(nivel + 1)
   const barra = barraProgresoNivel(mensajes)
 
-  let texto = `👤 *Perfil de @${jidObjetivo.split('@')[0]}*\n\n`
+  let texto = `👤 *Perfil de @${await resolverNumeroReal(sock, jidObjetivo, msg)}*\n\n`
 
   if (usuario.registrado) {
     texto += `📛 Nombre: ${usuario.nombre}\n🎂 Edad: ${usuario.edad}\n`
@@ -34,7 +34,8 @@ export default async function perfil({ sock, msg, args, chatId, db }) {
   }
 
   if (usuario.social?.pareja) {
-    texto += `💑 Pareja: @${usuario.social.pareja.split('@')[0]}\n`
+    const numeroPareja = await resolverNumeroReal(sock, usuario.social.pareja)
+    texto += `💑 Pareja: @${numeroPareja}\n`
   }
 
   const mentions = [jidObjetivo]
