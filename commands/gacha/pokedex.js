@@ -11,9 +11,9 @@ export default async function pokedex({ sock, chatId, args, m, config }) {
   }
 
   try {
-    const res = await fetch(\`https://pokeapi.co/api/v2/pokemon/\${query}\`)
+    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${query}`)
     if (!res.ok) {
-      return sock.sendMessage(chatId, { text: \`❌ No se encontró ningún Pokémon llamado *"\${query}"*.\` })
+      return sock.sendMessage(chatId, { text: `❌ No se encontró ningún Pokémon llamado *"${query}"*.` })
     }
 
     const data = await res.json()
@@ -31,27 +31,27 @@ export default async function pokedex({ sock, chatId, args, m, config }) {
 
     const imagen = data.sprites.other['official-artwork'].front_default || data.sprites.front_default
 
-    const caption = \`
+    const caption = `
 ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃   💠  *POKEDEX NEURAL*  💠   ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 🧬 *DATOS BÁSICOS:*
-» *Nombre:* \${nombre}
-» *ID:* #\${id}
-» *Tipo(s):* \${tipos}
-» *Altura:* \${altura}m
-» *Peso:* \${peso}kg
+» *Nombre:* ${nombre}
+» *ID:* #${id}
+» *Tipo(s):* ${tipos}
+» *Altura:* ${altura}m
+» *Peso:* ${peso}kg
 
 📊 *ESTADÍSTICAS BASE:*
-» ❤️ *Vida:* \${stats.hp}
-» ⚔️ *Ataque:* \${stats.attack}
-» 🛡️ *Defensa:* \${stats.defense}
-» ⚡ *Velocidad:* \${stats.speed}
+» ❤️ *Vida:* ${stats.hp}
+» ⚔️ *Ataque:* ${stats.attack}
+» 🛡️ *Defensa:* ${stats.defense}
+» ⚡ *Velocidad:* ${stats.speed}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 ✨ *Powered by TheYui Gacha System*
-━━━━━━━━━━━━━━━━━━━━━━━━\`.trim()
+━━━━━━━━━━━━━━━━━━━━━━━━`.trim()
 
     await sock.sendMessage(chatId, {
       image: { url: imagen },
@@ -60,6 +60,6 @@ export default async function pokedex({ sock, chatId, args, m, config }) {
 
   } catch (error) {
     console.error('Error en comando pokedex:', error)
-    await sock.sendMessage(chatId, { text: \`❌ Ocurrió un error al consultar la Pokedex.\` })
+    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al consultar la Pokedex.` })
   }
 }
