@@ -11,6 +11,8 @@ npm-debug.log*
 
 .env
 
+.panel-token
+
 .DS_Store
 Thumbs.db
 
