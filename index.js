@@ -56,11 +56,13 @@ function nuclearReset() {
 
 process.on('uncaughtException', (err) => {
   if (err.message.includes('EADDRINUSE')) process.exit(1)
-  if (err.message.includes('Bad MAC')) nuclearReset()
+  if (err.message.includes('Bad MAC')) return nuclearReset()
+  logError('Excepción no capturada:', err)
 })
 
 process.on('unhandledRejection', (reason) => {
-  if (reason?.message?.includes('Bad MAC')) nuclearReset()
+  if (reason?.message?.includes('Bad MAC')) return nuclearReset()
+  logError('Rechazo de promesa no manejado:', reason)
 })
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
