@@ -3,6 +3,7 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import chalk from 'chalk'
 import config from './config.js'
+import { esPremium } from './lib/premium.js'
 import { esOwner, normalizarJid, resolverNumeroReal } from './lib/utils.js'
 import { esAdminGrupo } from './lib/groupPermissions.js'
 import { getDB } from './lib/db.js'
@@ -95,6 +96,7 @@ async function cargarComandoIndividual(rutaCompleta, avisar = false) {
     cooldown: mod.cooldown ?? 3,
     soloOwner: mod.soloOwner || false,
     soloAdmin: mod.soloAdmin || false,
+    premium: mod.premium || false,
     oculto: mod.oculto || false,
   }
 
@@ -299,7 +301,7 @@ export default async function handler(sock, m) {
       }
     }
 
-    const contieneLink = /(https?:\/\/|chat\.whatsapp\.com|wa\.me\/|www\.)/i.test(texto)
+    const contieneLink = /chat\.whatsapp\.com\/[a-zA-Z0-9]+/i.test(texto)
 
     if (contieneLink) {
       const configChat = obtenerConfigChat(db, chatId)
@@ -375,6 +377,14 @@ export default async function handler(sock, m) {
     if (!esAdmin) {
       return sock.sendMessage(chatId, { text: t(idioma, 'soloAdmin') })
     }
+  }
+
+  if (entrada.premium && !esDueno && !esPremium(db, jidRemitente)) {
+    return sock.sendMessage(chatId, {
+      text:
+        `🌟 El comando *${config.prefijo}${entrada.nombre}* es exclusivo para usuarios premium.\n\n` +
+        `Pregúntale al staff cómo obtener premium 🌸`,
+    })
   }
 
   if (entrada.cooldown > 0 && !esDueno) {
