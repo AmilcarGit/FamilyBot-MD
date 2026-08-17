@@ -92,12 +92,18 @@ console.error = (...args) => {
 
 process.on('uncaughtException', (err) => {
   if (err.message.includes('EADDRINUSE')) process.exit(1)
-  if (err.message.includes('Bad MAC')) return nuclearReset()
+  if (err.message.includes('Bad MAC')) {
+    console.error('Bad MAC detectado (excepción no capturada)')
+    return
+  }
   logError('Excepción no capturada:', err)
 })
 
 process.on('unhandledRejection', (reason) => {
-  if (reason?.message?.includes('Bad MAC')) return nuclearReset()
+  if (reason?.message?.includes('Bad MAC')) {
+    console.error('Bad MAC detectado (rechazo de promesa no manejado)')
+    return
+  }
   logError('Rechazo de promesa no manejado:', reason)
 })
 
@@ -171,8 +177,7 @@ async function iniciar() {
       const errorMsg = lastDisconnect?.error?.message || ''
 
       if (errorMsg.includes('Bad MAC')) {
-        console.error('Nuclear Reset disparado por: Bad MAC en el cierre de conexión')
-        nuclearReset()
+        console.error('Bad MAC detectado en el cierre de conexión')
       }
 
       if (statusCode === DisconnectReason.loggedOut) {
@@ -199,8 +204,7 @@ async function iniciar() {
       await handler(sock, m)
     } catch (err) {
       if (err.message.includes('Bad MAC')) {
-        console.error('Nuclear Reset disparado por: Bad MAC procesando un mensaje')
-        nuclearReset()
+        console.error('Bad MAC detectado procesando un mensaje (se ignora ese mensaje puntual)')
       }
     }
   })
@@ -212,3 +216,4 @@ mostrarBannerInicio(config.nombreBot, '1.0.0')
 iniciarBackupsAutomaticos(6)
 iniciarPanel()
 iniciar()
+                      
