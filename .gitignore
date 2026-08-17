@@ -13,8 +13,6 @@ npm-debug.log*
 
 .panel-token
 
-bot.lock
-
 *.save
 *.swp
 
