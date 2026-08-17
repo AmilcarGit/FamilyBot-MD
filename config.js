@@ -6,7 +6,7 @@ const config = {
   staff: [
     { nombre: 'Benja', numero: '543875132593' }
   ],
-  numeroBot: '',
+  numeroBot: '51925679896',
   prioridad: 0,
   sessionFolder: './session',
   dbFile: './database.json',
