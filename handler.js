@@ -301,7 +301,7 @@ export default async function handler(sock, m) {
       }
     }
 
-    const contieneLink = /chat\.whatsapp\.com\/[a-zA-Z0-9]+/i.test(texto)
+    const contieneLink = /(https?:\/\/|chat\.whatsapp\.com|wa\.me\/|www\.)/i.test(texto)
 
     if (contieneLink) {
       const configChat = obtenerConfigChat(db, chatId)
