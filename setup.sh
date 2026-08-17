@@ -10,6 +10,19 @@ printf "\033[0m"
 
 echo "🚀 Iniciando configuración neural..."
 
+echo "📦 Verificando dependencias de sistema (webp para stickers)..."
+if command -v pkg > /dev/null; then
+    pkg install webp -y > /dev/null 2>&1
+elif command -v apt > /dev/null; then
+    sudo apt install webp -y > /dev/null 2>&1 || apt install webp -y > /dev/null 2>&1
+fi
+
+if command -v cwebp > /dev/null; then
+    echo "✅ webp instalado correctamente."
+else
+    echo "⚠️ No se pudo instalar webp automáticamente. Los stickers no van a funcionar hasta que lo instales a mano (pkg install webp)."
+fi
+
 cat << 'EOF' > start.sh
 #!/data/data/com.termux/files/usr/bin/bash
 
