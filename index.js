@@ -102,6 +102,10 @@ process.on('unhandledRejection', (reason) => {
 })
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+rl.on('SIGINT', () => {
+  console.log('\n👋 Cancelado por el usuario (Ctrl+C). Cerrando...')
+  process.exit(0)
+})
 const preguntar = (texto) => new Promise((resolve) => rl.question(texto, resolve))
 
 async function iniciar() {
