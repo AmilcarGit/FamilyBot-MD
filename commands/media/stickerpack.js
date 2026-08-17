@@ -67,11 +67,12 @@ export default async function stickerpack({ sock, chatId, args, config }) {
     const apiKey = 'lem954'
     const url = `https://api.lempi.lat/s/stickers?q=${encodeURIComponent(query)}&apikey=${apiKey}`
     
-    await sock.sendMessage(chatId, { text: `🔎 Buscando pack de stickers para: *${query}*...` })
+    await sock.sendMessage(chatId, { text: `🔎 Buscando pack de stickers para: *${query}*...\n✨ *Powered by Lempi API*` })
 
     const response = await fetch(url)
     const data = await response.json()
-    const resultados = data.result || []
+    
+    const resultados = Array.isArray(data) ? data : (data.result || data.resultados || [])
 
     if (resultados.length === 0) {
       return sock.sendMessage(chatId, {
@@ -91,7 +92,7 @@ export default async function stickerpack({ sock, chatId, args, config }) {
     const cantidadAEnviar = Math.min(stickers.length, 12)
 
     await sock.sendMessage(chatId, { 
-      text: `✨ *Paquete:* ${pack.titulo}\n👤 *Autor:* ${pack.autor || 'Desconocido'}\n📦 *Enviando:* ${cantidadAEnviar} stickers...` 
+      text: `✨ *Paquete:* ${pack.titulo}\n👤 *Autor:* ${pack.autor || 'Desconocido'}\n📦 *Enviando:* ${cantidadAEnviar} stickers...\n🌐 *Fuente:* Lempi API` 
     })
 
     for (let i = 0; i < cantidadAEnviar; i++) {
