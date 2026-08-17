@@ -2,7 +2,7 @@
 
 cd ~/TheYui-MD
 
-if ! pgrep -f "node --max-old-space-size=250 index.js" > /dev/null; then
+if ! pgrep -f "index.js" > /dev/null; then
     termux-wake-lock
     nohup bash start.sh > logs/watchdog.log 2>&1 &
     if command -v termux-notification > /dev/null; then
