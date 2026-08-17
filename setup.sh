@@ -69,6 +69,10 @@ cat << 'EOF' > watchdog.sh
 
 cd ~/TheYui-MD
 
+if pgrep -f "start.sh" > /dev/null; then
+    exit 0
+fi
+
 if ! pgrep -f "index.js" > /dev/null; then
     termux-wake-lock
     nohup bash start.sh > logs/watchdog.log 2>&1 &
