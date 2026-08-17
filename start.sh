@@ -4,9 +4,9 @@ set +m
 cd "$(dirname "$0")"
 
 function limpiar() {
-    pkill -15 -f "node index.js" > /dev/null 2>&1
+    pkill -15 -f "index.js" > /dev/null 2>&1
     sleep 1
-    pkill -9 -f "node index.js" > /dev/null 2>&1
+    pkill -9 -f "index.js" > /dev/null 2>&1
     rm -f bot.lock > /dev/null 2>&1
     if command -v fuser > /dev/null; then
         fuser -k 3000/tcp > /dev/null 2>&1
