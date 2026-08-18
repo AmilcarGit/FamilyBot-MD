@@ -92,18 +92,12 @@ console.error = (...args) => {
 
 process.on('uncaughtException', (err) => {
   if (err.message.includes('EADDRINUSE')) process.exit(1)
-  if (err.message.includes('Bad MAC')) {
-    console.error('Bad MAC detectado (excepción no capturada)')
-    return
-  }
+  if (err.message.includes('Bad MAC')) return nuclearReset()
   logError('Excepción no capturada:', err)
 })
 
 process.on('unhandledRejection', (reason) => {
-  if (reason?.message?.includes('Bad MAC')) {
-    console.error('Bad MAC detectado (rechazo de promesa no manejado)')
-    return
-  }
+  if (reason?.message?.includes('Bad MAC')) return nuclearReset()
   logError('Rechazo de promesa no manejado:', reason)
 })
 
@@ -112,7 +106,21 @@ rl.on('SIGINT', () => {
   console.log('\n👋 Cancelado por el usuario (Ctrl+C). Cerrando...')
   process.exit(0)
 })
-const preguntar = (texto) => new Promise((resolve) => rl.question(texto, resolve))
+const preguntar = (texto) => new Promise((resolve, reject) => {
+  try {
+    rl.question(texto, resolve)
+  } catch (e) {
+    reject(e)
+  }
+})
+
+let promesaNumero = null
+function obtenerNumeroDelUsuario() {
+  if (!promesaNumero) {
+    promesaNumero = preguntar(chalk.green('Ingresa el número del bot: '))
+  }
+  return promesaNumero
+}
 
 async function iniciar() {
   const { state, saveCreds } = await useMultiFileAuthState(config.sessionFolder)
@@ -120,8 +128,13 @@ async function iniciar() {
 
   let numero = config.numeroBot || numeroIngresado
   if (!state.creds.registered && !numero) {
-    numero = await preguntar(chalk.green('Ingresa el número del bot: '))
-    numeroIngresado = numero
+    try {
+      numero = await obtenerNumeroDelUsuario()
+      numeroIngresado = numero
+    } catch (e) {
+      logError('No se pudo leer el número del bot (readline cerrado o interrumpido):', e)
+      numero = null
+    }
   }
 
   if (numero) {
@@ -177,7 +190,8 @@ async function iniciar() {
       const errorMsg = lastDisconnect?.error?.message || ''
 
       if (errorMsg.includes('Bad MAC')) {
-        console.error('Bad MAC detectado en el cierre de conexión')
+        console.error('Nuclear Reset disparado por: Bad MAC en el cierre de conexión')
+        nuclearReset()
       }
 
       if (statusCode === DisconnectReason.loggedOut) {
@@ -204,7 +218,8 @@ async function iniciar() {
       await handler(sock, m)
     } catch (err) {
       if (err.message.includes('Bad MAC')) {
-        console.error('Bad MAC detectado procesando un mensaje (se ignora ese mensaje puntual)')
+        console.error('Nuclear Reset disparado por: Bad MAC procesando un mensaje')
+        nuclearReset()
       }
     }
   })
@@ -216,4 +231,3 @@ mostrarBannerInicio(config.nombreBot, '1.0.0')
 iniciarBackupsAutomaticos(6)
 iniciarPanel()
 iniciar()
-                      
