@@ -1,65 +1,48 @@
-export const alias = ['pokemon', 'poke']
-export const cooldown = 5
+import axios from 'axios'
 
-export default async function pokedex({ sock, chatId, args, m, config }) {
-  const query = args.join(' ').toLowerCase().trim()
+export const desc = 'Busca información detallada de un Pokémon con botones interactivos'
+export const alias = ['poke', 'pokemon']
+
+export default async function pokedex({ sock, chatId, args, config }) {
+  if (!args[0]) return sock.sendMessage(chatId, { text: `❌ Por favor, ingresa el nombre o número de un Pokémon.\nEjemplo: ${config.prefijo}pokedex charizard` })
+
+  const pokemon = args[0].toLowerCase()
   
-  if (!query) {
-    return sock.sendMessage(chatId, {
-      text: `❌ Por favor, ingresa el nombre o número de un Pokémon.\nEjemplo: *${config.prefijo}pokedex charizard*`
-    })
-  }
-
   try {
-    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${query}`)
-    if (!res.ok) {
-      return sock.sendMessage(chatId, { text: `❌ No se encontró ningún Pokémon llamado *"${query}"*.` })
-    }
-
-    const data = await res.json()
+    const { data } = await axios.get(`https://pokeapi.co/api/v2/pokemon/${pokemon}`)
     
-    const nombre = data.name.toUpperCase()
-    const id = data.id
-    const tipos = data.types.map(t => t.type.name).join(', ')
-    const altura = data.height / 10
-    const peso = data.weight / 10
+    const stats = data.stats.map(s => `📊 *${s.stat.name.toUpperCase()}:* ${s.base_stat}`).join('\n')
+    const tipos = data.types.map(t => t.type.name.toUpperCase()).join(', ')
+    const habilidades = data.abilities.map(a => a.ability.name).join(', ')
     
-    const stats = {}
-    data.stats.forEach(s => {
-      stats[s.stat.name] = s.base_stat
-    })
+    const texto = `🌌 *THE YUI-MD: POKEDEX NEURAL* 🌌\n\n` +
+                  `🆔 *ID:* ${data.id}\n` +
+                  `🏷️ *Nombre:* ${data.name.toUpperCase()}\n` +
+                  `🧬 *Tipos:* ${tipos}\n` +
+                  `✨ *Habilidades:* ${habilidades}\n` +
+                  `📏 *Altura:* ${data.height / 10}m | ⚖️ *Peso:* ${data.weight / 10}kg\n\n` +
+                  `${stats}\n\n` +
+                  `Powered by PokeAPI & TheYui-MD`
 
     const imagen = data.sprites.other['official-artwork'].front_default || data.sprites.front_default
 
-    const caption = `
-┏━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃   💠  *POKEDEX NEURAL*  💠   ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━┛
+    const buttons = [
+      { buttonId: `${config.prefijo}pokedex ${data.id - 1}`, buttonText: { displayText: '⬅️ Anterior' }, type: 1 },
+      { buttonId: `${config.prefijo}pokedex ${data.id + 1}`, buttonText: { displayText: 'Siguiente ➡️' }, type: 1 },
+      { buttonId: `${config.prefijo}menu`, buttonText: { displayText: '🏠 Menú Principal' }, type: 1 }
+    ]
 
-🧬 *DATOS BÁSICOS:*
-» *Nombre:* ${nombre}
-» *ID:* #${id}
-» *Tipo(s):* ${tipos}
-» *Altura:* ${altura}m
-» *Peso:* ${peso}kg
-
-📊 *ESTADÍSTICAS BASE:*
-» ❤️ *Vida:* ${stats.hp}
-» ⚔️ *Ataque:* ${stats.attack}
-» 🛡️ *Defensa:* ${stats.defense}
-» ⚡ *Velocidad:* ${stats.speed}
-
-━━━━━━━━━━━━━━━━━━━━━━━━
-✨ *Powered by TheYui Gacha System*
-━━━━━━━━━━━━━━━━━━━━━━━━`.trim()
-
-    await sock.sendMessage(chatId, {
+    const buttonMessage = {
       image: { url: imagen },
-      caption: caption
-    }, { quoted: m })
+      caption: texto,
+      footer: config.nombreBot,
+      buttons: buttons,
+      headerType: 4
+    }
 
-  } catch (error) {
-    console.error('Error en comando pokedex:', error)
-    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al consultar la Pokedex.` })
+    await sock.sendMessage(chatId, buttonMessage)
+
+  } catch (err) {
+    await sock.sendMessage(chatId, { text: `❌ No se encontró al Pokémon *${pokemon}*. Verifica el nombre e intenta de nuevo.` })
   }
 }
