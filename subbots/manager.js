@@ -10,7 +10,7 @@ import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
 import { getDB } from '../lib/db.js'
-import { delay } from '../lib/utils.js'
+import { delay, backoffDelay } from '../lib/utils.js'
 import { info, warn, error as logError } from '../lib/logger.js'
 
 const logger = pino({ level: 'silent' })
@@ -64,7 +64,14 @@ export async function iniciarSubbot({ numero, creadorJid, chatOrigen, sockPrinci
   fs.mkdirSync(carpeta, { recursive: true })
 
   const { state, saveCreds } = await useMultiFileAuthState(carpeta)
-  const { version } = await fetchLatestBaileysVersion()
+  
+  let version
+  try {
+    const v = await fetchLatestBaileysVersion()
+    version = v.version
+  } catch (e) {
+    version = [2, 3000, 1015901307]
+  }
 
   const sock = makeWASocket({
     version,
@@ -74,10 +81,18 @@ export async function iniciarSubbot({ numero, creadorJid, chatOrigen, sockPrinci
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
-    browser: ['Ubuntu', 'Chrome', '20.0.04'],
+    browser: ['Chrome (Linux)', '', ''],
+    patchMessageBeforeSending: (message) => {
+      const requiresPatch = !!(message.buttonsMessage || message.templateMessage || message.listMessage)
+      if (requiresPatch) {
+        message = { viewOnceMessage: { message: { messageContextInfo: { deviceListMetadata: {}, deviceListMetadataVersion: 2 }, ...message } } }
+      }
+      return message
+    },
   })
 
-  const entrada = { numero, sock, conectado: false, creadorJid }
+  sock.isSubbot = true
+  const entrada = { numero, sock, conectado: false, creadorJid, intentos: 0 }
   subbotsActivos.set(numero, entrada)
 
   let codigoSolicitado = esReconexion
@@ -87,7 +102,7 @@ export async function iniciarSubbot({ numero, creadorJid, chatOrigen, sockPrinci
 
     if (connection === 'connecting' && !sock.authState.creds.registered && !codigoSolicitado) {
       codigoSolicitado = true
-      await delay(1500)
+      await delay(5000)
 
       try {
         const codigo = await sock.requestPairingCode(numero)
@@ -97,21 +112,19 @@ export async function iniciarSubbot({ numero, creadorJid, chatOrigen, sockPrinci
             text: `🔗 *Vinculación de Subbot*\n\n📱 Número: ${numero}\n🔑 El código se enviará a continuación para que puedas copiarlo fácilmente.`,
           })
           await delay(1000)
-          await sockPrincipal.sendMessage(chatOrigen, {
-            text: codigo,
-          })
+          await sockPrincipal.sendMessage(chatOrigen, { text: codigo })
           await delay(1000)
           await sockPrincipal.sendMessage(chatOrigen, {
             text: '👆 *Toca el código de arriba para copiarlo.*\n\nLuego abre WhatsApp > Dispositivos vinculados > Vincular con número de teléfono e ingrésalo.',
           })
         }
       } catch (err) {
-        logError('Error solicitando código de vinculación del subbot:', err)
+        codigoSolicitado = false
         subbotsActivos.delete(numero)
 
         if (sockPrincipal && chatOrigen) {
           await sockPrincipal.sendMessage(chatOrigen, {
-            text: '❌ No pude generar el código de vinculación. Intenta de nuevo.',
+            text: '❌ No pude generar el código de vinculación. Asegúrate de que el número sea correcto e intenta de nuevo.',
           })
         }
       }
@@ -119,34 +132,35 @@ export async function iniciarSubbot({ numero, creadorJid, chatOrigen, sockPrinci
 
     if (connection === 'open') {
       entrada.conectado = true
+      entrada.intentos = 0
       await guardarMetadata(numero, creadorJid)
 
       if (sockPrincipal && chatOrigen) {
         await sockPrincipal.sendMessage(chatOrigen, {
-          text: `✅ Subbot *${numero}* conectado correctamente 💕\nYa tiene todos los comandos del bot principal.`,
+          text: `✅ Subbot *${numero}* conectado correctamente 💕`,
         })
       }
-
-      info(chalk.green(`🤖 Subbot conectado: ${numero}`))
     }
 
     if (connection === 'close') {
       entrada.conectado = false
       const statusCode = new Boom(lastDisconnect?.error)?.output?.statusCode
-      const isLoggedOut = statusCode === DisconnectReason.loggedOut
+      const errorMsg = lastDisconnect?.error?.message || ''
 
-      if (isLoggedOut) {
+      if (statusCode === DisconnectReason.loggedOut || errorMsg.includes('Bad MAC')) {
         subbotsActivos.delete(numero)
         await eliminarMetadata(numero)
         fs.rmSync(carpeta, { recursive: true, force: true })
-        warn(chalk.yellow(`🗑️ Subbot desvinculado: ${numero}`))
         return
       }
 
-      warn(chalk.yellow(`Subbot ${numero} desconectado, reintentando en 5s...`))
-      subbotsActivos.delete(numero)
-      await delay(5000)
-      iniciarSubbot({ numero, creadorJid, sockPrincipal, chatOrigen: null, esReconexion: true })
+      if (entrada.intentos < 5) {
+        entrada.intentos++
+        subbotsActivos.delete(numero)
+        setTimeout(() => {
+          iniciarSubbot({ numero, creadorJid, sockPrincipal, chatOrigen: null, esReconexion: true })
+        }, backoffDelay(entrada.intentos, 60000))
+      }
     }
   })
 
@@ -158,7 +172,11 @@ export async function iniciarSubbot({ numero, creadorJid, chatOrigen, sockPrinci
     try {
       await handler(sock, m)
     } catch (err) {
-      logError(`Error procesando mensaje en subbot ${numero}:`, err)
+      if (err.message.includes('Bad MAC')) {
+        subbotsActivos.delete(numero)
+        await eliminarMetadata(numero)
+        fs.rmSync(carpeta, { recursive: true, force: true })
+      }
     }
   })
 
@@ -187,9 +205,7 @@ export async function reconectarSubbotsGuardados(sockPrincipal) {
   for (const { numero, creadorJid } of db.data.subbots) {
     const carpeta = carpetaSesion(numero)
     if (!fs.existsSync(path.join(carpeta, 'creds.json'))) continue
-
-    info(chalk.blue(`♻️  Reconectando subbot: ${numero}`))
     await iniciarSubbot({ numero, creadorJid, sockPrincipal, chatOrigen: null, esReconexion: true })
-    await delay(2000)
+    await delay(3000)
   }
 }
