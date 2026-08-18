@@ -8,7 +8,6 @@ import path from 'path'
 import config from './config.js'
 import handler from './handler.js'
 import { delay, backoffDelay } from './lib/utils.js'
-import { info, warn, error as logError } from './lib/logger.js'
 import { mostrarBannerInicio, mostrarConexionExitosa } from './lib/banner.js'
 import { iniciarBackupsAutomaticos } from './lib/backup.js'
 import { iniciarPanel, establecerSockActivo } from './lib/panel.js'
@@ -16,9 +15,8 @@ import { iniciarAutoUpdate } from './lib/autoupdate.js'
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
-let cierresLoggedOutSeguidos = 0
 let codigoSolicitado = false
-let numeroIngresado = null
+let numeroTemporal = null
 
 const ARCHIVO_LOCK = path.join(process.cwd(), 'bot.lock')
 
@@ -48,61 +46,25 @@ verificarInstanciaUnica()
 function nuclearReset() {
   try {
     if (fs.existsSync(config.sessionFolder)) {
-      fs.rmSync(config.sessionFolder, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 })
+      fs.rmSync(config.sessionFolder, { recursive: true, force: true })
     }
   } catch (e) {}
   liberarInstancia()
   process.exit(1)
 }
 
-let contadorBadMac = 0
-let temporizadorBadMac = null
-let reseteando = false
-
-function vigilarBadMac(texto) {
-  if (reseteando || !texto || !texto.includes('Bad MAC')) return
-  contadorBadMac++
-  if (!temporizadorBadMac) {
-    temporizadorBadMac = setTimeout(() => {
-      contadorBadMac = 0
-      temporizadorBadMac = null
-    }, 15000)
-  }
-  if (contadorBadMac >= 5) {
-    reseteando = true
-    nuclearReset()
-  }
-}
-
-const consoleLogOriginal = console.log
-const consoleErrorOriginal = console.error
-
-console.log = (...args) => {
-  vigilarBadMac(args.map((a) => (a instanceof Error ? a.message : String(a))).join(' '))
-  consoleLogOriginal(...args)
-}
-
-console.error = (...args) => {
-  vigilarBadMac(args.map((a) => (a instanceof Error ? a.message : String(a))).join(' '))
-  consoleErrorOriginal(...args)
-}
-
-process.on('uncaughtException', (err) => {
-  if (err.message.includes('EADDRINUSE')) process.exit(1)
-  if (err.message.includes('Bad MAC')) return nuclearReset()
-  if (err.code === 'ERR_USE_AFTER_CLOSE') return
-})
-
-process.on('unhandledRejection', (reason) => {
-  if (reason?.message?.includes('Bad MAC')) return nuclearReset()
-})
-
-async function preguntar(texto) {
+async function preguntarNumero() {
+  if (process.env.PM2_HOME) return null
+  
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+  console.log(chalk.cyan('\n┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓'))
+  console.log(chalk.cyan('┃') + chalk.yellow('  🌐 CONFIGURACIÓN DE VINCULACIÓN NEURAL  ') + chalk.cyan('┃'))
+  console.log(chalk.cyan('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛'))
+  
   return new Promise((resolve) => {
-    rl.question(texto, (respuesta) => {
+    rl.question(chalk.green('➤ Ingresa el número del bot (ej: 51910227479): '), (respuesta) => {
       rl.close()
-      resolve(respuesta)
+      resolve(respuesta ? respuesta.replace(/\D/g, '') : null)
     })
     setTimeout(() => {
       try { rl.close() } catch (e) {}
@@ -116,46 +78,31 @@ async function iniciar() {
   
   let version
   try {
-    const v = await Promise.race([
-      fetchLatestBaileysVersion(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
-    ])
+    const v = await fetchLatestBaileysVersion()
     version = v.version
   } catch (e) {
     version = [2, 3000, 1015901307]
   }
 
-  let numero = config.numeroBot || numeroIngresado
+  let numero = config.numeroBot || numeroTemporal
   if (!state.creds.registered && !numero) {
-    try {
-      numero = await preguntar(chalk.green('Ingresa el número del bot: '))
-      numeroIngresado = numero
-    } catch (e) {
-      numero = null
-    }
+    numero = await preguntarNumero()
+    numeroTemporal = numero
   }
 
   if (numero) {
-    numero = numero.replace(/\D/g, '')
     if (numero.startsWith('54') && !numero.startsWith('549')) numero = '549' + numero.slice(2)
   }
 
   const sock = makeWASocket({
     version,
     logger,
-    printQRInTerminal: false,
+    printQRInTerminal: !numero,
     auth: {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
     browser: ['Ubuntu', 'Chrome', '20.0.04'],
-    patchMessageBeforeSending: (message) => {
-      const requiresPatch = !!(message.buttonsMessage || message.templateMessage || message.listMessage)
-      if (requiresPatch) {
-        message = { viewOnceMessage: { message: { messageContextInfo: { deviceListMetadata: {}, deviceListMetadataVersion: 2 }, ...message } } }
-      }
-      return message
-    },
   })
 
   establecerSockActivo(sock)
@@ -165,12 +112,10 @@ async function iniciar() {
 
     if (connection === 'connecting' && !sock.authState.creds.registered && !codigoSolicitado && numero) {
       codigoSolicitado = true
-      await delay(3000)
+      await delay(5000)
       try {
         const codigo = await sock.requestPairingCode(numero)
-        console.log('\n' + '='.repeat(40))
-        console.log(chalk.black(chalk.bgCyan(`  TU CÓDIGO DE VINCULACIÓN ES: ${codigo}  `)))
-        console.log('='.repeat(40) + '\n')
+        console.log(chalk.black(chalk.bgCyan(`\n TU CÓDIGO DE VINCULACIÓN ES: ${codigo} \n`)))
       } catch (err) {
         codigoSolicitado = false
       }
@@ -178,40 +123,24 @@ async function iniciar() {
 
     if (connection === 'open') {
       intentosReconexion = 0
-      cierresLoggedOutSeguidos = 0
       mostrarConexionExitosa(config.nombreBot)
       iniciarAutoUpdate(sock)
     }
 
     if (connection === 'close') {
       const statusCode = new Boom(lastDisconnect?.error)?.output?.statusCode
-      const errorMsg = lastDisconnect?.error?.message || ''
-
-      if (errorMsg.includes('Bad MAC')) {
-        nuclearReset()
-      }
-
       if (statusCode === DisconnectReason.loggedOut) {
-        cierresLoggedOutSeguidos++
-        if (cierresLoggedOutSeguidos >= 2) {
-          nuclearReset()
-        }
+        nuclearReset()
+      } else {
+        intentosReconexion++
+        setTimeout(iniciar, backoffDelay(intentosReconexion, config.maxReconnectDelay))
       }
-
-      intentosReconexion++
-      setTimeout(iniciar, backoffDelay(intentosReconexion, config.maxReconnectDelay))
     }
   })
 
   sock.ev.on('creds.update', saveCreds)
   sock.ev.on('messages.upsert', async (m) => {
-    try {
-      await handler(sock, m)
-    } catch (err) {
-      if (err.message.includes('Bad MAC')) {
-        nuclearReset()
-      }
-    }
+    try { await handler(sock, m) } catch (err) { if (err.message.includes('Bad MAC')) nuclearReset() }
   })
 
   return sock
