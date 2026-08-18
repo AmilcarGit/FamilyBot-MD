@@ -4,7 +4,7 @@ const config = {
   idiomaPorDefecto: 'es',
   owner: ['51910227479', '263505471119372'],
   staff: [
-    { nombre: 'Benja', numero: '543875132593' }
+    { nombre: 'Benja', numero: '5493875132593' }
   ],
   numeroBot: '',
   prioridad: 0,
