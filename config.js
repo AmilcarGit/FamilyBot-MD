@@ -1,9 +1,10 @@
-const config = {
+export default {
   nombreBot: 'TheYui-MD',
   prefijo: '.',
   idiomaPorDefecto: 'es',
   owner: ['51910227479', '263505471119372'],
-  staff: ['5493875132593' }
+  staff: [
+    { nombre: 'Benja', numero: '5493875132593' }
   ],
   numeroBot: '',
   prioridad: 0,
@@ -25,5 +26,3 @@ const config = {
     mensajeSalida: '😢 {mention} salió de *{grupo}*. ¡Hasta pronto!',
   },
 }
-
-export default config
