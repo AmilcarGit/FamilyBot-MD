@@ -50,9 +50,7 @@ function nuclearReset() {
     if (fs.existsSync(config.sessionFolder)) {
       fs.rmSync(config.sessionFolder, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 })
     }
-  } catch (e) {
-    logError('No se pudo eliminar la carpeta de sesión en nuclearReset:', e)
-  }
+  } catch (e) {}
   liberarInstancia()
   process.exit(1)
 }
@@ -72,7 +70,6 @@ function vigilarBadMac(texto) {
   }
   if (contadorBadMac >= 5) {
     reseteando = true
-    consoleLogOriginal(chalk.red('⚠️ Demasiados errores Bad MAC seguidos, la sesión está corrupta. Ejecutando Nuclear Reset...'))
     nuclearReset()
   }
 }
@@ -93,46 +90,47 @@ console.error = (...args) => {
 process.on('uncaughtException', (err) => {
   if (err.message.includes('EADDRINUSE')) process.exit(1)
   if (err.message.includes('Bad MAC')) return nuclearReset()
-  logError('Excepción no capturada:', err)
+  if (err.code === 'ERR_USE_AFTER_CLOSE') return
 })
 
 process.on('unhandledRejection', (reason) => {
   if (reason?.message?.includes('Bad MAC')) return nuclearReset()
-  logError('Rechazo de promesa no manejado:', reason)
 })
 
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
-rl.on('SIGINT', () => {
-  console.log('\n👋 Cancelado por el usuario (Ctrl+C). Cerrando...')
-  process.exit(0)
-})
-const preguntar = (texto) => new Promise((resolve, reject) => {
-  try {
-    rl.question(texto, resolve)
-  } catch (e) {
-    reject(e)
-  }
-})
-
-let promesaNumero = null
-function obtenerNumeroDelUsuario() {
-  if (!promesaNumero) {
-    promesaNumero = preguntar(chalk.green('Ingresa el número del bot: '))
-  }
-  return promesaNumero
+async function preguntar(texto) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+  return new Promise((resolve) => {
+    rl.question(texto, (respuesta) => {
+      rl.close()
+      resolve(respuesta)
+    })
+    setTimeout(() => {
+      try { rl.close() } catch (e) {}
+      resolve(null)
+    }, 60000)
+  })
 }
 
 async function iniciar() {
   const { state, saveCreds } = await useMultiFileAuthState(config.sessionFolder)
-  const { version } = await fetchLatestBaileysVersion()
+  
+  let version
+  try {
+    const v = await Promise.race([
+      fetchLatestBaileysVersion(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+    ])
+    version = v.version
+  } catch (e) {
+    version = [2, 3000, 1015901307]
+  }
 
   let numero = config.numeroBot || numeroIngresado
   if (!state.creds.registered && !numero) {
     try {
-      numero = await obtenerNumeroDelUsuario()
+      numero = await preguntar(chalk.green('Ingresa el número del bot: '))
       numeroIngresado = numero
     } catch (e) {
-      logError('No se pudo leer el número del bot (readline cerrado o interrumpido):', e)
       numero = null
     }
   }
@@ -190,24 +188,17 @@ async function iniciar() {
       const errorMsg = lastDisconnect?.error?.message || ''
 
       if (errorMsg.includes('Bad MAC')) {
-        console.error('Nuclear Reset disparado por: Bad MAC en el cierre de conexión')
         nuclearReset()
       }
 
       if (statusCode === DisconnectReason.loggedOut) {
         cierresLoggedOutSeguidos++
         if (cierresLoggedOutSeguidos >= 2) {
-          console.error(`Nuclear Reset disparado por: loggedOut confirmado (${cierresLoggedOutSeguidos} veces seguidas)`)
           nuclearReset()
-        } else {
-          console.log('⚠️ Cierre con código loggedOut, reintentando una vez antes de resetear la sesión...')
         }
       }
 
       intentosReconexion++
-      if (intentosReconexion > config.maxReconnectAttempts) {
-        console.log(`⚠️ Ya van ${intentosReconexion} intentos de reconexión, pero se sigue intentando (nunca nos rendimos).`)
-      }
       setTimeout(iniciar, backoffDelay(intentosReconexion, config.maxReconnectDelay))
     }
   })
@@ -218,7 +209,6 @@ async function iniciar() {
       await handler(sock, m)
     } catch (err) {
       if (err.message.includes('Bad MAC')) {
-        console.error('Nuclear Reset disparado por: Bad MAC procesando un mensaje')
         nuclearReset()
       }
     }
