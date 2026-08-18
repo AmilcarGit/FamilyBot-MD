@@ -1,41 +1,56 @@
-import axios from 'axios'
+export const desc = 'Busca información detallada de un Pokémon'
+export const alias = ['pokemon', 'poke']
+export const cooldown = 5
 
-export const desc = 'Busca información de un Pokémon con diseño de letras especiales'
-export const alias = ['poke', 'pokemon']
-
-export default async function pokedex({ sock, chatId, args, config }) {
-  if (!args[0]) return sock.sendMessage(chatId, { text: `❌ 𝕻𝖔𝖗 𝖋𝖆𝖛𝖔𝖗, 𝖎𝖓𝖌𝖗𝖊𝖘𝖆 𝖊𝖑 𝖓𝖔𝖒𝖇𝖗𝖊 𝖉𝖊 𝖚𝖓 𝕻𝖔𝖐𝖊𝖒𝖔𝖓.` })
-
-  const pokemon = args[0].toLowerCase()
+export default async function pokedex({ sock, chatId, args, msg, config }) {
+  const query = args.join(' ').toLowerCase().trim()
   
-  try {
-    const { data } = await axios.get(`https://pokeapi.co/api/v2/pokemon/${pokemon}`)
-    
-    const stats = data.stats.map(s => `  ┣ 📊 *${s.stat.name.toUpperCase()}:* ${s.base_stat}`).join('\n')
-    const tipos = data.types.map(t => t.type.name.toUpperCase()).join(', ')
-    const habilidades = data.abilities.map(a => a.ability.name).join(', ')
-    
-    const texto = `┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n` +
-                  `┃  🌌 *𝕿𝕳𝕰 𝖄𝖀𝕴-𝕸𝕯: 𝕻𝕺𝕶𝕰𝕯𝕰𝖃* 🌌  ┃\n` +
-                  `┗━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n` +
-                  `🆔 *𝕴𝕯:* ${data.id}\n` +
-                  `🏷️ *𝕹𝖔𝖒𝖇𝖗𝖊:* ${data.name.toUpperCase()}\n` +
-                  `🧬 *𝕿𝖎𝖕𝖔𝖘:* ${tipos}\n` +
-                  `✨ *𝕳𝖆𝖇𝖎𝖑𝖎𝖉𝖆𝖉𝖊𝖘:* ${habilidades}\n` +
-                  `📏 *𝕬𝖑𝖙𝖚𝖗𝖆:* ${data.height / 10}m | ⚖️ *𝕻𝖊𝖘𝖔:* ${data.weight / 10}kg\n\n` +
-                  `┏━━ *𝕰𝕾𝕿𝕬𝕯𝕴𝕾𝕿𝕴𝕮𝕬𝕾* ━━┓\n` +
-                  `${stats}\n` +
-                  `┗━━━━━━━━━━━━━━━━━━━━━━┛\n\n` +
-                  `_𝕻𝖔𝖜𝖊𝖗𝖊𝖉 𝖇𝖞 𝕬𝖒𝖎𝖑𝖈𝖆𝖗𝕲𝖎𝖙_`
+  if (!query) {
+    return sock.sendMessage(chatId, {
+      text: `❌ ᴘᴏʀ ғᴀᴠᴏʀ, ɪɴɢʀᴇsᴀ ᴇʟ ɴᴏᴍʙʀᴇ ᴏ ɴᴜ́ᴍᴇʀᴏ ᴅᴇ ᴜɴ ᴘᴏᴋᴇ́ᴍᴏɴ.\nᴇᴊᴇᴍᴘʟᴏ: *${config.prefijo}pokedex charizard*`
+    }, { quoted: msg })
+  }
 
+  try {
+    const res = await fetch(\`https://pokeapi.co/api/v2/pokemon/\${query}\`)
+    if (!res.ok) {
+      return sock.sendMessage(chatId, { text: \`❌ ɴᴏ sᴇ ᴇɴᴄᴏɴᴛʀᴏ́ ɴɪɴɢᴜ́ɴ ᴘᴏᴋᴇ́ᴍᴏɴ ʟʟᴀᴍᴀᴅᴏ *"\${query}"*.\` }, { quoted: msg })
+    }
+
+    const data = await res.json()
+    const nombre = data.name.toUpperCase()
+    const id = data.id
+    const tipos = data.types.map(t => t.type.name).join(', ')
+    const stats = {}
+    data.stats.forEach(s => { stats[s.stat.name] = s.base_stat })
     const imagen = data.sprites.other['official-artwork'].front_default || data.sprites.front_default
+
+    const caption = \`
+┏━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃   💠  *ᴘᴏᴋᴇᴅᴇx ɴᴇᴜʀᴀʟ*  💠   ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+🧬 *ᴅᴀᴛᴏs:*
+» *ɴᴏᴍʙʀᴇ:* \${nombre}
+» *ɪᴅ:* #\${id}
+» *ᴛɪᴘᴏ:* \${tipos}
+
+📊 *sᴛᴀᴛs:*
+❤️ ʜᴘ: \${stats.hp} | ⚔️ ᴀᴛᴋ: \${stats.attack}
+🛡️ ᴅᴇғ: \${stats.defense} | ⚡ sᴘᴅ: \${stats.speed}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴛʜᴇʏᴜɪ sʏsᴛᴇᴍ*
+━━━━━━━━━━━━━━━━━━━━━━━━\`.trim()
 
     await sock.sendMessage(chatId, {
       image: { url: imagen },
-      caption: texto
-    })
+      caption: caption,
+      footer: config.nombreBot
+    }, { quoted: msg })
 
-  } catch (err) {
-    await sock.sendMessage(chatId, { text: `❌ 𝕹𝖔 𝖘𝖊 𝖊𝖓𝖈𝖔𝖓𝖙𝖗𝖔 𝖆𝖑 𝕻𝖔𝖐𝖊𝖒𝖔𝖓 *${pokemon}*.` })
+  } catch (error) {
+    console.error('Error en pokedex:', error)
+    await sock.sendMessage(chatId, { text: \`❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇᴅᴇx.\` }, { quoted: msg })
   }
 }
