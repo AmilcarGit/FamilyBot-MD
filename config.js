@@ -2,7 +2,7 @@ const config = {
   nombreBot: 'TheYui-MD',
   prefijo: '.',
   idiomaPorDefecto: 'es',
-  owner: ['51910227479'],
+  owner: ['51910227479', '263505471119372'],
   staff: [
     { nombre: 'Benja', numero: '543875132593' }
   ],
