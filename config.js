@@ -6,7 +6,7 @@ export default {
   staff: [
     { nombre: 'Benja', numero: '5493875132593' }
   ],
-  numeroBot: '51925679896',
+  numeroBot: '',
   prioridad: 0,
   sessionFolder: './session',
   dbFile: './database.json',
