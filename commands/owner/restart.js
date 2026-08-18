@@ -1,26 +1,19 @@
-import { spawn } from 'child_process'
-import fs from 'fs'
-import path from 'path'
+import { exec } from 'child_process'
 
-export const desc = 'Reinicia el bot'
-export const cooldown = 0
+export const desc = 'Reinicia el bot de forma segura y limpia'
+export const alias = ['reboot']
 export const soloOwner = true
 
-export default async function restart({ sock, chatId }) {
-  await sock.sendMessage(chatId, { text: '🔄 Reiniciando el bot...' })
-
-  const archivoLock = path.join(process.cwd(), 'bot.lock')
-  try {
-    fs.unlinkSync(archivoLock)
-  } catch {}
-
-  const hijo = spawn(process.argv[0], process.argv.slice(1), {
-    cwd: process.cwd(),
-    detached: true,
-    stdio: 'ignore',
-  })
-
-  hijo.unref()
-
-  setTimeout(() => process.exit(0), 500)
+export default async function restart({ sock, chatId, config }) {
+  await sock.sendMessage(chatId, { text: '🔄 *REINICIO NEURAL EN CURSO*\n\nLimpiando procesos y liberando memoria, espera 5 segundos...' })
+  
+  setTimeout(() => {
+    if (process.env.PM2_HOME) {
+      exec('pm2 restart yui-bot', (err) => {
+        if (err) process.exit(0)
+      })
+    } else {
+      process.exit(0)
+    }
+  }, 2000)
 }
