@@ -2,111 +2,58 @@
 
 <img src="https://i.postimg.cc/tJ9hb31m/IMG-20260714-WA0060.jpg" width="100%" alt="TheYui-MD Banner">
 
-# 🌌 **THE YUI-MD V9** 🌌
-### *The Next Generation of WhatsApp Ecosystem*
+<br/>
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=35&pause=1000&color=00D4FF&center=true&vCenter=true&width=900&lines=NEURAL+DASHBOARD+V9;ADVANCED+ECONOMY+SYSTEM;ELITE+AI+INTEGRATION;CYBERPUNK+INTERFACE;ULTIMATE+WHATSAPP+BOT" alt="Typing SVG"/>
+  <img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=40&pause=1000&color=00D4FF&center=true&vCenter=true&width=900&lines=THE+YUI-MD+V12+ELITE;NEURAL+WHATSAPP+SYSTEM;CYBERPUNK+DASHBOARD+V12;POWERED+BY+AMILCARGIT" alt="Typing SVG"/>
 </p>
 
-[![Stars](https://img.shields.io/github/stars/AmilcarGit/TheYui-MD?style=for-the-badge&logo=github&color=ff007f&labelColor=111)](https://github.com/AmilcarGit/TheYui-MD)
-[![Forks](https://img.shields.io/github/forks/AmilcarGit/TheYui-MD?style=for-the-badge&logo=github&color=00d4ff&labelColor=111)](https://github.com/AmilcarGit/TheYui-MD)
-[![License](https://img.shields.io/github/license/AmilcarGit/TheYui-MD?style=for-the-badge&color=00ff00&labelColor=111)](https://github.com/AmilcarGit/TheYui-MD)
-[![Activity](https://img.shields.io/github/last-commit/AmilcarGit/TheYui-MD?style=for-the-badge&color=ffff00&labelColor=111)](https://github.com/AmilcarGit/TheYui-MD)
+<p align="center">
+  <a href="#-instalación-táctica"><img src="https://img.shields.io/badge/INSTALACIÓN-RÁPIDA-ff007f?style=for-the-badge&logo=termux&logoColor=white" /></a>
+  <a href="#-directorio-de-apis-elite"><img src="https://img.shields.io/badge/APIS-INTEGRADAS-00d4ff?style=for-the-badge&logo=googlecloud&logoColor=white" /></a>
+  <a href="https://github.com/AmilcarGit/TheYui-MD/stargazers"><img src="https://img.shields.io/github/stars/AmilcarGit/TheYui-MD?style=for-the-badge&logo=github&color=ffff00&labelColor=0a0a0a" /></a>
+</p>
 
 </div>
 
 ---
 
-## 💎 **SOBRE LA RED YUI**
-**TheYui-MD** no es simplemente un bot de WhatsApp. Es una infraestructura de **Inteligencia Artificial** y **Entretenimiento** diseñada bajo una estética **Cyberpunk/Neon**. Construido con el motor **Baileys** y optimizado para una latencia ultra baja, ofrece control absoluto a través de su exclusivo panel web.
+# 🌌 **THE YUI-MD: INFRAESTRUCTURA NEURAL V12**
+
+**TheYui-MD** es el ecosistema definitivo para WhatsApp Multi-Device. Fusionamos la potencia de la **Inteligencia Artificial** con una **Economía RPG** profunda y una **Interfaz Web Cyberpunk** única. Esta versión V12 está optimizada para **Baileys v7.0.0-rc14** con soporte completo para LIDs y persistencia extrema en Android.
 
 ---
 
-## ⚡ **DASHBOARD CORE V9 (NEURAL GATE)**
-Hemos desarrollado el panel web más avanzado para Termux. Olvida los comandos complejos, ahora tú tienes el mando desde tu navegador.
+## 🚀 **CENTRO DE MANDO: DASHBOARD V12**
+Administra tu bot como un profesional desde cualquier lugar del mundo.
 
-*   🔵 **Real-Time Logs:** Visualiza la actividad del bot cada 2 segundos.
-*   💗 **Security Shield:** Tokens únicos autogenerados y protección de identidad de Creador.
-*   🟢 **Remote Control:** Reinicia, configura dueños y gestiona el Staff sin tocar una línea de código.
-*   🟡 **Broadcast Center:** Envía anuncios masivos a toda tu comunidad con un clic.
+*   📡 **Monitor en Tiempo Real:** Consola de logs y monitor de RAM con refresco constante.
+*   🔐 **Neural Shield:** Tokens únicos autogenerados por cada instalación para máxima seguridad.
+*   👑 **Owner Lock:** Identidad del creador y staff blindados en el núcleo del sistema.
+*   📢 **Broadcast Center:** Envía anuncios masivos a toda tu red en milisegundos.
 
 ---
 
-## 🚀 **DESPLIEGUE RÁPIDO**
+## 🛠️ **DIRECTORIO DE APIS ELITE**
+Utilizamos un arsenal de APIs de alta gama para garantizar velocidad y bypass de bloqueos.
 
-<details>
-<summary><b>📲 Instalación en Termux (Android)</b></summary>
+| API | Función Principal | Estado |
+| :--- | :--- | :--- |
+| 💠 **Baileys v7** | Motor principal con soporte LID y Anti-Ban. | `ONLINE` |
+| 💠 **Lempi API** | Descargas Pro (IG, FB, TK, Spotify) & Stickers. | `ONLINE` |
+| 💠 **Mitzuki API** | Lyrics, Memes y Generación de Stickers WM. | `ONLINE` |
+| 💠 **EvoGB API** | Clima, Deezer y Herramientas de búsqueda. | `ONLINE` |
+| 💠 **NyxDLaPI** | Inteligencia Artificial Text-to-Image (DALL-E). | `ONLINE` |
+| 💠 **Edward API** | Motor de búsqueda y descarga de YouTube. | `ONLINE` |
 
+---
+
+## 📥 **INSTALACIÓN TÁCTICA EN TERMUX**
+
+Sigue estos pasos para un despliegue perfecto en Android.
+
+### **Paso 1: Preparación del Entorno**
+Actualiza los paquetes de Termux e instala las dependencias necesarias.
 ```bash
 pkg update && pkg upgrade -y
-pkg install git nodejs ffmpeg -y
-git clone https://github.com/AmilcarGit/TheYui-MD
-cd TheYui-MD
-npm install
-npm start
-```
-</details>
-
-<details>
-<summary><b>💻 Instalación en VPS (Linux)</b></summary>
-
-```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install git nodejs ffmpeg -y
-git clone https://github.com/AmilcarGit/TheYui-MD
-cd TheYui-MD
-npm install
-npm start
-```
-</details>
-
----
-
-## 🛡️ **CARACTERÍSTICAS PREMIUM**
-
-| Módulo | Descripción | Tecnología |
-| :--- | :--- | :--- |
-| **🧠 Inteligencia Artificial** | Gemini AI, Text-to-Image y Chat GPT integrados. | NyxDLaPI / Gemini |
-| **💰 Economía RPG** | Sistema de minería, robos, bancos y casino global. | LocalDB v2 |
-| **📥 Media Downloader** | Descargas de IG, TikTok, FB y YT sin bloqueos. | Lempi API |
-| **🎭 Sticker Engine** | Stickers animados, memes y personalización WM. | Mitzuki API |
-| **👮 Seguridad Grupal** | Antilink, Antispam, Antifake y Welcome Pro. | Baileys Core |
-
----
-
-## 📊 **ESTADÍSTICAS DEL SISTEMA**
-
-<div align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=AmilcarGit&show_icons=true&theme=tokyonight&hide_border=true" width="48%">
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=AmilcarGit&layout=compact&theme=tokyonight&hide_border=true" width="48%">
-</div>
-
----
-
-## 👑 **EQUIPO DE DESARROLLO**
-<div align="center">
-  <table>
-    <tr>
-      <td align="center">
-        <a href="https://github.com/AmilcarGit">
-          <img src="https://github.com/AmilcarGit.png" width="100px;" alt="AmilcarGit"/><br />
-          <sub><b>Amilcar (Owner)</b></sub>
-        </a>
-      </td>
-      <td align="center">
-        <img src="https://i.postimg.cc/tJ9hb31m/IMG-20260714-WA0060.jpg" width="100px;" alt="Staff"/><br />
-        <sub><b>Benja (Staff)</b></sub>
-      </td>
-    </tr>
-  </table>
-</div>
-
----
-
-## 💖 **APOYA EL PROYECTO**
-Si **TheYui-MD** te ha servido, no olvides dejar una ⭐ en este repositorio. Tu apoyo nos ayuda a seguir innovando en el ecosistema de WhatsApp.
-
-<div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&height=150&color=00D4FF&section=footer&text=THE%20YUI%20ECOSYSTEM&fontSize=40&fontAlignY=60" alt="Footer"/>
-</div>
+pkg install git nodejs ffmpeg imagick -y
