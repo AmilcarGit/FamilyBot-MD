@@ -1,6 +1,7 @@
 import fetch from 'node-fetch'
+import { guardarEnCache } from '../../lib/pokedexJuego.js'
 
-export const desc = 'Busca información detallada de un Pokémon y permite atraparlo'
+export const desc = 'Busca información detallada de un Pokémon'
 export const alias = ['pokemon', 'poke']
 export const cooldown = 5
 
@@ -14,9 +15,7 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
   }
 
   try {
-    console.log(`[Pokedex] Buscando: ${query}`)
-    const res = await fetch('https://pokeapi.co/api/v2/pokemon/' + query)
-    
+    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${query}`)
     if (!res.ok) {
       return sock.sendMessage(chatId, { text: '❌ ɴᴏ sᴇ ᴇɴᴄᴏɴᴛʀᴏ́ ɴɪɴɢᴜ́ɴ ᴘᴏᴋᴇ́ᴍᴏɴ ʟʟᴀᴍᴀᴅᴏ *"' + query + '"*.' }, { quoted: msg })
     }
@@ -27,37 +26,41 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
     const tipos = data.types.map(t => t.type.name).join(', ')
     const stats = {}
     data.stats.forEach(s => { stats[s.stat.name] = s.base_stat })
-    const imagenUrl = data.sprites.other['official-artwork'].front_default || data.sprites.front_default
+    const imagen = data.sprites.other['official-artwork'].front_default || data.sprites.front_default
+    const statsTotal = Object.values(stats).reduce((a, b) => a + b, 0)
 
-    const caption = '┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n' +
-                  '┃   💠  *ᴘᴏᴋᴇᴅᴇx ɴᴇᴜʀᴀʟ*  💠   ┃\n' +
-                  '┗━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n' +
-                  '🧬 *ᴅᴀᴛᴏs:*\n' +
-                  '» *ɴᴏᴍʙʀᴇ:* ' + nombre + '\n' +
-                  '» *ɪᴅ:* #' + id + '\n' +
-                  '» *ᴛɪᴘᴏ:* ' + tipos + '\n\n' +
-                  '📊 *sᴛᴀᴛs:*\n' +
-                  '❤️ ʜᴘ: ' + stats.hp + ' | ⚔️ ᴀᴛᴋ: ' + stats.attack + '\n' +
-                  '🛡️ ᴅᴇғ: ' + stats.defense + ' | ⚡ sᴘᴅ: ' + stats.speed + '\n\n' +
-                  '━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-                  '🎒 _ᴘᴀʀᴀ ᴀᴛʀᴀᴘᴀʀʟᴏ ᴇsᴄʀɪʙᴇ:_\n' +
-                  '*' + config.prefijo + 'atrapar ' + data.name + ' ' + id + '*\n\n' +
-                  '✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ' + config.nombreBot + '*'
+    guardarEnCache(id, { nombre, tipos, statsTotal })
 
-    console.log(`[Pokedex] Enviando resultado para: ${nombre}`)
-    
-    try {
-      await sock.sendMessage(chatId, { 
-        image: { url: imagenUrl }, 
-        caption: caption.trim() 
-      }, { quoted: msg })
-    } catch (mediaError) {
-      console.error('[Pokedex] Error enviando imagen, enviando solo texto:', mediaError)
-      await sock.sendMessage(chatId, { text: caption.trim() }, { quoted: msg })
-    }
+    const caption = `┏━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃   💠  *ᴘᴏᴋᴇᴅᴇx ɴᴇᴜʀᴀʟ*  💠   ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+🧬 *ᴅᴀᴛᴏs:*
+» *ɴᴏᴍʙʀᴇ:* ${nombre}
+» *ɪᴅ:* #${id}
+» *ᴛɪᴘᴏ:* ${tipos}
+
+📊 *sᴛᴀᴛs:*
+❤️ ʜᴘ: ${stats.hp} | ⚔️ ᴀᴛᴋ: ${stats.attack}
+🛡️ ᴅᴇғ: ${stats.defense} | ⚡ sᴘᴅ: ${stats.speed}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴛʜᴇʏᴜɪ sʏsᴛᴇᴍ*
+━━━━━━━━━━━━━━━━━━━━━━━━`.trim()
+
+    await sock.sendMessage(chatId, {
+      image: { url: imagen },
+      caption: caption,
+      footer: config.nombreBot,
+      buttons: [
+        { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 Atrapar' }, type: 1 },
+        { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 Ver Mochila' }, type: 1 },
+      ],
+      headerType: 4,
+    }, { quoted: msg })
 
   } catch (error) {
-    console.error('[Pokedex] Error general:', error)
-    await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇ́ᴅᴇx.' }, { quoted: msg })
+    console.error('Error en pokedex:', error)
+    await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇᴅᴇx.' }, { quoted: msg })
   }
 }
