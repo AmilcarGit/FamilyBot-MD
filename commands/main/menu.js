@@ -25,7 +25,7 @@ function formatRuntime(seconds) {
   const d = Math.floor(seconds / (3600 * 24))
   const h = Math.floor((seconds % (3600 * 24)) / 3600)
   const m = Math.floor((seconds % 3600) / 60)
-  return \`\${d}ᴅ \${h}ʜ \${m}ᴍ\`
+  return `${d}ᴅ ${h}ʜ ${m}ᴍ`
 }
 
 export default async function menu({ sock, chatId, comandos, config, db, msg }) {
@@ -46,38 +46,38 @@ export default async function menu({ sock, chatId, comandos, config, db, msg }) 
       porCategoria[cat].push(c)
     })
 
-    let menuText = \`┏━━━━━━━━━━━━━━━━━━━━━━━━┓
+    let menuText = `┏━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃   🌌  *ᴛʜᴇ ʏᴜɪ-ᴍᴅ ᴠ1*  🌌   ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 🛰️ *sᴛᴀᴛᴜs ɴᴇᴜʀᴀʟ:*
-» *ᴜᴘᴛɪᴍᴇ:* \${uptime}
-» *ʀᴀᴍ:* \${ram} ᴍʙ / 1024 ᴍʙ
-» *ᴜsᴜᴀʀɪᴏs:* \${totalUsers}
-» *ᴘʀᴇғɪᴊᴏ:* [ \${config.prefijo} ]
+» *ᴜᴘᴛɪᴍᴇ:* ${uptime}
+» *ʀᴀᴍ:* ${ram} ᴍʙ / 1024 ᴍʙ
+» *ᴜsᴜᴀʀɪᴏs:* ${totalUsers}
+» *ᴘʀᴇғɪᴊᴏ:* [ ${config.prefijo} ]
 
-📅 *ғᴇᴄʜᴀ:* \${fecha}
+📅 *ғᴇᴄʜᴀ:* ${fecha}
 ━━━━━━━━━━━━━━━━━━━━━━━━
-\`
+`
 
     const categorias = Object.keys(porCategoria).sort()
     categorias.forEach(cat => {
       const icon = ICONOS[cat.toLowerCase()] || '📂'
-      menuText += \`\\n┏━━〔 \${icon} *\${cat.toUpperCase()}* 〕━━┓\\n\`
+      menuText += `\n┏━━〔 ${icon} *${cat.toUpperCase()}* 〕━━┓\n`
       
       porCategoria[cat].forEach(c => {
         const requiereReg = !['main', 'owner'].includes(cat.toLowerCase())
         const lock = (requiereReg && !isRegistered) ? ' 🔐' : ''
         
-        menuText += \`┃ ✧ *\${config.prefijo}\${c.nombre}*\${lock}\\n\`
-        menuText += \`┃   🌾 _\${c.desc || 'sɪɴ ᴅᴇsᴄʀɪᴘᴄɪᴏ́ɴ'}_\\n\`
+        menuText += `┃ ✧ *${config.prefijo}${c.nombre}*${lock}\n`
+        menuText += `┃   🌾 _${c.desc || 'sɪɴ ᴅᴇsᴄʀɪᴘᴄɪᴏ́ɴ'}_\n`
       })
       
-      menuText += \`┗━━━━━━━━━━━━━━━━━━━━┛\\n\`
+      menuText += `┗━━━━━━━━━━━━━━━━━━━━┛\n`
     })
 
-    menuText += \`\\n✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴍɪʟᴄᴀɢɪᴛ*
-\${isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜsᴀ ' + config.prefijo + 'reg ᴘᴀʀᴀ ʀᴇɢɪsᴛʀᴀʀᴛᴇ_'}\`
+    menuText += `\n✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴍɪʟᴄᴀɢɪᴛ*
+${isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜsᴀ ' + config.prefijo + 'reg ᴘᴀʀᴀ ʀᴇɢɪsᴛʀᴀʀᴛᴇ_'}`
 
     let imagen = null
     try {
