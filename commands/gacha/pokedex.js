@@ -1,5 +1,4 @@
-import pkg from '@whiskeysockets/baileys'
-const { generateWAMessageFromContent, prepareWAMessageMedia } = pkg
+import { generateWAMessageFromContent, prepareWAMessageMedia } from '@whiskeysockets/baileys'
 import fetch from 'node-fetch'
 
 export const desc = 'Busca información detallada de un Pokémon y permite atraparlo'
@@ -52,20 +51,25 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
       }
     ]
 
-    const imgRes = await fetch(imagenUrl)
-    const arrayBuffer = await imgRes.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-    
-    const media = await prepareWAMessageMedia({ image: buffer }, { upload: sock.waUploadToServer })
+    let header = null
+    try {
+      const imgRes = await fetch(imagenUrl)
+      const arrayBuffer = await imgRes.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+      const media = await prepareWAMessageMedia({ image: buffer }, { upload: sock.waUploadToServer })
+      header = {
+        hasMediaAttachment: true,
+        imageMessage: media.imageMessage
+      }
+    } catch (e) {
+      console.error('Error preparando imagen:', e)
+    }
 
     const message = {
       viewOnceMessage: {
         message: {
           interactiveMessage: {
-            header: {
-              hasMediaAttachment: true,
-              imageMessage: media.imageMessage
-            },
+            header: header,
             body: { text: caption.trim() },
             footer: { text: config.nombreBot },
             nativeFlowMessage: { buttons: buttons }
