@@ -28,8 +28,11 @@ function formatRuntime(seconds) {
   return `${d}ᴅ ${h}ʜ ${m}ᴍ`
 }
 
-export default async function menu({ sock, chatId, comandos, config, db }) {
+export default async function menu({ sock, chatId, comandos, config, db, msg }) {
   try {
+    const jidRemitente = msg.key.participant || msg.key.remoteJid
+    const isRegistered = db.data.users[jidRemitente]?.registrado
+    
     const uptime = formatRuntime(process.uptime())
     const ram = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)
     const totalUsers = Object.keys(db.data.users || {}).length
@@ -64,15 +67,19 @@ export default async function menu({ sock, chatId, comandos, config, db }) {
       
       porCategoria[cat].forEach(c => {
         const requiereReg = !['main', 'owner'].includes(cat.toLowerCase())
-        const lock = requiereReg ? ' 🔐' : ''
+        const lock = (requiereReg && !isRegistered) ? ' 🔐' : ''
+        
+        // Comando principal
         menuText += `┃ ✧ *${config.prefijo}${c.nombre}*${lock}\n`
+        // Descripción en la línea de abajo con estilo
+        menuText += `┃   🌾 _${c.desc || 'sɪɴ ᴅᴇsᴄʀɪᴘᴄɪᴏ́ɴ'}_\n`
       })
       
       menuText += `┗━━━━━━━━━━━━━━━━━━━━┛\n`
     })
 
     menuText += `\n✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴍɪʟᴄᴀɢɪᴛ*
-💡 _Usa ${config.prefijo}reg para registrarte_`
+${isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜsᴀ ' + config.prefijo + 'reg ᴘᴀʀᴀ ʀᴇɢɪsᴛʀᴀʀᴛᴇ_'}`
 
     let imagen = null
     try {
