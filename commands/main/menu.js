@@ -82,15 +82,24 @@ ${isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜs�
     let imagen = null
     try {
       imagen = obtenerImagenMenuAleatoria()
-    } catch (e) {}
+    } catch (e) {
+      console.error('Error al obtener imagen:', e)
+    }
 
     if (imagen) {
-      await sock.sendMessage(chatId, { image: imagen, caption: menuText.trim() })
+      try {
+        await sock.sendMessage(chatId, { image: imagen, caption: menuText.trim() }, { quoted: msg })
+      } catch (mediaError) {
+        console.error('Fallo al enviar imagen del menú, enviando solo texto:', mediaError)
+        await sock.sendMessage(chatId, { text: menuText.trim() }, { quoted: msg })
+      }
     } else {
-      await sock.sendMessage(chatId, { text: menuText.trim() })
+      await sock.sendMessage(chatId, { text: menuText.trim() }, { quoted: msg })
     }
   } catch (error) {
-    console.error('Error en menu:', error)
-    await sock.sendMessage(chatId, { text: '❌ Error al generar el menú neural.' })
+    console.error('Error crítico en menu:', error)
+    try {
+      await sock.sendMessage(chatId, { text: '❌ Error al generar el menú neural.' })
+    } catch {}
   }
 }
