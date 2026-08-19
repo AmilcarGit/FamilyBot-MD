@@ -1,4 +1,4 @@
-import fetch from 'node-fetch'
+import axios from 'axios'
 
 export const desc = 'Busca información detallada de un Pokémon y permite atraparlo'
 export const alias = ['pokemon', 'poke']
@@ -14,12 +14,9 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
   }
 
   try {
-    const res = await fetch('https://pokeapi.co/api/v2/pokemon/' + query)
-    if (!res.ok) {
-      return sock.sendMessage(chatId, { text: '❌ ɴᴏ sᴇ ᴇɴᴄᴏɴᴛʀᴏ́ ɴɪɴɢᴜ́ɴ ᴘᴏᴋᴇ́ᴍᴏɴ ʟʟᴀᴍᴀᴅᴏ *"' + query + '"*.' }, { quoted: msg })
-    }
-
-    const data = await res.json()
+    const res = await axios.get('https://pokeapi.co/api/v2/pokemon/' + query)
+    const data = res.data
+    
     const nombre = data.name.toUpperCase()
     const id = data.id
     const tipos = data.types.map(t => t.type.name).join(', ')
@@ -40,20 +37,27 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
                   '━━━━━━━━━━━━━━━━━━━━━━━━\n' +
                   '✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ' + config.nombreBot + '*'
 
-    const buttons = [
-      { buttonId: config.prefijo + 'atrapar ' + data.name + ' ' + id, buttonText: { displayText: '🎒 ᴀᴛʀᴀᴘᴀʀ ' + nombre }, type: 1 }
-    ]
+    const buttonText = '🎒 ᴀᴛʀᴀᴘᴀʀ ' + nombre
+    const buttonId = config.prefijo + 'atrapar ' + data.name + ' ' + id
 
-    await sock.sendMessage(chatId, {
-      image: { url: imagenUrl },
-      caption: caption.trim(),
-      footer: config.nombreBot,
-      buttons: buttons,
-      headerType: 4
-    }, { quoted: msg })
+    try {
+      await sock.sendMessage(chatId, {
+        image: { url: imagenUrl },
+        caption: caption.trim(),
+        footer: config.nombreBot,
+        buttons: [{ buttonId: buttonId, buttonText: { displayText: buttonText }, type: 1 }],
+        headerType: 4
+      }, { quoted: msg })
+    } catch (e) {
+      await sock.sendMessage(chatId, {
+        text: caption.trim() + '\n\n🎒 *ᴘᴀʀᴀ ᴀᴛʀᴀᴘᴀʀ ᴜsᴀ:* ' + buttonId,
+        footer: config.nombreBot,
+        buttons: [{ buttonId: buttonId, buttonText: { displayText: buttonText }, type: 1 }],
+        headerType: 1
+      }, { quoted: msg })
+    }
 
   } catch (error) {
-    console.error('Error en pokedex:', error)
-    await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇᴅᴇx.' }, { quoted: msg })
+    await sock.sendMessage(chatId, { text: '❌ ɴᴏ sᴇ ᴇɴᴄᴏɴᴛʀᴏ́ ᴇʟ ᴘᴏᴋᴇ́ᴍᴏɴ ᴏ ʜᴀʏ ᴜɴ ᴇʀʀᴏʀ ᴅᴇ ʀᴇᴅ.' }, { quoted: msg })
   }
 }
