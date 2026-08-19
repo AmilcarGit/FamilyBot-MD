@@ -1,9 +1,9 @@
+
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import chalk from 'chalk'
 import config from './config.js'
-import { esPremium } from './lib/premium.js'
 import { esOwner, normalizarJid, resolverNumeroReal } from './lib/utils.js'
 import { esAdminGrupo } from './lib/groupPermissions.js'
 import { getDB } from './lib/db.js'
@@ -21,11 +21,25 @@ const listaComandos = []
 const cooldowns = new Map()
 const comandosRespondidos = new Map()
 
-setInterval(() => {
+setInterval(async () => {
   const ahora = Date.now()
   if (comandosRespondidos.size > 1000) {
     comandosRespondidos.clear()
   }
+  
+  try {
+    const db = await getDB()
+    if (db.data.comandosRespondidos) {
+      let modificado = false
+      for (const id in db.data.comandosRespondidos) {
+        if (ahora - db.data.comandosRespondidos[id].timestamp > 10 * 60 * 1000) {
+          delete db.data.comandosRespondidos[id]
+          modificado = true
+        }
+      }
+      if (modificado) await db.write()
+    }
+  } catch {}
 }, 5 * 60 * 1000)
 
 export function obtenerComandosPanel() {
@@ -96,7 +110,6 @@ async function cargarComandoIndividual(rutaCompleta, avisar = false) {
     cooldown: mod.cooldown ?? 3,
     soloOwner: mod.soloOwner || false,
     soloAdmin: mod.soloAdmin || false,
-    premium: mod.premium || false,
     oculto: mod.oculto || false,
   }
 
@@ -214,13 +227,28 @@ export default async function handler(sock, m) {
 
   const idioma = obtenerIdiomaUsuario(db, jidRemitente, config)
 
-  const texto =
+  const tipoMensaje = Object.keys(msg.message)[0]
+  let texto = 
     msg.message.conversation ||
     msg.message.extendedTextMessage?.text ||
     msg.message.imageMessage?.caption ||
+    msg.message.buttonsResponseMessage?.selectedButtonId ||
+    msg.message.templateButtonReplyMessage?.selectedId ||
+    msg.message.listResponseMessage?.singleSelectReply?.selectedRowId ||
     ''
 
-  const tipoMensaje = Object.keys(msg.message)[0]
+  if (!texto && msg.message.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson) {
+    try {
+      const params = JSON.parse(msg.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson)
+      texto = params.id || params.selectedId || params.selectedRowId || ''
+    } catch (e) {
+      console.error('Error parseando paramsJson:', e)
+    }
+  }
+
+  if (!texto && msg.message.interactiveResponseMessage?.body?.text) {
+    texto = msg.message.interactiveResponseMessage.body.text
+  }
   const esGrupo = chatId.endsWith('@g.us')
   info(
     chalk.cyan(esGrupo ? '👥 Grupo' : '👤 Privado'),
@@ -301,7 +329,7 @@ export default async function handler(sock, m) {
       }
     }
 
-    const contieneLink = /(https?:\/\/|chat\.whatsapp\.com|wa\.me\/|www\.)/i.test(texto)
+    const contieneLink = /chat\.whatsapp\.com\/[a-zA-Z0-9]+/i.test(texto)
 
     if (contieneLink) {
       const configChat = obtenerConfigChat(db, chatId)
@@ -341,11 +369,21 @@ export default async function handler(sock, m) {
   const prioridad = sock.isSubbot ? (config.prioridad || 1) : 0
   if (prioridad > 0) {
     await new Promise((resolve) => setTimeout(resolve, prioridad * 2000))
-    if (comandosRespondidos.has(msg.key.id)) {
+    
+    await db.read()
+    db.data.comandosRespondidos ??= {}
+    if (db.data.comandosRespondidos[msg.key.id]) {
       info(chalk.yellow(`🚫 Anti-Spam: ${entrada.nombre} cancelado (ya respondido por otro bot)`))
       return
     }
   }
+
+  db.data.comandosRespondidos ??= {}
+  db.data.comandosRespondidos[msg.key.id] = {
+    bot: sock.user.name || sock.user.id,
+    timestamp: Date.now()
+  }
+  await db.write()
 
   const numeroRealRemitente = await resolverNumeroReal(sock, jidRemitente, msg)
   const esDueno = esOwner(numeroRealRemitente, config.owner)
@@ -377,14 +415,6 @@ export default async function handler(sock, m) {
     if (!esAdmin) {
       return sock.sendMessage(chatId, { text: t(idioma, 'soloAdmin') })
     }
-  }
-
-  if (entrada.premium && !esDueno && !esPremium(db, jidRemitente)) {
-    return sock.sendMessage(chatId, {
-      text:
-        `🌟 El comando *${config.prefijo}${entrada.nombre}* es exclusivo para usuarios premium.\n\n` +
-        `Pregúntale al staff cómo obtener premium 🌸`,
-    })
   }
 
   if (entrada.cooldown > 0 && !esDueno) {
