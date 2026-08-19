@@ -1,5 +1,3 @@
-import pkg from '@whiskeysockets/baileys'
-const { generateWAMessageFromContent } = pkg
 import fetch from 'node-fetch'
 
 export const desc = 'Busca información detallada de un Pokémon y permite atraparlo'
@@ -27,7 +25,7 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
     const tipos = data.types.map(t => t.type.name).join(', ')
     const stats = {}
     data.stats.forEach(s => { stats[s.stat.name] = s.base_stat })
-    const imagen = data.sprites.other['official-artwork'].front_default || data.sprites.front_default
+    const imagenUrl = data.sprites.other['official-artwork'].front_default || data.sprites.front_default
 
     const caption = '┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n' +
                   '┃   💠  *ᴘᴏᴋᴇᴅᴇx ɴᴇᴜʀᴀʟ*  💠   ┃\n' +
@@ -43,33 +41,16 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
                   '✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ' + config.nombreBot + '*'
 
     const buttons = [
-      {
-        name: 'quick_reply',
-        buttonParamsJson: JSON.stringify({
-          display_text: '🎒 ᴀᴛʀᴀᴘᴀʀ ' + nombre,
-          id: config.prefijo + 'atrapar ' + data.name + ' ' + id
-        })
-      }
+      { buttonId: config.prefijo + 'atrapar ' + data.name + ' ' + id, buttonText: { displayText: '🎒 ᴀᴛʀᴀᴘᴀʀ ' + nombre }, type: 1 }
     ]
 
-    const message = {
-      viewOnceMessage: {
-        message: {
-          interactiveMessage: {
-            header: {
-              hasMediaAttachment: true,
-              imageMessage: await sock.prepareMessageMedia({ url: imagen }, { upload: sock.waUploadToServer })
-            },
-            body: { text: caption.trim() },
-            footer: { text: config.nombreBot },
-            nativeFlowMessage: { buttons: buttons }
-          }
-        }
-      }
-    }
-
-    const preparedMessage = generateWAMessageFromContent(chatId, message, { quoted: msg, userJid: sock.user.id })
-    await sock.relayMessage(chatId, preparedMessage.message, { messageId: preparedMessage.key.id })
+    await sock.sendMessage(chatId, {
+      image: { url: imagenUrl },
+      caption: caption.trim(),
+      footer: config.nombreBot,
+      buttons: buttons,
+      headerType: 4
+    }, { quoted: msg })
 
   } catch (error) {
     console.error('Error en pokedex:', error)
