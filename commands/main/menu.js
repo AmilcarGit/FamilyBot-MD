@@ -63,43 +63,44 @@ export default async function menu({ sock, chatId, comandos, config, db, msg }) 
     const categorias = Object.keys(porCategoria).sort()
     categorias.forEach(cat => {
       const icon = ICONOS[cat.toLowerCase()] || '📂'
-      menuText += `\n┏━━〔 ${icon} *${cat.toUpperCase()}* 〕━━┓\n`
+      menuText += \`\\n┏━━〔 \${icon} *\${cat.toUpperCase()}* 〕━━┓\\n\`
       
       porCategoria[cat].forEach(c => {
         const requiereReg = !['main', 'owner'].includes(cat.toLowerCase())
         const lock = (requiereReg && !isRegistered) ? ' 🔐' : ''
         
-        menuText += `┃ ✧ *${config.prefijo}${c.nombre}*${lock}\n`
-        menuText += `┃   🌾 _${c.desc || 'sɪɴ ᴅᴇsᴄʀɪᴘᴄɪᴏ́ɴ'}_\n`
+        menuText += \`┃ ✧ *\${config.prefijo}\${c.nombre}*\${lock}\\n\`
+        menuText += \`┃   🌾 _\${c.desc || 'sɪɴ ᴅᴇsᴄʀɪᴘᴄɪᴏ́ɴ'}_\\n\`
       })
       
-      menuText += `┗━━━━━━━━━━━━━━━━━━━━┛\n`
+      menuText += \`┗━━━━━━━━━━━━━━━━━━━━┛\\n\`
     })
 
-    menuText += `\n✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴍɪʟᴄᴀɢɪᴛ*
-${isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜsᴀ ' + config.prefijo + 'reg ᴘᴀʀᴀ ʀᴇɢɪsᴛʀᴀʀᴛᴇ_'}`
+    menuText += \`\\n✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴍɪʟᴄᴀɢɪᴛ*
+\${isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜsᴀ ' + config.prefijo + 'reg ᴘᴀʀᴀ ʀᴇɢɪsᴛʀᴀʀᴛᴇ_'}\`
 
     let imagen = null
     try {
       imagen = obtenerImagenMenuAleatoria()
-    } catch (e) {
-      console.error('Error al obtener imagen:', e)
-    }
+    } catch (e) {}
 
     if (imagen) {
       try {
-        await sock.sendMessage(chatId, { image: imagen, caption: menuText.trim() }, { quoted: msg })
-      } catch (mediaError) {
-        console.error('Fallo al enviar imagen del menú, enviando solo texto:', mediaError)
-        await sock.sendMessage(chatId, { text: menuText.trim() }, { quoted: msg })
+        await sock.sendMessage(chatId, { 
+          image: imagen, 
+          caption: menuText.trim() 
+        }, { quoted: msg })
+        return 
+      } catch (e) {
+        console.error('Error al enviar imagen, reintentando solo con texto...')
       }
-    } else {
-      await sock.sendMessage(chatId, { text: menuText.trim() }, { quoted: msg })
     }
+
+    await sock.sendMessage(chatId, { 
+      text: menuText.trim() 
+    }, { quoted: msg })
+
   } catch (error) {
-    console.error('Error crítico en menu:', error)
-    try {
-      await sock.sendMessage(chatId, { text: '❌ Error al generar el menú neural.' })
-    } catch {}
+    console.error('Error final en menu:', error)
   }
 }
