@@ -1,6 +1,6 @@
 import { obtenerImagenMenuAleatoria } from '../../lib/randomImage.js'
 
-export const desc = 'Muestra el menú neural con selector'
+export const desc = 'Muestra el menú neural de comandos'
 export const alias = ['help', 'ayuda', 'menu']
 export const cooldown = 5
 
@@ -25,7 +25,7 @@ function formatRuntime(seconds) {
   const d = Math.floor(seconds / (3600 * 24))
   const h = Math.floor((seconds % (3600 * 24)) / 3600)
   const m = Math.floor((seconds % 3600) / 60)
-  return d + 'ᴅ ' + h + 'ʜ ' + m + 'ᴍ'
+  return `${d}ᴅ ${h}ʜ ${m}ᴍ`
 }
 
 export default async function menu({ sock, chatId, comandos, config, db, msg }) {
@@ -46,67 +46,57 @@ export default async function menu({ sock, chatId, comandos, config, db, msg }) 
       porCategoria[cat].push(c)
     })
 
-    let menuText = '┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n' +
-                   '┃   🌌  *ᴛʜᴇ ʏᴜɪ-ᴍᴅ ᴠ1*  🌌   ┃\n' +
-                   '┗━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n' +
-                   '🛰️ *sᴛᴀᴛᴜs ɴᴇᴜʀᴀʟ:*\n' +
-                   '» *ᴜᴘᴛɪᴍᴇ:* ' + uptime + '\n' +
-                   '» *ʀᴀᴍ:* ' + ram + ' ᴍʙ / 1024 ᴍʙ\n' +
-                   '» *ᴜsᴜᴀʀɪᴏs:* ' + totalUsers + '\n' +
-                   '» *ᴘʀᴇғɪᴊᴏ:* [ ' + config.prefijo + ' ]\n\n' +
-                   '📅 *ғᴇᴄʜᴀ:* ' + fecha + '\n' +
-                   '━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-                   '✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴍɪʟᴄᴀɢɪᴛ*\n' +
-                   (isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜsᴀ ' + config.prefijo + 'reg ᴘᴀʀᴀ ʀᴇɢɪsᴛʀᴀʀᴛᴇ_')
+    let menuText = `┏━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃   🌌  *ᴛʜᴇ ʏᴜɪ-ᴍᴅ ᴠ1*  🌌   ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-    const sections = []
-    
-    sections.push({
-      title: '⚡ SISTEMA',
-      rows: [
-        { title: '⚡ PING', rowId: config.prefijo + 'ping', description: 'Verificar latencia del bot' },
-        { title: '🤖 INFO BOT', rowId: config.prefijo + 'infobot', description: 'Información técnica del sistema' }
-      ]
-    })
+🛰️ *sᴛᴀᴛᴜs ɴᴇᴜʀᴀʟ:*
+» *ᴜᴘᴛɪᴍᴇ:* ${uptime}
+» *ʀᴀᴍ:* ${ram} ᴍʙ / 1024 ᴍʙ
+» *ᴜsᴜᴀʀɪᴏs:* ${totalUsers}
+» *ᴘʀᴇғɪᴊᴏ:* [ ${config.prefijo} ]
+
+📅 *ғᴇᴄʜᴀ:* ${fecha}
+━━━━━━━━━━━━━━━━━━━━━━━━
+`
 
     const categorias = Object.keys(porCategoria).sort()
-    const rowsCategorias = categorias.map(cat => ({
-      title: ICONOS[cat.toLowerCase()] + ' ' + cat.toUpperCase(),
-      rowId: config.prefijo + 'help ' + cat.toLowerCase(),
-      description: 'Ver comandos de ' + cat
-    }))
-
-    sections.push({
-      title: '📂 CATEGORÍAS',
-      rows: rowsCategorias
+    categorias.forEach(cat => {
+      const icon = ICONOS[cat.toLowerCase()] || '📂'
+      menuText += `\n┏━━〔 ${icon} *${cat.toUpperCase()}* 〕━━┓\n`
+      
+      porCategoria[cat].forEach(c => {
+        const requiereReg = !['main', 'owner'].includes(cat.toLowerCase())
+        const lock = (requiereReg && !isRegistered) ? ' 🔐' : ''
+        
+        menuText += `┃ ✧ *${config.prefijo}${c.nombre}*${lock}\n`
+        menuText += `┃   🌾 _${c.desc || 'sɪɴ ᴅᴇsᴄʀɪᴘᴄɪᴏ́ɴ'}_\n`
+      })
+      
+      menuText += `┗━━━━━━━━━━━━━━━━━━━━┛\n`
     })
 
-    const listMessage = {
-      text: menuText.trim(),
-      footer: config.nombreBot,
-      title: '💠 MENU SELECCTOR 💠',
-      buttonText: '🌸 ABRIR SELECTOR 🌸',
-      sections
-    }
+    menuText += `\n✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴍɪʟᴄᴀɢɪᴛ*
+${isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜsᴀ ' + config.prefijo + 'reg ᴘᴀʀᴀ ʀᴇɢɪsᴛʀᴀʀᴛᴇ_'}`
 
-    const imagen = obtenerImagenMenuAleatoria()
-    
+    let imagen = null
+    try {
+      imagen = obtenerImagenMenuAleatoria()
+    } catch (e) {}
+
     if (imagen) {
       try {
         await sock.sendMessage(chatId, { 
           image: imagen, 
-          caption: menuText.trim(),
-          footer: config.nombreBot,
-          buttonText: '🌸 ABRIR SELECTOR 🌸',
-          sections
+          caption: menuText.trim() 
         }, { quoted: msg })
         return 
       } catch (e) {}
     }
 
-    await sock.sendMessage(chatId, listMessage, { quoted: msg })
+    await sock.sendMessage(chatId, { 
+      text: menuText.trim() 
+    }, { quoted: msg })
 
-  } catch (error) {
-    console.error('Error en menu:', error)
-  }
+  } catch (error) {}
 }
