@@ -39,57 +39,65 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
                   '❤️ ʜᴘ: ' + stats.hp + ' | ⚔️ ᴀᴛᴋ: ' + stats.attack + '\n' +
                   '🛡️ ᴅᴇғ: ' + stats.defense + ' | ⚡ sᴘᴅ: ' + stats.speed + '\n\n' +
                   '━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+                  '🎒 _ᴜsᴀ ᴇʟ ʙᴏᴛᴏ́ɴ ᴅᴇ ᴀʙᴀᴊᴏ ᴏ ᴇsᴄʀɪʙᴇ:_\n' +
+                  '*' + config.prefijo + 'atrapar ' + data.name + ' ' + id + '*\n\n' +
                   '✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ' + config.nombreBot + '*'
 
-    const buttons = [
-      {
-        name: 'quick_reply',
-        buttonParamsJson: JSON.stringify({
-          display_text: '🎒 ᴀᴛʀᴀᴘᴀʀ ' + nombre,
-          id: config.prefijo + 'atrapar ' + data.name + ' ' + id
-        })
-      }
-    ]
-
-    let header = {
-      title: '💠 POKEDEX SYSTEM 💠',
-      hasMediaAttachment: false
-    }
-
+    let buffer = null
     try {
       const imgRes = await fetch(imagenUrl)
       const arrayBuffer = await imgRes.arrayBuffer()
-      const buffer = Buffer.from(arrayBuffer)
-      const media = await prepareWAMessageMedia({ image: buffer }, { upload: sock.waUploadToServer })
-      header = {
-        title: '💠 POKEDEX SYSTEM 💠',
-        hasMediaAttachment: true,
-        imageMessage: media.imageMessage
-      }
+      buffer = Buffer.from(arrayBuffer)
     } catch (e) {
-      console.error('Error preparando imagen:', e)
+      console.error('Error descargando imagen:', e)
     }
 
-    const interactiveMessage = {
-      header: header,
-      body: { text: caption.trim() },
-      footer: { text: config.nombreBot },
-      nativeFlowMessage: { buttons: buttons }
-    }
+    try {
+      const buttons = [
+        {
+          name: 'quick_reply',
+          buttonParamsJson: JSON.stringify({
+            display_text: '🎒 ᴀᴛʀᴀᴘᴀʀ ' + nombre,
+            id: config.prefijo + 'atrapar ' + data.name + ' ' + id
+          })
+        }
+      ]
 
-    const message = {
-      viewOnceMessageV2: {
-        message: {
-          interactiveMessage: interactiveMessage
+      let media = null
+      if (buffer) {
+        media = await prepareWAMessageMedia({ image: buffer }, { upload: sock.waUploadToServer })
+      }
+
+      const message = {
+        viewOnceMessage: {
+          message: {
+            interactiveMessage: {
+              header: {
+                title: '💠 POKEDEX SYSTEM 💠',
+                hasMediaAttachment: !!media,
+                imageMessage: media?.imageMessage
+              },
+              body: { text: caption.trim() },
+              footer: { text: config.nombreBot },
+              nativeFlowMessage: { buttons: buttons }
+            }
+          }
         }
       }
+
+      const preparedMessage = generateWAMessageFromContent(chatId, message, { quoted: msg, userJid: sock.user.id })
+      await sock.relayMessage(chatId, preparedMessage.message, { messageId: preparedMessage.key.id })
+    } catch (interactiveError) {
+      console.error('Error enviando mensaje interactivo, usando fallback:', interactiveError)
+      if (buffer) {
+        await sock.sendMessage(chatId, { image: buffer, caption: caption.trim() }, { quoted: msg })
+      } else {
+        await sock.sendMessage(chatId, { text: caption.trim() }, { quoted: msg })
+      }
     }
 
-    const preparedMessage = generateWAMessageFromContent(chatId, message, { quoted: msg, userJid: sock.user.id })
-    await sock.relayMessage(chatId, preparedMessage.message, { messageId: preparedMessage.key.id })
-
   } catch (error) {
-    console.error('Error en pokedex:', error)
+    console.error('Error general en pokedex:', error)
     await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇ́ᴅᴇx.' }, { quoted: msg })
   }
 }
