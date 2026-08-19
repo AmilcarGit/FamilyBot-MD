@@ -1,11 +1,11 @@
 import { obtenerImagenMenuAleatoria } from '../../lib/randomImage.js'
 
-export const desc = 'Muestra el menú neural de comandos'
+export const desc = 'Muestra el menu del bot'
 export const alias = ['help', 'ayuda', 'menu']
 export const cooldown = 5
 
 const ICONOS = {
-  main: '💠',
+  main: '🏠',
   descargas: '📥',
   economia: '💰',
   gacha: '🧧',
@@ -25,7 +25,7 @@ function formatRuntime(seconds) {
   const d = Math.floor(seconds / (3600 * 24))
   const h = Math.floor((seconds % (3600 * 24)) / 3600)
   const m = Math.floor((seconds % 3600) / 60)
-  return d + 'ᴅ ' + h + 'ʜ ' + m + 'ᴍ'
+  return d + 'd ' + h + 'h ' + m + 'm'
 }
 
 export default async function menu({ sock, chatId, comandos, config, db, msg }) {
@@ -46,40 +46,38 @@ export default async function menu({ sock, chatId, comandos, config, db, msg }) 
       porCategoria[cat].push(c)
     })
 
-    let menuText = '┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n' +
-                   '┃   🌌  *ᴛʜᴇ ʏᴜɪ-ᴍᴅ ᴠ1*  🌌   ┃\n' +
-                   '┗━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n' +
-                   '🛰️ *sᴛᴀᴛᴜs ɴᴇᴜʀᴀʟ:*\n' +
-                   '» *ᴜᴘᴛɪᴍᴇ:* ' + uptime + '\n' +
-                   '» *ʀᴀᴍ:* ' + ram + ' ᴍʙ / 1024 ᴍʙ\n' +
-                   '» *ᴜsᴜᴀʀɪᴏs:* ' + totalUsers + '\n' +
-                   '» *ᴘʀᴇғɪᴊᴏ:* [ ' + config.prefijo + ' ]\n\n' +
-                   '📅 *ғᴇᴄʜᴀ:* ' + fecha + '\n' +
-                   '━━━━━━━━━━━━━━━━━━━━━━━━\n'
+    let menuText = '====================\n' +
+                   '   THE YUI-MD V1\n' +
+                   '====================\n\n' +
+                   'STATUS:\n' +
+                   '- Uptime: ' + uptime + '\n' +
+                   '- RAM: ' + ram + ' MB / 1024 MB\n' +
+                   '- Usuarios: ' + totalUsers + '\n' +
+                   '- Prefijo: [ ' + config.prefijo + ' ]\n\n' +
+                   'Fecha: ' + fecha + '\n' +
+                   '--------------------\n'
 
     const categorias = Object.keys(porCategoria).sort()
     categorias.forEach(cat => {
       const icon = ICONOS[cat.toLowerCase()] || '📂'
-      menuText += '\n┏━━〔 ' + icon + ' *' + cat.toUpperCase() + '* 〕━━┓\n'
+      menuText += '\n[ ' + icon + ' ' + cat.toUpperCase() + ' ]\n'
       
       porCategoria[cat].forEach(c => {
         const requiereReg = !['main', 'owner'].includes(cat.toLowerCase())
-        const lock = (requiereReg && !isRegistered) ? ' 🔐' : ''
+        const lock = (requiereReg && !isRegistered) ? ' (L)' : ''
         
-        menuText += '┃ ✧ *' + config.prefijo + c.nombre + '*' + lock + '\n'
-        menuText += '┃   🌾 _' + (c.desc || 'sɪɴ ᴅᴇsᴄʀɪᴘᴄɪᴏ́ɴ') + '_\n'
+        menuText += '> ' + config.prefijo + c.nombre + lock + '\n'
+        menuText += '  ' + (c.desc || 'Sin descripcion') + '\n'
       })
-      
-      menuText += '┗━━━━━━━━━━━━━━━━━━━━┛\n'
     })
 
-    menuText += '\n✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴍɪʟᴄᴀɢɪᴛ*\n' +
-                (isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜsᴀ ' + config.prefijo + 'reg ᴘᴀʀᴀ ʀᴇɢɪsᴛʀᴀʀᴛᴇ_')
+    menuText += '\nPowered by AmilcarGit\n' +
+                (isRegistered ? 'Usuario Registrado' : 'Usa ' + config.prefijo + 'reg para registrarte')
 
     const buttons = [
-      { buttonId: config.prefijo + 'premium', buttonText: { displayText: '💎 ᴘʀᴇᴍɪᴜᴍ' }, type: 1 },
-      { buttonId: config.prefijo + 'infobot', buttonText: { displayText: '🤖 ɪɴғᴏ ʙᴏᴛ' }, type: 1 },
-      { buttonId: config.prefijo + 'owner', buttonText: { displayText: '👑 ᴏᴡɴᴇʀ' }, type: 1 }
+      { buttonId: config.prefijo + 'premium', buttonText: { displayText: 'Premium' }, type: 1 },
+      { buttonId: config.prefijo + 'infobot', buttonText: { displayText: 'Info Bot' }, type: 1 },
+      { buttonId: config.prefijo + 'owner', buttonText: { displayText: 'Owner' }, type: 1 }
     ]
 
     const imagen = obtenerImagenMenuAleatoria()
@@ -102,6 +100,6 @@ export default async function menu({ sock, chatId, comandos, config, db, msg }) 
     }
   } catch (error) {
     console.error('Error en menu:', error)
-    await sock.sendMessage(chatId, { text: '❌ Error al generar el menú neural.' })
+    await sock.sendMessage(chatId, { text: 'Error al generar el menu.' })
   }
 }
