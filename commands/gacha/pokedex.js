@@ -1,4 +1,4 @@
-import axios from 'axios'
+import fetch from 'node-fetch'
 
 export const desc = 'Busca información detallada de un Pokémon y permite atraparlo'
 export const alias = ['pokemon', 'poke']
@@ -14,9 +14,12 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
   }
 
   try {
-    const res = await axios.get('https://pokeapi.co/api/v2/pokemon/' + query)
-    const data = res.data
-    
+    const res = await fetch('https://pokeapi.co/api/v2/pokemon/' + query)
+    if (!res.ok) {
+      return sock.sendMessage(chatId, { text: '❌ ɴᴏ sᴇ ᴇɴᴄᴏɴᴛʀᴏ́ ɴɪɴɢᴜ́ɴ ᴘᴏᴋᴇ́ᴍᴏɴ ʟʟᴀᴍᴀᴅᴏ *"' + query + '"*.' }, { quoted: msg })
+    }
+
+    const data = await res.json()
     const nombre = data.name.toUpperCase()
     const id = data.id
     const tipos = data.types.map(t => t.type.name).join(', ')
@@ -58,6 +61,6 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
     }
 
   } catch (error) {
-    await sock.sendMessage(chatId, { text: '❌ ɴᴏ sᴇ ᴇɴᴄᴏɴᴛʀᴏ́ ᴇʟ ᴘᴏᴋᴇ́ᴍᴏɴ ᴏ ʜᴀʏ ᴜɴ ᴇʀʀᴏʀ ᴅᴇ ʀᴇᴅ.' }, { quoted: msg })
+    await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇᴅᴇx.' }, { quoted: msg })
   }
 }
