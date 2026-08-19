@@ -51,13 +51,18 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
       }
     ]
 
-    let header = null
+    let header = {
+      title: '💠 POKEDEX SYSTEM 💠',
+      hasMediaAttachment: false
+    }
+
     try {
       const imgRes = await fetch(imagenUrl)
       const arrayBuffer = await imgRes.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
       const media = await prepareWAMessageMedia({ image: buffer }, { upload: sock.waUploadToServer })
       header = {
+        title: '💠 POKEDEX SYSTEM 💠',
         hasMediaAttachment: true,
         imageMessage: media.imageMessage
       }
@@ -65,15 +70,17 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
       console.error('Error preparando imagen:', e)
     }
 
+    const interactiveMessage = {
+      header: header,
+      body: { text: caption.trim() },
+      footer: { text: config.nombreBot },
+      nativeFlowMessage: { buttons: buttons }
+    }
+
     const message = {
-      viewOnceMessage: {
+      viewOnceMessageV2: {
         message: {
-          interactiveMessage: {
-            header: header,
-            body: { text: caption.trim() },
-            footer: { text: config.nombreBot },
-            nativeFlowMessage: { buttons: buttons }
-          }
+          interactiveMessage: interactiveMessage
         }
       }
     }
