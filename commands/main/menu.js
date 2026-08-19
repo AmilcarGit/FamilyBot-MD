@@ -63,21 +63,21 @@ export default async function menu({ sock, chatId, comandos, config, db, msg }) 
     const categorias = Object.keys(porCategoria).sort()
     categorias.forEach(cat => {
       const icon = ICONOS[cat.toLowerCase()] || '📂'
-      menuText += \`\\n┏━━〔 \${icon} *\${cat.toUpperCase()}* 〕━━┓\\n\`
+      menuText += `\n┏━━〔 ${icon} *${cat.toUpperCase()}* 〕━━┓\n`
       
       porCategoria[cat].forEach(c => {
         const requiereReg = !['main', 'owner'].includes(cat.toLowerCase())
         const lock = (requiereReg && !isRegistered) ? ' 🔐' : ''
         
-        menuText += \`┃ ✧ *\${config.prefijo}\${c.nombre}*\${lock}\\n\`
-        menuText += \`┃   🌾 _\${c.desc || 'sɪɴ ᴅᴇsᴄʀɪᴘᴄɪᴏ́ɴ'}_\\n\`
+        menuText += `┃ ✧ *${config.prefijo}${c.nombre}*${lock}\n`
+        menuText += `┃   🌾 _${c.desc || 'sɪɴ ᴅᴇsᴄʀɪᴘᴄɪᴏ́ɴ'}_\n`
       })
       
-      menuText += \`┗━━━━━━━━━━━━━━━━━━━━┛\\n\`
+      menuText += `┗━━━━━━━━━━━━━━━━━━━━┛\n`
     })
 
-    menuText += \`\\n✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴍɪʟᴄᴀɢɪᴛ*
-\${isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜsᴀ ' + config.prefijo + 'reg ᴘᴀʀᴀ ʀᴇɢɪsᴛʀᴀʀᴛᴇ_'}\`
+    menuText += `\n✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴍɪʟᴄᴀɢɪᴛ*
+${isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜsᴀ ' + config.prefijo + 'reg ᴘᴀʀᴀ ʀᴇɢɪsᴛʀᴀʀᴛᴇ_'}`
 
     let imagen = null
     try {
@@ -91,16 +91,12 @@ export default async function menu({ sock, chatId, comandos, config, db, msg }) 
           caption: menuText.trim() 
         }, { quoted: msg })
         return 
-      } catch (e) {
-        console.error('Error al enviar imagen, reintentando solo con texto...')
-      }
+      } catch (e) {}
     }
 
     await sock.sendMessage(chatId, { 
       text: menuText.trim() 
     }, { quoted: msg })
 
-  } catch (error) {
-    console.error('Error final en menu:', error)
-  }
+  } catch (error) {}
 }
