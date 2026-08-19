@@ -1,5 +1,5 @@
 import pkg from '@whiskeysockets/baileys'
-const { generateWAMessageFromContent } = pkg
+const { generateWAMessageFromContent, prepareWAMessageMedia } = pkg
 import fetch from 'node-fetch'
 
 export const desc = 'Busca información detallada de un Pokémon y permite atraparlo'
@@ -53,8 +53,10 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
     ]
 
     const imgRes = await fetch(imagenUrl)
-    const buffer = await imgRes.buffer()
-    const media = await sock.prepareMessageMedia(buffer, { upload: sock.waUploadToServer })
+    const arrayBuffer = await imgRes.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    
+    const media = await prepareWAMessageMedia({ image: buffer }, { upload: sock.waUploadToServer })
 
     const message = {
       viewOnceMessage: {
@@ -77,6 +79,6 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
 
   } catch (error) {
     console.error('Error en pokedex:', error)
-    await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇᴅᴇx.' }, { quoted: msg })
+    await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇ́ᴅᴇx.' }, { quoted: msg })
   }
 }
