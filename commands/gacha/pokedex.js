@@ -1,4 +1,3 @@
-import { generateWAMessageFromContent, prepareWAMessageMedia } from '@whiskeysockets/baileys'
 import fetch from 'node-fetch'
 
 export const desc = 'Busca información detallada de un Pokémon y permite atraparlo'
@@ -15,7 +14,9 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
   }
 
   try {
+    console.log(`[Pokedex] Buscando: ${query}`)
     const res = await fetch('https://pokeapi.co/api/v2/pokemon/' + query)
+    
     if (!res.ok) {
       return sock.sendMessage(chatId, { text: '❌ ɴᴏ sᴇ ᴇɴᴄᴏɴᴛʀᴏ́ ɴɪɴɢᴜ́ɴ ᴘᴏᴋᴇ́ᴍᴏɴ ʟʟᴀᴍᴀᴅᴏ *"' + query + '"*.' }, { quoted: msg })
     }
@@ -39,65 +40,24 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
                   '❤️ ʜᴘ: ' + stats.hp + ' | ⚔️ ᴀᴛᴋ: ' + stats.attack + '\n' +
                   '🛡️ ᴅᴇғ: ' + stats.defense + ' | ⚡ sᴘᴅ: ' + stats.speed + '\n\n' +
                   '━━━━━━━━━━━━━━━━━━━━━━━━\n' +
-                  '🎒 _ᴜsᴀ ᴇʟ ʙᴏᴛᴏ́ɴ ᴅᴇ ᴀʙᴀᴊᴏ ᴏ ᴇsᴄʀɪʙᴇ:_\n' +
+                  '🎒 _ᴘᴀʀᴀ ᴀᴛʀᴀᴘᴀʀʟᴏ ᴇsᴄʀɪʙᴇ:_\n' +
                   '*' + config.prefijo + 'atrapar ' + data.name + ' ' + id + '*\n\n' +
                   '✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ' + config.nombreBot + '*'
 
-    let buffer = null
+    console.log(`[Pokedex] Enviando resultado para: ${nombre}`)
+    
     try {
-      const imgRes = await fetch(imagenUrl)
-      const arrayBuffer = await imgRes.arrayBuffer()
-      buffer = Buffer.from(arrayBuffer)
-    } catch (e) {
-      console.error('Error descargando imagen:', e)
-    }
-
-    try {
-      const buttons = [
-        {
-          name: 'quick_reply',
-          buttonParamsJson: JSON.stringify({
-            display_text: '🎒 ᴀᴛʀᴀᴘᴀʀ ' + nombre,
-            id: config.prefijo + 'atrapar ' + data.name + ' ' + id
-          })
-        }
-      ]
-
-      let media = null
-      if (buffer) {
-        media = await prepareWAMessageMedia({ image: buffer }, { upload: sock.waUploadToServer })
-      }
-
-      const message = {
-        viewOnceMessage: {
-          message: {
-            interactiveMessage: {
-              header: {
-                title: '💠 POKEDEX SYSTEM 💠',
-                hasMediaAttachment: !!media,
-                imageMessage: media?.imageMessage
-              },
-              body: { text: caption.trim() },
-              footer: { text: config.nombreBot },
-              nativeFlowMessage: { buttons: buttons }
-            }
-          }
-        }
-      }
-
-      const preparedMessage = generateWAMessageFromContent(chatId, message, { quoted: msg, userJid: sock.user.id })
-      await sock.relayMessage(chatId, preparedMessage.message, { messageId: preparedMessage.key.id })
-    } catch (interactiveError) {
-      console.error('Error enviando mensaje interactivo, usando fallback:', interactiveError)
-      if (buffer) {
-        await sock.sendMessage(chatId, { image: buffer, caption: caption.trim() }, { quoted: msg })
-      } else {
-        await sock.sendMessage(chatId, { text: caption.trim() }, { quoted: msg })
-      }
+      await sock.sendMessage(chatId, { 
+        image: { url: imagenUrl }, 
+        caption: caption.trim() 
+      }, { quoted: msg })
+    } catch (mediaError) {
+      console.error('[Pokedex] Error enviando imagen, enviando solo texto:', mediaError)
+      await sock.sendMessage(chatId, { text: caption.trim() }, { quoted: msg })
     }
 
   } catch (error) {
-    console.error('Error general en pokedex:', error)
+    console.error('[Pokedex] Error general:', error)
     await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇ́ᴅᴇx.' }, { quoted: msg })
   }
 }
