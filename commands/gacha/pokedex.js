@@ -1,3 +1,5 @@
+import pkg from '@whiskeysockets/baileys'
+const { generateWAMessageFromContent } = pkg
 import fetch from 'node-fetch'
 
 export const desc = 'Busca información detallada de un Pokémon y permite atraparlo'
@@ -40,27 +42,41 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
                   '━━━━━━━━━━━━━━━━━━━━━━━━\n' +
                   '✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ' + config.nombreBot + '*'
 
-    const buttonText = '🎒 ᴀᴛʀᴀᴘᴀʀ ' + nombre
-    const buttonId = config.prefijo + 'atrapar ' + data.name + ' ' + id
+    const buttons = [
+      {
+        name: 'quick_reply',
+        buttonParamsJson: JSON.stringify({
+          display_text: '🎒 ᴀᴛʀᴀᴘᴀʀ ' + nombre,
+          id: config.prefijo + 'atrapar ' + data.name + ' ' + id
+        })
+      }
+    ]
 
-    try {
-      await sock.sendMessage(chatId, {
-        image: { url: imagenUrl },
-        caption: caption.trim(),
-        footer: config.nombreBot,
-        buttons: [{ buttonId: buttonId, buttonText: { displayText: buttonText }, type: 1 }],
-        headerType: 4
-      }, { quoted: msg })
-    } catch (e) {
-      await sock.sendMessage(chatId, {
-        text: caption.trim() + '\n\n🎒 *ᴘᴀʀᴀ ᴀᴛʀᴀᴘᴀʀ ᴜsᴀ:* ' + buttonId,
-        footer: config.nombreBot,
-        buttons: [{ buttonId: buttonId, buttonText: { displayText: buttonText }, type: 1 }],
-        headerType: 1
-      }, { quoted: msg })
+    const imgRes = await fetch(imagenUrl)
+    const buffer = await imgRes.buffer()
+    const media = await sock.prepareMessageMedia(buffer, { upload: sock.waUploadToServer })
+
+    const message = {
+      viewOnceMessage: {
+        message: {
+          interactiveMessage: {
+            header: {
+              hasMediaAttachment: true,
+              imageMessage: media.imageMessage
+            },
+            body: { text: caption.trim() },
+            footer: { text: config.nombreBot },
+            nativeFlowMessage: { buttons: buttons }
+          }
+        }
+      }
     }
 
+    const preparedMessage = generateWAMessageFromContent(chatId, message, { quoted: msg, userJid: sock.user.id })
+    await sock.relayMessage(chatId, preparedMessage.message, { messageId: preparedMessage.key.id })
+
   } catch (error) {
+    console.error('Error en pokedex:', error)
     await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇᴅᴇx.' }, { quoted: msg })
   }
 }
