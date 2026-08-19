@@ -69,9 +69,7 @@ export default async function menu({ sock, chatId, comandos, config, db, msg }) 
         const requiereReg = !['main', 'owner'].includes(cat.toLowerCase())
         const lock = (requiereReg && !isRegistered) ? ' 🔐' : ''
         
-        // Comando principal
         menuText += `┃ ✧ *${config.prefijo}${c.nombre}*${lock}\n`
-        // Descripción en la línea de abajo con estilo
         menuText += `┃   🌾 _${c.desc || 'sɪɴ ᴅᴇsᴄʀɪᴘᴄɪᴏ́ɴ'}_\n`
       })
       
@@ -81,15 +79,29 @@ export default async function menu({ sock, chatId, comandos, config, db, msg }) 
     menuText += `\n✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴍɪʟᴄᴀɢɪᴛ*
 ${isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜsᴀ ' + config.prefijo + 'reg ᴘᴀʀᴀ ʀᴇɢɪsᴛʀᴀʀᴛᴇ_'}`
 
-    let imagen = null
-    try {
-      imagen = obtenerImagenMenuAleatoria()
-    } catch (e) {}
+    const buttons = [
+      { buttonId: `${config.prefijo}premium`, buttonText: { displayText: '💎 ᴘʀᴇᴍɪᴜᴍ' }, type: 1 },
+      { buttonId: `${config.prefijo}infobot`, buttonText: { displayText: '🤖 ɪɴғᴏ ʙᴏᴛ' }, type: 1 },
+      { buttonId: `${config.prefijo}owner`, buttonText: { displayText: '👑 ᴏᴡɴᴇʀ' }, type: 1 }
+    ]
 
+    const imagen = obtenerImagenMenuAleatoria()
+    
     if (imagen) {
-      await sock.sendMessage(chatId, { image: imagen, caption: menuText.trim() })
+      await sock.sendMessage(chatId, { 
+        image: imagen, 
+        caption: menuText.trim(),
+        footer: config.nombreBot,
+        buttons: buttons,
+        headerType: 4
+      }, { quoted: msg })
     } else {
-      await sock.sendMessage(chatId, { text: menuText.trim() })
+      await sock.sendMessage(chatId, { 
+        text: menuText.trim(),
+        footer: config.nombreBot,
+        buttons: buttons,
+        headerType: 1
+      }, { quoted: msg })
     }
   } catch (error) {
     console.error('Error en menu:', error)
