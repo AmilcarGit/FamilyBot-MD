@@ -139,6 +139,11 @@ export default async function handler(sock, m) {
 
   if (entrada.soloOwner && !esDueno) return sock.sendMessage(chatId, { text: t(idioma, 'soloOwner') })
 
+  if (entrada.soloAdmin && !esDueno) {
+    const esAdmin = await esAdminGrupo(sock, chatId, jidRemitente)
+    if (!esAdmin) return sock.sendMessage(chatId, { text: t(idioma, 'soloAdmin') || '🔒 Este comando es solo para administradores del grupo.' })
+  }
+
   try {
     db.data.stats ??= { comandosEjecutados: 0 }
     db.data.stats.comandosEjecutados++
