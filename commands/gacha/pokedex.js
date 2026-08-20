@@ -48,25 +48,25 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
 ✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ${config.nombreBot}*
 ━━━━━━━━━━━━━━━━━━━━━━━━`.trim()
 
+    const buttons = [
+      { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 ᴀᴛʀᴀᴘᴀʀ' }, type: 1 },
+      { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 ᴍᴏᴄʜɪʟᴀ' }, type: 1 }
+    ]
+
     try {
       await sock.sendMessage(chatId, {
         image: { url: imagenUrl },
         caption: caption,
         footer: config.nombreBot,
-        buttons: [
-          { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 ᴀᴛʀᴀᴘᴀʀ' }, type: 1 },
-          { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 ᴍᴏᴄʜɪʟᴀ' }, type: 1 }
-        ],
+        buttons: buttons,
         headerType: 4
       }, { quoted: msg })
     } catch (e) {
       await sock.sendMessage(chatId, {
         text: caption,
         footer: config.nombreBot,
-        buttons: [
-          { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 ᴀᴛʀᴀᴘᴀʀ' }, type: 1 },
-          { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 ᴍᴏᴄʜɪʟᴀ' }, type: 1 }
-        ]
+        buttons: buttons,
+        headerType: 1
       }, { quoted: msg })
     }
 
