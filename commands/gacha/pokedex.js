@@ -1,7 +1,9 @@
 import fetch from 'node-fetch'
 import { guardarEnCache } from '../../lib/pokedexJuego.js'
-import pkg from '@whiskeysockets/baileys'
-const { generateWAMessageFromContent, prepareWAMessageMedia } = pkg
+import * as Baileys from '@whiskeysockets/baileys'
+
+const generateWAMessageFromContent = Baileys.generateWAMessageFromContent || Baileys.default?.generateWAMessageFromContent
+const prepareWAMessageMedia = Baileys.prepareWAMessageMedia || Baileys.default?.prepareWAMessageMedia
 
 export const desc = 'Busca información detallada de un Pokémon con Interfaz Neural'
 export const alias = ['pokemon', 'poke']
