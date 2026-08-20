@@ -51,13 +51,24 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
     await sock.sendMessage(chatId, {
       image: { url: imagen },
       caption: caption,
-      footer: config.nombreBot,
-      buttons: [
-        { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 Atrapar' }, type: 1 },
-        { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 Ver Mochila' }, type: 1 },
-      ],
-      headerType: 4,
+      footer: config.nombreBot
     }, { quoted: msg })
+
+    await sock.sendMessage(chatId, {
+      text: `¿Qué quieres hacer con *${nombre}*?`,
+      footer: config.nombreBot,
+      title: '💠 Pokédex Neural',
+      buttonText: '📋 Abrir selector',
+      sections: [
+        {
+          title: 'Acciones disponibles',
+          rows: [
+            { title: '🎯 Atrapar', description: `Intentar capturar a ${nombre}`, rowId: `${config.prefijo}pokeatrapar ${id}` },
+            { title: '🎒 Ver mochila', description: 'Revisa tu colección de Pokémon', rowId: `${config.prefijo}mochila` },
+          ],
+        },
+      ],
+    })
 
   } catch (error) {
     console.error('Error en pokedex:', error)
