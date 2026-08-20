@@ -52,9 +52,11 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
 ━━━━━━━━━━━━━━━━━━━━━━━━`.trim()
 
     let media = null
-    try {
-      media = await prepareWAMessageMedia({ image: { url: imagenUrl } }, { upload: sock.waUploadToServer })
-    } catch (e) {}
+try {
+  media = await prepareWAMessageMedia({ image: { url: imagenUrl } }, { upload: sock.waUploadToServer })
+} catch (e) {
+  console.error('❌ Error preparando imagen de pokedex:', e)
+}
 
     const buttons = [
       {
