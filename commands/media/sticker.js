@@ -1,4 +1,5 @@
-import { Jimp } from 'jimp'
+import jimpPkg from 'jimp'
+const { Jimp } = jimpPkg
 import webp from 'node-webpmux'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
