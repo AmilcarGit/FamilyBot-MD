@@ -1,5 +1,4 @@
-import pkg from '@whiskeysockets/baileys'
-const { generateWAMessageFromContent, prepareWAMessageMedia, proto } = pkg
+import { generateWAMessageFromContent, prepareWAMessageMedia, proto } from '@whiskeysockets/baileys'
 import fetch from 'node-fetch'
 import { guardarEnCache } from '../../lib/pokedexJuego.js'
 
@@ -54,7 +53,7 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
     try {
       media = await prepareWAMessageMedia({ image: { url: imagenUrl } }, { upload: sock.waUploadToServer })
     } catch (e) {
-      console.error('Fallo subida de media, usando modo texto')
+      console.log('Modo texto activado por fallo de media')
     }
 
     const buttons = [
@@ -74,22 +73,22 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
       }
     ]
 
-    const interactiveMessage = proto.Message.InteractiveMessage.create({
-      header: proto.Message.InteractiveMessage.Header.create({
+    const interactiveMessage = {
+      header: {
         title: '💠 POKEDEX NEURAL 💠',
         hasMediaAttachment: !!media,
         imageMessage: media ? media.imageMessage : null
-      }),
-      body: proto.Message.InteractiveMessage.Body.create({
+      },
+      body: {
         text: caption
-      }),
-      footer: proto.Message.InteractiveMessage.Footer.create({
+      },
+      footer: {
         text: config.nombreBot
-      }),
-      nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+      },
+      nativeFlowMessage: {
         buttons: buttons
-      })
-    })
+      }
+    }
 
     const messageContent = generateWAMessageFromContent(chatId, {
       viewOnceMessage: {
@@ -102,7 +101,7 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
     await sock.relayMessage(chatId, messageContent.message, { messageId: messageContent.key.id })
 
   } catch (error) {
-    console.error('Error crítico en pokedex:', error)
+    console.error('Error en pokedex:', error)
     await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇᴅᴇx.' }, { quoted: msg })
   }
 }
