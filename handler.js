@@ -3,7 +3,6 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import chalk from 'chalk'
 import config from './config.js'
-import { esPremium } from './lib/premium.js'
 import { esOwner, normalizarJid, resolverNumeroReal } from './lib/utils.js'
 import { esAdminGrupo } from './lib/groupPermissions.js'
 import { getDB } from './lib/db.js'
@@ -21,11 +20,25 @@ const listaComandos = []
 const cooldowns = new Map()
 const comandosRespondidos = new Map()
 
-setInterval(() => {
+setInterval(async () => {
   const ahora = Date.now()
   if (comandosRespondidos.size > 1000) {
     comandosRespondidos.clear()
   }
+  
+  try {
+    const db = await getDB()
+    if (db.data.comandosRespondidos) {
+      let modificado = false
+      for (const id in db.data.comandosRespondidos) {
+        if (ahora - db.data.comandosRespondidos[id].timestamp > 10 * 60 * 1000) {
+          delete db.data.comandosRespondidos[id]
+          modificado = true
+        }
+      }
+      if (modificado) await db.write()
+    }
+  } catch {}
 }, 5 * 60 * 1000)
 
 export function obtenerComandosPanel() {
@@ -96,7 +109,6 @@ async function cargarComandoIndividual(rutaCompleta, avisar = false) {
     cooldown: mod.cooldown ?? 3,
     soloOwner: mod.soloOwner || false,
     soloAdmin: mod.soloAdmin || false,
-    premium: mod.premium || false,
     oculto: mod.oculto || false,
   }
 
@@ -162,177 +174,42 @@ export default async function handler(sock, m) {
   const msg = m.messages?.[0]
   if (!msg?.message) return
 
-  const quotedMsg =
-    msg.message.extendedTextMessage?.contextInfo?.quotedMessage ||
-    msg.message.imageMessage?.contextInfo?.quotedMessage ||
-    msg.message.videoMessage?.contextInfo?.quotedMessage ||
-    msg.message.documentMessage?.contextInfo?.quotedMessage
-
-  if (quotedMsg) {
-    const stanzaId = msg.message.extendedTextMessage?.contextInfo?.stanzaId
-    if (stanzaId) {
-      comandosRespondidos.set(stanzaId, true)
-    }
-  }
-
-  const esAutorespuesta = msg.key.fromMe
-
-  if (esAutorespuesta) {
-    const posibleTexto =
-      msg.message.conversation ||
-      msg.message.extendedTextMessage?.text ||
-      msg.message.imageMessage?.caption ||
-      ''
-
-    const esComando = config.prefijo && posibleTexto.startsWith(config.prefijo)
-    if (!esComando) return
-  }
-
   const jidRemitente = msg.key.participant || msg.key.remoteJid
   const chatId = msg.key.remoteJid
 
   let db
   try {
     db = await getDB()
-
     db.data.blacklist ??= []
-    db.data.stats ??= {}
-    db.data.stats.mensajesPorHora ??= Array(24).fill(0)
-    const horaActual = new Date().getHours()
-    db.data.stats.mensajesPorHora[horaActual] = (db.data.stats.mensajesPorHora[horaActual] || 0) + 1
-    if (db.data.blacklist.includes(normalizarJid(jidRemitente))) {
-      return
-    }
-
     const jidNormalizado = normalizarJid(jidRemitente)
-    db.data.users[jidNormalizado] ??= { mensajes: 0, idioma: config.idiomaPorDefecto }
+    if (db.data.blacklist.includes(jidNormalizado)) return
+    db.data.users[jidNormalizado] ??= { mensajes: 0, registrado: false }
     db.data.users[jidNormalizado].mensajes++
     await db.write()
   } catch (err) {
-    logError('Error guardando en la base de datos:', err)
+    logError('Error DB:', err)
   }
 
   const idioma = obtenerIdiomaUsuario(db, jidRemitente, config)
+  const tipoMensaje = Object.keys(msg.message)[0]
 
-  const respuestaBoton =
-    msg.message.buttonsResponseMessage?.selectedButtonId ||
-    msg.message.templateButtonReplyMessage?.selectedId ||
-    msg.message.listResponseMessage?.singleSelectReply?.selectedRowId ||
-    null
-
-  const texto =
-    respuestaBoton ||
+  let texto = 
     msg.message.conversation ||
     msg.message.extendedTextMessage?.text ||
     msg.message.imageMessage?.caption ||
+    msg.message.buttonsResponseMessage?.selectedButtonId ||
+    msg.message.templateButtonReplyMessage?.selectedId ||
+    msg.message.listResponseMessage?.singleSelectReply?.selectedRowId ||
     ''
 
-  const tipoMensaje = Object.keys(msg.message)[0]
-  const esGrupo = chatId.endsWith('@g.us')
-  info(
-    chalk.cyan(esGrupo ? '👥 Grupo' : '👤 Privado'),
-    chalk.gray(`${jidRemitente.split('@')[0]}:`),
-    texto || chalk.dim(`[${tipoMensaje}]`)
-  )
+  if (!texto && msg.message.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson) {
+    try {
+      const params = JSON.parse(msg.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson)
+      texto = params.id || params.selectedId || params.selectedRowId || ''
+    } catch (e) {}
+  }
 
   if (!texto) return
-
-  const esNumero = /^[1-9][0-9]*$/.test(texto.trim())
-  const infoContexto = msg.message.extendedTextMessage?.contextInfo
-  const citadoPorMi = infoContexto?.participant === sock.user.id
-  
-  if (infoContexto?.stanzaId) {
-    comandosRespondidos.set(infoContexto.stanzaId, true)
-  }
-
-  if (esNumero && citadoPorMi) {
-    const num = parseInt(texto.trim())
-    if (num >= 1 && num <= 10) {
-      const quotedText = msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.conversation || 
-                         msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.extendedTextMessage?.text ||
-                         msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage?.caption || ''
-      
-      if (quotedText.includes('SPOTIFY SYSTEM') || quotedText.includes('spotify search')) {
-        const cmd = comandos['sp']
-        if (cmd) {
-          return cmd.run({
-            sock, msg, args: [texto.trim()], chatId, esDueno: esOwner(await resolverNumeroReal(sock, jidRemitente, msg), config.owner),
-            comandos: listaComandos, config, db, idioma, t: (clave, vars) => t(idioma, clave, vars)
-          })
-        }
-      }
-
-      if (quotedText.includes('Resultados para:') && (quotedText.includes('YouTube') || quotedText.includes('yts'))) {
-        const cmd = comandos['play']
-        if (cmd) {
-          return cmd.run({
-            sock, msg, args: [texto.trim()], chatId, esDueno: esOwner(await resolverNumeroReal(sock, jidRemitente, msg), config.owner),
-            comandos: listaComandos, config, db, idioma, t: (clave, vars) => t(idioma, clave, vars)
-          })
-        }
-      }
-
-      if (quotedText.includes('Resultados de Deezer')) {
-        const cmd = comandos['dz']
-        if (cmd) {
-          return cmd.run({
-            sock, msg, args: [texto.trim()], chatId, esDueno: esOwner(await resolverNumeroReal(sock, jidRemitente, msg), config.owner),
-            comandos: listaComandos, config, db, idioma, t: (clave, vars) => t(idioma, clave, vars)
-          })
-        }
-      }
-    }
-  }
-
-  if (esGrupo) {
-    const numeroMensajesRecientes = registrarMensaje(jidRemitente)
-
-    if (numeroMensajesRecientes > MAX_MENSAJES) {
-      limpiarHistorial(jidRemitente)
-
-      const numeroReal = await resolverNumeroReal(sock, jidRemitente, msg)
-      const esDuenoMsj = esOwner(numeroReal, config.owner)
-
-      if (!esDuenoMsj) {
-        const configChat = obtenerConfigChat(db, chatId)
-        const jidNormalizado = normalizarJid(jidRemitente)
-        configChat.advertencias[jidNormalizado] = (configChat.advertencias[jidNormalizado] || 0) + 1
-        await db.write()
-
-        await sock.sendMessage(chatId, {
-          text: `🚨 @${jidRemitente.split('@')[0]} está enviando mensajes demasiado rápido. Se registró una advertencia por flood.`,
-          mentions: [jidRemitente],
-        })
-
-        return
-      }
-    }
-
-    const contieneLink = /(https?:\/\/|chat\.whatsapp\.com|wa\.me\/|www\.)/i.test(texto)
-
-    if (contieneLink) {
-      const configChat = obtenerConfigChat(db, chatId)
-
-      if (configChat.antilink) {
-        const numeroReal = await resolverNumeroReal(sock, jidRemitente, msg)
-        const esDuenoMsj = esOwner(numeroReal, config.owner)
-        const esAdminMsj = esDuenoMsj ? true : await esAdminGrupo(sock, chatId, jidRemitente)
-
-        if (!esDuenoMsj && !esAdminMsj) {
-          try {
-            await sock.sendMessage(chatId, { delete: msg.key })
-          } catch {}
-
-          await sock.sendMessage(chatId, {
-            text: `🔗 @${jidRemitente.split('@')[0]} no se permiten links de invitación en este grupo.`,
-            mentions: [jidRemitente],
-          })
-
-          return
-        }
-      }
-    }
-  }
 
   let cuerpo = texto
   if (config.prefijo && texto.startsWith(config.prefijo)) {
@@ -341,111 +218,43 @@ export default async function handler(sock, m) {
 
   const [comandoRaw, ...args] = cuerpo.trim().split(/\s+/)
   const comando = comandoRaw?.toLowerCase()
-
   const entrada = comando && comandos[comando]
   if (!entrada) return
 
-  const prioridad = sock.isSubbot ? (config.prioridad || 1) : 0
-  if (prioridad > 0) {
-    await new Promise((resolve) => setTimeout(resolve, prioridad * 2000))
-    if (comandosRespondidos.has(msg.key.id)) {
-      info(chalk.yellow(`🚫 Anti-Spam: ${entrada.nombre} cancelado (ya respondido por otro bot)`))
-      return
-    }
-  }
-
   const numeroRealRemitente = await resolverNumeroReal(sock, jidRemitente, msg)
   const esDueno = esOwner(numeroRealRemitente, config.owner)
-  if (!esDueno && (config.comandosDesactivados || []).includes(entrada.nombre)) {
-    return sock.sendMessage(chatId, { text: `⛔ El comando *${config.prefijo}${entrada.nombre}* está temporalmente desactivado.` })
-  }
 
-  const categoriasSinRegistro = ['main', 'owner']
-  if (!esDueno && !categoriasSinRegistro.includes(entrada.categoria)) {
-    const jidNormalizado = normalizarJid(jidRemitente)
-    const usuarioDB = db.data.users[jidNormalizado]
-
-    if (!usuarioDB?.registrado) {
-      return sock.sendMessage(chatId, {
-        text:
-          `📝 Debes registrarte antes de usar comandos.\n\n` +
-          `Usa: *${config.prefijo}reg Nombre.Edad*\n` +
-          `Ejemplo: *${config.prefijo}reg Amilcar.21*`,
-      })
-    }
-  }
-
-  if (entrada.soloOwner && !esDueno) {
-    return sock.sendMessage(chatId, { text: t(idioma, 'soloOwner') })
-  }
+  if (entrada.soloOwner && !esDueno) return sock.sendMessage(chatId, { text: t(idioma, 'soloOwner') })
 
   if (entrada.soloAdmin && !esDueno) {
     const esAdmin = await esAdminGrupo(sock, chatId, jidRemitente)
-    if (!esAdmin) {
-      return sock.sendMessage(chatId, { text: t(idioma, 'soloAdmin') })
-    }
-  }
-
-  if (entrada.premium && !esDueno && !esPremium(db, jidRemitente)) {
-    return sock.sendMessage(chatId, {
-      text:
-        `🌟 El comando *${config.prefijo}${entrada.nombre}* es exclusivo para usuarios premium.\n\n` +
-        `Pregúntale al staff cómo obtener premium 🌸`,
-    })
+    if (!esAdmin) return sock.sendMessage(chatId, { text: t(idioma, 'soloAdmin') })
   }
 
   if (entrada.cooldown > 0 && !esDueno) {
     const clave = `${entrada.nombre}:${jidRemitente}`
     const ahora = Date.now()
     const vencimiento = cooldowns.get(clave)
-
     if (vencimiento && ahora < vencimiento) {
       const restante = Math.ceil((vencimiento - ahora) / 1000)
-      return sock.sendMessage(chatId, {
-        text: t(idioma, 'cooldown', { restante, prefijo: config.prefijo, comando: entrada.nombre }),
-      })
+      return sock.sendMessage(chatId, { text: t(idioma, 'cooldown', { restante, prefijo: config.prefijo, comando: entrada.nombre }) })
     }
     cooldowns.set(clave, ahora + entrada.cooldown * 1000)
   }
 
-  let ejecutar = entrada.run
-  let argsFinal = args
-
-  if (entrada.subcomandos && args[0]) {
-    const nombreSub = args[0].toLowerCase()
-    if (entrada.subcomandos[nombreSub]) {
-      ejecutar = entrada.subcomandos[nombreSub]
-      argsFinal = args.slice(1)
-    }
-  }
-
   try {
     db.data.stats ??= { comandosEjecutados: 0 }
-    db.data.stats.comandosEjecutados = (db.data.stats.comandosEjecutados || 0) + 1
-    db.data.stats.comandosPorNombre ??= {}
-    db.data.stats.comandosPorNombre[entrada.nombre] = (db.data.stats.comandosPorNombre[entrada.nombre] || 0) + 1
+    db.data.stats.comandosEjecutados++
     await db.write()
 
-    info(
-      chalk.green('⚡ Comando:'),
-      `${config.prefijo}${entrada.nombre}`,
-      chalk.gray(`(${jidRemitente.split('@')[0]})`)
-    )
+    info(chalk.green('⚡ Comando:'), `${config.prefijo}${entrada.nombre}`, chalk.gray(`(${jidRemitente.split('@')[0]})`))
 
-    await ejecutar({
-      sock,
-      msg,
-      args: argsFinal,
-      chatId,
-      esDueno,
-      comandos: listaComandos,
-      config: { ...config, prioridad: sock.isSubbot ? (config.prioridad || 1) : 0 },
-      db,
-      idioma,
+    await entrada.run({
+      sock, msg, args, chatId, esDueno, comandos: listaComandos, config, db, idioma,
       t: (clave, vars) => t(idioma, clave, vars),
     })
   } catch (err) {
-    logError(`Error en el comando "${entrada.nombre}":`, err)
+    logError(`Error en ${entrada.nombre}:`, err)
     await notificarErrorAlOwner(sock, err, entrada.nombre)
   }
 }
