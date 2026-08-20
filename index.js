@@ -164,7 +164,7 @@ async function iniciar() {
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect } = update
 
-    if (connection === 'connecting' && !sock.authState.creds.registered && !codigoSolicitado && numero) {
+    if (!sock.authState.creds.registered && !codigoSolicitado && numero && (connection === 'connecting' || update.qr)) {
       codigoSolicitado = true
       await delay(4000)
       try {
