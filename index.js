@@ -1,4 +1,6 @@
-import makeWASocket, { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore } from '@itsukichan/baileys'
+import * as Baileys from '@itsukichan/baileys'
+const makeWASocket = Baileys.default || Baileys
+const { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore } = Baileys
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
@@ -68,7 +70,7 @@ async function preguntar(texto) {
 }
 
 async function iniciar() {
-  console.log(chalk.yellow('📂 Cargando sesión...'))
+  console.log(chalk.yellow('📂 Cargando sesión neural...'))
   const { state, saveCreds } = await useMultiFileAuthState(config.sessionFolder)
   
   const version = [2, 3000, 1015901307]
