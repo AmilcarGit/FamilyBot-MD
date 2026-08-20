@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
-    "@itsukichan/baileys": "latest",
+    "@whiskeysockets/baileys": "git+https://github.com/Andresv27728/baileys-beta.git",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
