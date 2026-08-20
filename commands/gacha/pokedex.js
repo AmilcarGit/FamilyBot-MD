@@ -1,13 +1,13 @@
 import fetch from 'node-fetch'
 import { guardarEnCache } from '../../lib/pokedexJuego.js'
 
-export const desc = 'Busca información detallada de un Pokémon con Interfaz Neural'
+export const desc = 'Busca información detallada de un Pokémon'
 export const alias = ['pokemon', 'poke']
 export const cooldown = 5
 
 export default async function pokedex({ sock, chatId, args, msg, config }) {
   const query = args.join(' ').toLowerCase().trim()
-  
+
   if (!query) {
     return sock.sendMessage(chatId, {
       text: '❌ ᴘᴏʀ ғᴀᴠᴏʀ, ɪɴɢʀᴇsᴀ ᴇʟ ɴᴏᴍʙʀᴇ ᴏ ɴᴜ́ᴍᴇʀᴏ ᴅᴇ ᴜɴ ᴘᴏᴋᴇ́ᴍᴏɴ.\nᴇᴊᴇᴍᴘʟᴏ: *' + config.prefijo + 'pokedex charizard*'
@@ -26,7 +26,7 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
     const tipos = data.types.map(t => t.type.name).join(', ')
     const stats = {}
     data.stats.forEach(s => { stats[s.stat.name] = s.base_stat })
-    const imagenUrl = data.sprites.other['official-artwork'].front_default || data.sprites.front_default
+    const imagen = data.sprites.other['official-artwork'].front_default || data.sprites.front_default
     const statsTotal = Object.values(stats).reduce((a, b) => a + b, 0)
 
     guardarEnCache(id, { nombre, tipos, statsTotal })
@@ -45,30 +45,18 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
 🛡️ ᴅᴇғ: ${stats.defense} | ⚡ sᴘᴅ: ${stats.speed}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
-✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ${config.nombreBot}*
+✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴛʜᴇʏᴜɪ sʏsᴛᴇᴍ*
 ━━━━━━━━━━━━━━━━━━━━━━━━`.trim()
 
-    const buttons = [
-      { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 ᴀᴛʀᴀᴘᴀʀ' }, type: 1 },
-      { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 ᴍᴏᴄʜɪʟᴀ' }, type: 1 }
-    ]
-
-    try {
-      await sock.sendMessage(chatId, {
-        image: { url: imagenUrl },
-        caption: caption,
-        footer: config.nombreBot,
-        buttons: buttons,
-        headerType: 4
-      }, { quoted: msg })
-    } catch (e) {
-      await sock.sendMessage(chatId, {
-        text: caption,
-        footer: config.nombreBot,
-        buttons: buttons,
-        headerType: 1
-      }, { quoted: msg })
-    }
+    await sock.sendMessage(chatId, {
+      image: { url: imagen },
+      caption: caption,
+      footer: config.nombreBot,
+      buttons: [
+        { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 Atrapar' }, type: 1 },
+        { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 Ver Mochila' }, type: 1 },
+      ],
+    }, { quoted: msg })
 
   } catch (error) {
     console.error('Error en pokedex:', error)
