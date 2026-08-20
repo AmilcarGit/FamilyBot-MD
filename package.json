@@ -14,7 +14,8 @@
   "author": "AmilcarGit",
   "license": "MIT",
   "overrides": {
-    "libsignal": "npm:libsignal-node@latest"
+    "libsignal": "npm:libsignal-node@latest",
+    "@whiskeysockets/baileys": "npm:@itsukichan/baileys@latest"
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
