@@ -1,10 +1,9 @@
-import { 
-  makeWASocket, 
+import makeWASocket, { 
   useMultiFileAuthState, 
   DisconnectReason, 
   makeCacheableSignalKeyStore,
   fetchLatestBaileysVersion
-} from '@itsukichan/baileys'
+} from '@whiskeysockets/baileys'
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
@@ -76,7 +75,6 @@ async function iniciar() {
   console.log(chalk.yellow('📂 Cargando sesión neural...'))
   const { state, saveCreds } = await useMultiFileAuthState(config.sessionFolder)
   
-  // Obtenemos la versión más reciente para evitar bloqueos
   let { version, isLatest } = await fetchLatestBaileysVersion()
   console.log(chalk.blue(`📡 Usando WA v${version.join('.')}, ¿Es la última?: ${isLatest}`))
 
@@ -102,7 +100,6 @@ async function iniciar() {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
-    // Usamos un navegador estándar para que WhatsApp acepte el código
     browser: ['Ubuntu', 'Chrome', '110.0.5481.178'],
     markOnlineOnConnect: true,
     generateHighQualityLinkPreview: true,
@@ -128,9 +125,8 @@ async function iniciar() {
       } catch (err) {
         console.log(chalk.red('❌ Error al generar código:'), err.message)
         codigoSolicitado = false
-        // No salimos del proceso para ver el error
       }
-    }, 10000)
+    }, 8000)
   }
 
   sock.ev.on('connection.update', async (update) => {
