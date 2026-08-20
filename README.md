@@ -1,342 +1,393 @@
-¡Claro! Aquí tienes el README.md completo listo para copiar y pegar en tu repositorio FamilyBot-MD. 👇
-
 <div align="center">
 
-<img src="https://i.postimg.cc/m2zZMSYw/file-000000007e3481f582fd4e0467fe5966.png" width="100%" alt="FamilyBot-MD — WhatsApp Bot" />
+<a href="https://github.com/AmilcarGit/FamilyBot-MD">
+  <img src="https://i.postimg.cc/m2zZMSYw/file-000000007e3481f582fd4e0467fe5966.png" width="100%" alt="FamilyBot-MD">
+</a>
 
-<br />
+<br><br>
 
 # 🌿 FamilyBot-MD
 
-### 🤖 WhatsApp Multi-Device Bot · Powerful · Modular · Customizable
+### 🤖 WhatsApp Multi-Device Bot · Modular · Powerful · Customizable
 
 <p>
-  <img src="https://img.shields.io/badge/Node.js-ESM-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
-  <img src="https://img.shields.io/badge/WhatsApp-Multi--Device-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="WhatsApp" />
-  <img src="https://img.shields.io/github/license/AmilcarGit/FamilyBot-MD?style=for-the-badge" alt="License" />
-  <img src="https://img.shields.io/github/stars/AmilcarGit/FamilyBot-MD?style=for-the-badge&logo=github" alt="Stars" />
+  <a href="https://github.com/AmilcarGit/FamilyBot-MD/stargazers">
+    <img src="https://img.shields.io/github/stars/AmilcarGit/FamilyBot-MD?style=for-the-badge&logo=github&label=Stars" alt="Stars">
+  </a>
+  <a href="https://github.com/AmilcarGit/FamilyBot-MD/network/members">
+    <img src="https://img.shields.io/github/forks/AmilcarGit/FamilyBot-MD?style=for-the-badge&logo=github&label=Forks" alt="Forks">
+  </a>
+  <a href="https://github.com/AmilcarGit/FamilyBot-MD/issues">
+    <img src="https://img.shields.io/github/issues/AmilcarGit/FamilyBot-MD?style=for-the-badge&logo=github&label=Issues" alt="Issues">
+  </a>
+  <a href="https://github.com/AmilcarGit/FamilyBot-MD/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/AmilcarGit/FamilyBot-MD?style=for-the-badge&label=License" alt="License">
+  </a>
 </p>
 
 <p>
-  <a href="https://github.com/AmilcarGit/FamilyBot-MD">📦 Repositorio</a> ·
-  <a href="https://github.com/AmilcarGit/FamilyBot-MD/issues">🐛 Reportar problema</a> ·
-  <a href="https://github.com/AmilcarGit/FamilyBot-MD/forks">🍴 Fork</a>
+  <a href="https://github.com/AmilcarGit/FamilyBot-MD"><strong>📦 Código fuente</strong></a> •
+  <a href="https://github.com/AmilcarGit/FamilyBot-MD/issues"><strong>🐛 Reportar error</strong></a> •
+  <a href="https://github.com/AmilcarGit/FamilyBot-MD/pulls"><strong>🔧 Pull Requests</strong></a> •
+  <a href="https://github.com/AmilcarGit/FamilyBot-MD/forks"><strong>🍴 Hacer Fork</strong></a>
 </p>
 
 </div>
 
 ---
 
-## 🌌 ¿Qué es FamilyBot-MD?
+## 📚 Contenido
 
-**FamilyBot-MD** es un bot de WhatsApp Multi-Device desarrollado en
-**JavaScript/Node.js**, diseñado para ofrecer una base moderna, modular
-y fácil de personalizar.
+- [🌌 Sobre FamilyBot-MD](#-sobre-familybot-md)
+- [✨ Características](#-características)
+- [🧠 Tecnologías](#-tecnologías)
+- [📁 Estructura](#-estructura)
+- [📱 Instalación](#-instalación)
+- [⚙️ Configuración](#️-configuración)
+- [▶️ Ejecución](#️-ejecución)
+- [🧹 Desarrollo](#-desarrollo)
+- [🔐 Seguridad](#-seguridad)
+- [🤝 Contribuir](#-contribuir)
+- [🐛 Issues](#-issues)
+- [⭐ Apoyar](#-apoyar)
+- [👨‍💻 Créditos](#-créditos)
+- [📜 Licencia](#-licencia)
 
-El proyecto organiza sus funcionalidades mediante comandos, librerías
-y módulos separados, permitiendo ampliar el bot sin convertir el código
-principal en un proyecto difícil de mantener.
+---
 
-> 💚 Creado con dedicación por **AmilcarGit**.
+## 🌌 Sobre FamilyBot-MD
+
+**FamilyBot-MD** es un bot de WhatsApp Multi-Device construido con
+**JavaScript y Node.js**, pensado como una base modular para automatizar,
+experimentar y crear nuevas funciones para WhatsApp.
+
+Su organización por comandos, librerías, locales y recursos permite
+mantener el proyecto extensible y fácil de personalizar.
+
+> 🌿 **FamilyBot-MD** nace como la nueva identidad del proyecto anteriormente conocido como **TheYui-MD**.
 
 ---
 
 ## ✨ Características
 
-| 🧩 Función | 📌 Descripción |
+| 🧩 Característica | 📌 Descripción |
 |---|---|
-| 🤖 WhatsApp MD | Arquitectura orientada a WhatsApp Multi-Device |
-| ⚡ Node.js | Ejecución rápida mediante JavaScript moderno |
-| 🧱 Modular | Comandos y librerías organizados por componentes |
-| 🎵 Multimedia | Herramientas relacionadas con audio, vídeo e imágenes |
-| 🌎 Locales | Estructura preparada para traducciones/localización |
-| 💾 Persistencia | Soporte para almacenamiento mediante LowDB/MongoDB |
-| 🌐 Web/API | Express disponible para servicios web |
-| 🖼️ Media | Jimp y herramientas multimedia integradas |
-| 🧹 Calidad | ESLint + Prettier para mantener el código limpio |
-| 🛠️ Personalizable | Configuración y comandos fácilmente modificables |
+| 🤖 Multi-Device | Arquitectura para WhatsApp Multi-Device |
+| ⚡ Node.js | JavaScript moderno con ES Modules |
+| 🧱 Modular | Comandos y módulos organizados |
+| 🎵 Multimedia | Herramientas para contenido multimedia |
+| 🌎 Locales | Estructura para idiomas y traducciones |
+| 💾 Base de datos | Soporte para persistencia mediante dependencias del proyecto |
+| 🌐 Web | Express disponible para servicios web |
+| 🖼️ Imágenes | Procesamiento mediante Jimp |
+| 🧹 Code Quality | ESLint y Prettier |
+| 🛠️ Personalizable | Configuración y comandos modificables |
 
 ---
 
-## 🧠 Stack tecnológico
+## 🧠 Tecnologías
 
-- 🟢 **Node.js** + ES Modules
-- 💬 **Baileys** para la comunicación con WhatsApp
-- 🌐 **Express** para servicios web
-- 🗄️ **LowDB / MongoDB** para persistencia
-- 🖼️ **Jimp** para procesamiento de imágenes
-- 🎬 **FFmpeg** para procesamiento multimedia
-- 📺 **youtubei.js** para funcionalidades relacionadas con YouTube
-- 🎨 **Chalk** para una consola más clara
-- 🧹 **ESLint** + **Prettier** para calidad de código
+- 🟢 Node.js
+- 💬 Baileys
+- 🌐 Express
+- 🗄️ LowDB / MongoDB
+- 🖼️ Jimp
+- 🎬 FFmpeg
+- 📺 youtubei.js
+- 🎨 Chalk
+- 🧹 ESLint
+- ✨ Prettier
+
+> ℹ️ Las versiones y dependencias exactas deben consultarse en `package.json`.
 
 ---
 
-## 📁 Estructura del proyecto
+## 📁 Estructura
 
 ```text
 FamilyBot-MD/
-├── 📂 assets/        # Recursos y archivos del proyecto
-├── 📂 commands/      # Comandos del bot
-├── 📂 lib/           # Librerías y módulos auxiliares
-├── 📂 locales/       # Idiomas y traducciones
-├── 📂 music/         # Recursos relacionados con música
-├── ⚙️ config.js      # Configuración principal
-├── 🧠 handler.js     # Procesamiento de mensajes/comandos
-├── 🚀 index.js       # Punto de entrada
-├── 📦 package.json   # Dependencias y scripts
-├── 📜 LICENSE        # Licencia MIT
-└── 📖 README.md      # Documentación
-
+├── 📂 assets/
+├── 📂 commands/
+├── 📂 lib/
+├── 📂 locales/
+├── 📂 music/
+├── ⚙️ config.js
+├── 🧠 handler.js
+├── 🚀 index.js
+├── 📦 package.json
+├── 📜 LICENSE
+└── 📖 README.md
+```
 
 ---
 
-📱 Instalación en Termux
+# 📱 Instalación
 
-1️⃣ Actualizar Termux
+## 🟢 Termux
 
+### 1. Actualizar paquetes
+
+```bash
 pkg update && pkg upgrade -y
+```
 
-2️⃣ Instalar herramientas necesarias
+### 2. Instalar dependencias del sistema
 
+```bash
 pkg install git nodejs ffmpeg imagemagick -y
+```
 
-3️⃣ Clonar FamilyBot-MD
+### 3. Clonar el repositorio
 
+```bash
 git clone https://github.com/AmilcarGit/FamilyBot-MD.git
 cd FamilyBot-MD
+```
 
-4️⃣ Instalar dependencias
+### 4. Instalar dependencias
 
+```bash
 npm install
-
-5️⃣ Iniciar el bot
-
-npm start
-
-> 💡 Si el proyecto requiere variables de entorno o valores específicos en config.js, revísalos antes del primer arranque.
-
-
-
+```
 
 ---
 
-⚙️ Scripts disponibles
+# ⚙️ Configuración
 
-▶️ Iniciar
+Antes de iniciar:
 
-npm start
-
-🧹 Revisar código
-
-npm run lint
-
-🎨 Formatear código
-
-npm run format
-
-🔄 Ejecutar con PM2
-
-npm run pm2
-
-⛔ Detener PM2
-
-npm run stop
-
-
----
-
-🧩 Desarrollo y personalización
-
-➕ Crear o modificar comandos
-
-Los comandos principales se encuentran dentro de:
-
-commands/
-
-Puedes organizar nuevas funciones en módulos independientes y conectarlas al sistema de manejo de mensajes.
-
-
----
-
-⚙️ Configuración
-
-La configuración general se encuentra en:
-
+```text
 config.js
+```
 
-Antes de publicar una instalación, evita colocar contraseñas, tokens, sesiones o credenciales directamente en archivos públicos.
+Revisa la configuración del bot y adapta los valores necesarios para
+tu instalación.
 
+### 🔐 Importante
 
----
+Nunca publiques:
 
-🔐 Seguridad
-
-FamilyBot-MD es un proyecto de código abierto.
-
-Si vas a desplegar tu propia instancia:
-
-🔒 Mantén tus credenciales fuera del repositorio.
-
-🚫 No publiques sesiones de WhatsApp.
-
-🔑 Utiliza variables de entorno cuando sea posible.
-
-🧹 Revisa .gitignore antes de hacer commits.
-
-📦 Mantén las dependencias actualizadas.
-
-🛡️ No compartas tokens ni claves privadas.
-
-👀 Revisa cuidadosamente los cambios antes de hacer git push.
-
-
+- 🔑 Tokens
+- 🔐 Contraseñas
+- 📱 Sesiones de WhatsApp
+- 🗝️ API Keys privadas
+- 🍪 Cookies privadas
 
 ---
 
-🛠️ Calidad del código
+# ▶️ Ejecución
 
-El proyecto incluye herramientas para mantener un estilo consistente.
+### 🚀 Iniciar
 
+```bash
+npm start
+```
+
+### 🧹 Lint
+
+```bash
+npm run lint
+```
+
+### 🎨 Formatear
+
+```bash
+npm run format
+```
+
+### 🔄 PM2
+
+```bash
+npm run pm2
+```
+
+### ⛔ Detener
+
+```bash
+npm run stop
+```
+---
+
+# 🧹 Desarrollo
+
+Para trabajar en el proyecto:
+
+```bash
+git clone https://github.com/AmilcarGit/FamilyBot-MD.git
+cd FamilyBot-MD
+npm install
+```
+
+Después realiza tus cambios y comprueba el código:
+
+```bash
 npm run lint
 npm run format
-
-Esto permite detectar problemas de estilo y mantener los archivos formateados de manera uniforme.
-
+```
 
 ---
 
-🤝 Contribuir
+# 🔐 Seguridad
 
-¿Quieres mejorar FamilyBot-MD?
+FamilyBot-MD es software de código abierto.
+
+Para mantener segura tu instalación:
+
+- 🔒 Mantén las credenciales privadas.
+- 🚫 No subas sesiones.
+- 🛡️ No compartas API Keys.
+- 📦 Mantén las dependencias actualizadas.
+- 🔍 Revisa los cambios antes de hacer `git push`.
+- 🧪 Prueba tus modificaciones antes de desplegarlas.
+
+---
+
+# 🤝 Contribuir
 
 ¡Las contribuciones son bienvenidas! 💚
 
-🚀 Proceso
+```text
+1️⃣ Fork
+   ↓
+2️⃣ Crear rama
+   ↓
+3️⃣ Realizar cambios
+   ↓
+4️⃣ Probar
+   ↓
+5️⃣ Commit
+   ↓
+6️⃣ Pull Request
+```
 
-1. 🍴 Haz un Fork del repositorio.
+### 💡 Antes de enviar un PR
 
+```bash
+npm run lint
+npm run format
+```
 
-2. 🌿 Crea una rama para tu cambio.
-
-
-3. 🧩 Implementa y prueba tu mejora.
-
-
-4. 🧹 Ejecuta npm run lint.
-
-
-5. 🎨 Ejecuta npm run format.
-
-
-6. 📤 Envía un Pull Request.
-
-
-7. 💬 Explica claramente qué cambiaste.
-
-
-
-
----
-
-🐛 Reportar errores
-
-Si encuentras un problema, abre un Issue e incluye:
-
-📱 Sistema operativo.
-
-🟢 Versión de Node.js.
-
-🧾 Mensaje de error completo.
-
-🔁 Pasos para reproducirlo.
-
-📋 Logs relevantes.
-
-🧩 Comando o módulo relacionado.
-
-
-⚠️ Nunca publiques contraseñas, tokens o sesiones en un Issue.
-
-👉 Abrir un Issue
-
+Explica claramente qué cambia tu Pull Request y, si corresponde,
+incluye pasos para reproducir o probar la modificación.
 
 ---
 
-⭐ Apoya el proyecto
+# 🐛 Issues
 
-Si FamilyBot-MD te resulta útil:
+¿Encontraste un error?
 
-⭐ Dale una estrella al repositorio.
+👉 **[Abrir un Issue](https://github.com/AmilcarGit/FamilyBot-MD/issues)**
 
-🍴 Haz un Fork y crea tu propia versión.
+Incluye:
 
-💬 Comparte el proyecto con otros desarrolladores.
+- 📱 Sistema operativo
+- 🟢 Versión de Node.js
+- 🧾 Error completo
+- 🔁 Pasos para reproducir
+- 📋 Logs relevantes
+- 🧩 Comando o módulo afectado
 
-🤝 Contribuye con mejoras y nuevas funciones.
-
+⚠️ Elimina cualquier información privada antes de publicar logs.
 
 ---
 
-📊 Información del proyecto
+# 🔧 Pull Requests
 
-<div align="center">📌 Información	💚 FamilyBot-MD
+👉 **[Ver Pull Requests](https://github.com/AmilcarGit/FamilyBot-MD/pulls)**
 
-👨‍💻 Creador	AmilcarGit
-🤖 Plataforma	WhatsApp
-🟢 Runtime	Node.js
-📦 Módulos	ES Modules
-📜 Licencia	MIT
-🌐 Código abierto	Sí
+Las mejoras, correcciones y nuevas funciones pueden proponerse mediante
+Pull Requests.
 
-
-</div>
 ---
 
-👨‍💻 Créditos
+# ⭐ Apoya FamilyBot-MD
 
-<div align="center">🌿 FamilyBot-MD
+Si el proyecto te gusta:
 
-Creado por
+<a href="https://github.com/AmilcarGit/FamilyBot-MD/stargazers">
+  ⭐ <strong>Dale una estrella</strong>
+</a>
 
-AmilcarGit
+<br><br>
+
+<a href="https://github.com/AmilcarGit/FamilyBot-MD/fork">
+  🍴 <strong>Haz un Fork</strong>
+</a>
+
+<br><br>
+
+<a href="https://github.com/AmilcarGit/FamilyBot-MD/issues">
+  💬 <strong>Participa en la comunidad</strong>
+</a>
+
+---
+
+# 📊 Estado del proyecto
+
+<p align="center">
+  <a href="https://github.com/AmilcarGit/FamilyBot-MD/commits/main">
+    <img src="https://img.shields.io/github/last-commit/AmilcarGit/FamilyBot-MD?style=for-the-badge&logo=github" alt="Last Commit">
+  </a>
+  <a href="https://github.com/AmilcarGit/FamilyBot-MD">
+    <img src="https://img.shields.io/github/repo-size/AmilcarGit/FamilyBot-MD?style=for-the-badge&logo=github" alt="Repo Size">
+  </a>
+  <a href="https://github.com/AmilcarGit/FamilyBot-MD">
+    <img src="https://img.shields.io/github/languages/top/AmilcarGit/FamilyBot-MD?style=for-the-badge&logo=javascript" alt="Top Language">
+  </a>
+</p>
+
+---
+
+# 👨‍💻 Créditos
+
+<div align="center">
+
+## 🌿 FamilyBot-MD
+
+### Creado por
+
+# **AmilcarGit**
 
 <a href="https://github.com/AmilcarGit">
-  <img src="https://img.shields.io/badge/GitHub-AmilcarGit-181717?style=for-the-badge&logo=github" />
-</a><br><br>
+  <img src="https://img.shields.io/badge/GitHub-AmilcarGit-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub AmilcarGit">
+</a>
 
-Proyecto:
-AmilcarGit/FamilyBot-MD
+<br><br>
+
+<a href="https://github.com/AmilcarGit/FamilyBot-MD">
+  <img src="https://img.shields.io/badge/Repositorio-FamilyBot--MD-00D4FF?style=for-the-badge&logo=github&logoColor=white" alt="FamilyBot-MD">
+</a>
 
 </div>
----
-
-📜 Licencia
-
-Este proyecto se distribuye bajo la Licencia MIT.
-
-Consulta el archivo LICENSE para conocer los términos completos.
-
 
 ---
 
-<div align="center">🌿 FamilyBot-MD
+# 📜 Licencia
 
-💚 WhatsApp · Node.js · Open Source · Community
+Este proyecto se distribuye bajo la **Licencia MIT**.
 
-<br>Hecho con 💚 y JavaScript por AmilcarGit
+Consulta [`LICENSE`](./LICENSE) para los términos completos.
 
-<br>⭐ Si te gusta el proyecto, déjale una estrella ⭐
+---
 
-<br><img src="https://img.shields.io/github/stars/AmilcarGit/FamilyBot-MD?style=social" /></div>
-```📌 Cómo subirlo
+<div align="center">
 
-En tu repositorio entra a:
+# 🌿 FamilyBot-MD
 
-README.md → ✏️ Edit → selecciona todo → pega el código → Commit changes.
+### 🤖 WhatsApp • Node.js • Open Source • Community
 
-Y la portada quedará usando exactamente esta imagen:
+**Hecho con 💚 y JavaScript por AmilcarGit**
 
-https://i.postimg.cc/m2zZMSYw/file-000000007e3481f582fd4e0467fe5966.png
+<br>
 
-[Abrir FamilyBot-MD](https://github.com/AmilcarGit/FamilyBot-MD?utm_source=chatgpt.com)
+<a href="https://github.com/AmilcarGit/FamilyBot-MD/stargazers">
+  ⭐ <strong>Star this repository</strong>
+</a>
+
+<br><br>
+
+<img src="https://img.shields.io/github/stars/AmilcarGit/FamilyBot-MD?style=social" alt="GitHub stars">
+
+</div>
+
+
