@@ -2,7 +2,8 @@ import {
   makeWASocket, 
   useMultiFileAuthState, 
   DisconnectReason, 
-  makeCacheableSignalKeyStore 
+  makeCacheableSignalKeyStore,
+  fetchLatestBaileysVersion
 } from '@itsukichan/baileys'
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
@@ -20,7 +21,6 @@ import { iniciarAutoUpdate } from './lib/autoupdate.js'
 
 const logger = pino({ level: 'silent' })
 let intentosReconexion = 0
-let cierresLoggedOutSeguidos = 0
 let codigoSolicitado = false
 let numeroIngresado = null
 
@@ -76,7 +76,9 @@ async function iniciar() {
   console.log(chalk.yellow('📂 Cargando sesión neural...'))
   const { state, saveCreds } = await useMultiFileAuthState(config.sessionFolder)
   
-  const version = [2, 3000, 1015901307]
+  // Obtenemos la versión más reciente para evitar bloqueos
+  let { version, isLatest } = await fetchLatestBaileysVersion()
+  console.log(chalk.blue(`📡 Usando WA v${version.join('.')}, ¿Es la última?: ${isLatest}`))
 
   let numero = config.numeroBot || numeroIngresado
   if (!state.creds.registered && !numero) {
@@ -100,9 +102,11 @@ async function iniciar() {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
-    browser: ['TheYui-MD', 'Chrome', '20.0.04'],
+    // Usamos un navegador estándar para que WhatsApp acepte el código
+    browser: ['Ubuntu', 'Chrome', '110.0.5481.178'],
     markOnlineOnConnect: true,
     generateHighQualityLinkPreview: true,
+    syncFullHistory: false,
     getMessage: async (key) => {
       return { conversation: 'TheYui-MD' }
     }
@@ -122,11 +126,11 @@ async function iniciar() {
         console.log(chalk.cyan('┃') + chalk.bgCyan(chalk.black(`  CÓDIGO DE VINCULACIÓN: ${codigo}  `)) + chalk.cyan('┃'))
         console.log(chalk.cyan('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛') + '\n')
       } catch (err) {
-        console.log(chalk.red('❌ Error al generar código. Reiniciando...'))
+        console.log(chalk.red('❌ Error al generar código:'), err.message)
         codigoSolicitado = false
-        process.exit(1)
+        // No salimos del proceso para ver el error
       }
-    }, 5000)
+    }, 10000)
   }
 
   sock.ev.on('connection.update', async (update) => {
@@ -134,18 +138,20 @@ async function iniciar() {
 
     if (connection === 'open') {
       intentosReconexion = 0
-      cierresLoggedOutSeguidos = 0
       mostrarConexionExitosa(config.nombreBot)
       iniciarAutoUpdate(sock)
     }
 
     if (connection === 'close') {
       const statusCode = new Boom(lastDisconnect?.error)?.output?.statusCode
+      console.log(chalk.red(`🔌 Conexión cerrada. Razón: ${statusCode}`))
+      
       if (statusCode === DisconnectReason.loggedOut) {
         nuclearReset()
+      } else {
+        intentosReconexion++
+        setTimeout(iniciar, backoffDelay(intentosReconexion, config.maxReconnectDelay))
       }
-      intentosReconexion++
-      setTimeout(iniciar, backoffDelay(intentosReconexion, config.maxReconnectDelay))
     }
   })
 
