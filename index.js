@@ -103,6 +103,13 @@ async function iniciar() {
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
     browser: ['Ubuntu', 'Chrome', '20.0.04'],
+    patchMessageBeforeSending: (message) => {
+      const requiresPatch = !!(message.buttonsMessage || message.templateMessage || message.listMessage)
+      if (requiresPatch) {
+        message = { viewOnceMessage: { message: { messageContextInfo: { deviceListMetadata: {}, deviceListMetadataVersion: 2 }, ...message } } }
+      }
+      return message
+    },
   })
 
   establecerSockActivo(sock)
