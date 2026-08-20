@@ -1,4 +1,4 @@
-import makeWASocket, { useMultiFileAuthState, fetchLatestBaileysVersion, DisconnectReason, makeCacheableSignalKeyStore } from '@itsukichan/baileys'
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore } from '@itsukichan/baileys'
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
@@ -57,48 +57,6 @@ function nuclearReset() {
   process.exit(1)
 }
 
-let contadorBadMac = 0
-let temporizadorBadMac = null
-let reseteando = false
-
-function vigilarBadMac(texto) {
-  if (reseteando || !texto || !texto.includes('Bad MAC')) return
-  contadorBadMac++
-  if (!temporizadorBadMac) {
-    temporizadorBadMac = setTimeout(() => {
-      contadorBadMac = 0
-      temporizadorBadMac = null
-    }, 15000)
-  }
-  if (contadorBadMac >= 5) {
-    reseteando = true
-    nuclearReset()
-  }
-}
-
-const consoleLogOriginal = console.log
-const consoleErrorOriginal = console.error
-
-console.log = (...args) => {
-  vigilarBadMac(args.map((a) => (a instanceof Error ? a.message : String(a))).join(' '))
-  consoleLogOriginal(...args)
-}
-
-console.error = (...args) => {
-  vigilarBadMac(args.map((a) => (a instanceof Error ? a.message : String(a))).join(' '))
-  consoleErrorOriginal(...args)
-}
-
-process.on('uncaughtException', (err) => {
-  if (err.message.includes('EADDRINUSE')) process.exit(1)
-  if (err.message.includes('Bad MAC')) return nuclearReset()
-  if (err.code === 'ERR_USE_AFTER_CLOSE') return
-})
-
-process.on('unhandledRejection', (reason) => {
-  if (reason?.message?.includes('Bad MAC')) return nuclearReset()
-})
-
 async function preguntar(texto) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
   return new Promise((resolve) => {
@@ -106,35 +64,20 @@ async function preguntar(texto) {
       rl.close()
       resolve(respuesta)
     })
-    setTimeout(() => {
-      try { rl.close() } catch (e) {}
-      resolve(null)
-    }, 60000)
   })
 }
 
 async function iniciar() {
+  console.log(chalk.yellow('📂 Cargando sesión...'))
   const { state, saveCreds } = await useMultiFileAuthState(config.sessionFolder)
   
-  let version
-  try {
-    const v = await Promise.race([
-      fetchLatestBaileysVersion(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
-    ])
-    version = v.version
-  } catch (e) {
-    version = [2, 3000, 1015901307]
-  }
+  const version = [2, 3000, 1015901307]
 
   let numero = config.numeroBot || numeroIngresado
   if (!state.creds.registered && !numero) {
-    try {
-      numero = await preguntar(chalk.cyan('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n┃ ') + chalk.white('Ingresa el número del bot (ej: 51xxx):') + chalk.cyan(' ┃\n┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n> '))
-      numeroIngresado = numero
-    } catch (e) {
-      numero = null
-    }
+    console.log(chalk.cyan('❓ Esperando número de teléfono...'))
+    numero = await preguntar(chalk.cyan('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n┃ ') + chalk.white('Ingresa el número del bot (ej: 51xxx):') + chalk.cyan(' ┃\n┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n> '))
+    numeroIngresado = numero
   }
 
   if (numero) {
@@ -142,6 +85,8 @@ async function iniciar() {
     if (numero.startsWith('54') && !numero.startsWith('549')) numero = '549' + numero.slice(2)
   }
 
+  console.log(chalk.yellow('🚀 Iniciando conexión neural...'))
+  
   const sock = makeWASocket({
     version,
     logger,
@@ -160,27 +105,27 @@ async function iniciar() {
 
   establecerSockActivo(sock)
 
-  sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect, qr } = update
-
-    if (!sock.authState.creds.registered && !codigoSolicitado && numero) {
+  if (!sock.authState.creds.registered && numero) {
+    setTimeout(async () => {
+      if (codigoSolicitado) return
       codigoSolicitado = true
-      console.log(chalk.yellow('⏳ Generando código de vinculación para: ' + numero + '...'))
-      await delay(3000)
+      console.log(chalk.yellow('⏳ Solicitando código para: ' + numero + '...'))
       try {
+        await delay(3000)
         const codigo = await sock.requestPairingCode(numero)
         console.log('\n' + chalk.cyan('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓'))
         console.log(chalk.cyan('┃') + chalk.bgCyan(chalk.black(`  CÓDIGO DE VINCULACIÓN: ${codigo}  `)) + chalk.cyan('┃'))
         console.log(chalk.cyan('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛') + '\n')
       } catch (err) {
-        console.log(chalk.red('❌ Error al solicitar código. Reintentando...'))
+        console.log(chalk.red('❌ Error al generar código. Reiniciando...'))
         codigoSolicitado = false
+        process.exit(1)
       }
-    }
+    }, 5000)
+  }
 
-    if (qr && !sock.authState.creds.registered && !numero) {
-      console.log(chalk.yellow('⚠️ Escanea el QR o reinicia para usar código de vinculación.'))
-    }
+  sock.ev.on('connection.update', async (update) => {
+    const { connection, lastDisconnect } = update
 
     if (connection === 'open') {
       intentosReconexion = 0
@@ -191,19 +136,9 @@ async function iniciar() {
 
     if (connection === 'close') {
       const statusCode = new Boom(lastDisconnect?.error)?.output?.statusCode
-      const errorMsg = lastDisconnect?.error?.message || ''
-
-      if (errorMsg.includes('Bad MAC')) {
+      if (statusCode === DisconnectReason.loggedOut) {
         nuclearReset()
       }
-
-      if (statusCode === DisconnectReason.loggedOut) {
-        cierresLoggedOutSeguidos++
-        if (cierresLoggedOutSeguidos >= 2) {
-          nuclearReset()
-        }
-      }
-
       intentosReconexion++
       setTimeout(iniciar, backoffDelay(intentosReconexion, config.maxReconnectDelay))
     }
@@ -213,11 +148,7 @@ async function iniciar() {
   sock.ev.on('messages.upsert', async (m) => {
     try {
       await handler(sock, m)
-    } catch (err) {
-      if (err.message.includes('Bad MAC')) {
-        nuclearReset()
-      }
-    }
+    } catch (err) {}
   })
 
   return sock
