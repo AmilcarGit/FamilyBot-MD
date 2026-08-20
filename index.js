@@ -1,4 +1,5 @@
-import makeWASocket, { 
+import { 
+  makeWASocket, 
   useMultiFileAuthState, 
   DisconnectReason, 
   makeCacheableSignalKeyStore,
@@ -75,8 +76,13 @@ async function iniciar() {
   console.log(chalk.yellow('📂 Cargando sesión neural...'))
   const { state, saveCreds } = await useMultiFileAuthState(config.sessionFolder)
   
-  let { version, isLatest } = await fetchLatestBaileysVersion()
-  console.log(chalk.blue(`📡 Usando WA v${version.join('.')}, ¿Es la última?: ${isLatest}`))
+  let version
+  try {
+    const v = await fetchLatestBaileysVersion()
+    version = v.version
+  } catch (e) {
+    version = [2, 3000, 1015901307]
+  }
 
   let numero = config.numeroBot || numeroIngresado
   if (!state.creds.registered && !numero) {
@@ -140,8 +146,6 @@ async function iniciar() {
 
     if (connection === 'close') {
       const statusCode = new Boom(lastDisconnect?.error)?.output?.statusCode
-      console.log(chalk.red(`🔌 Conexión cerrada. Razón: ${statusCode}`))
-      
       if (statusCode === DisconnectReason.loggedOut) {
         nuclearReset()
       } else {
