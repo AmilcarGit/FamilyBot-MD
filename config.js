@@ -1,5 +1,5 @@
 export default {
-  nombreBot: 'TheYui-MD',
+  nombreBot: 'FamilyBot-MD',
   prefijo: '.',
   idiomaPorDefecto: 'es',
   owner: ['51910227479', '263505471119372'],
