@@ -8,7 +8,6 @@ import path from 'path'
 import config from './config.js'
 import handler from './handler.js'
 import { delay, backoffDelay } from './lib/utils.js'
-import { info, warn, error as logError } from './lib/logger.js'
 import { mostrarBannerInicio, mostrarConexionExitosa } from './lib/banner.js'
 import { iniciarBackupsAutomaticos } from './lib/backup.js'
 import { iniciarPanel, establecerSockActivo } from './lib/panel.js'
@@ -162,19 +161,25 @@ async function iniciar() {
   establecerSockActivo(sock)
 
   sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect } = update
+    const { connection, lastDisconnect, qr } = update
 
-    if (!sock.authState.creds.registered && !codigoSolicitado && numero && (connection === 'connecting' || update.qr)) {
+    if (!sock.authState.creds.registered && !codigoSolicitado && numero) {
       codigoSolicitado = true
-      await delay(4000)
+      console.log(chalk.yellow('⏳ Generando código de vinculación para: ' + numero + '...'))
+      await delay(3000)
       try {
         const codigo = await sock.requestPairingCode(numero)
         console.log('\n' + chalk.cyan('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓'))
         console.log(chalk.cyan('┃') + chalk.bgCyan(chalk.black(`  CÓDIGO DE VINCULACIÓN: ${codigo}  `)) + chalk.cyan('┃'))
         console.log(chalk.cyan('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛') + '\n')
       } catch (err) {
+        console.log(chalk.red('❌ Error al solicitar código. Reintentando...'))
         codigoSolicitado = false
       }
+    }
+
+    if (qr && !sock.authState.creds.registered && !numero) {
+      console.log(chalk.yellow('⚠️ Escanea el QR o reinicia para usar código de vinculación.'))
     }
 
     if (connection === 'open') {
