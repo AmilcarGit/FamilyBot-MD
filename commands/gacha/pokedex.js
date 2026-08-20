@@ -36,13 +36,15 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
 ┗━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 🧬 *ᴅᴀᴛᴏs:*
-» *ɴᴏᴍʙ🇷ᴇ:* ${nombre}
+» *ɴᴏᴍʙʀᴇ:* ${nombre}
 » *ɪᴅ:* #${id}
 » *ᴛɪᴘᴏ:* ${tipos}
 
 📊 *sᴛᴀᴛs:*
 ❤️ ʜᴘ: ${stats.hp} | ⚔️ ᴀᴛᴋ: ${stats.attack}
 🛡️ ᴅᴇғ: ${stats.defense} | ⚡ sᴘᴅ: ${stats.speed}
+
+🔗 *ᴠɪsᴜᴀʟ:* ${imagenUrl}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 ✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ${config.nombreBot}*
@@ -53,16 +55,18 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
       { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 ᴍᴏᴄʜɪʟᴀ' }, type: 1 }
     ]
 
-    let imageBuffer
+    let imageBuffer = null
     try {
       const imgRes = await fetch(imagenUrl)
-      imageBuffer = await imgRes.buffer()
+      const arrayBuffer = await imgRes.arrayBuffer()
+      imageBuffer = Buffer.from(arrayBuffer)
     } catch (e) {
-      console.error('Error descargando imagen:', e)
+      console.error('Error descargando imagen:', e.message)
     }
 
-    try {
-      if (imageBuffer) {
+    let enviado = false
+    if (imageBuffer) {
+      try {
         await sock.sendMessage(chatId, {
           image: imageBuffer,
           caption: caption,
@@ -70,32 +74,26 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
           buttons: buttons,
           headerType: 4
         }, { quoted: msg })
-      } else {
-        throw new Error('No image buffer')
+        enviado = true
+      } catch (e) {
+        console.error('Error enviando imagen con botones:', e.message)
       }
-    } catch (e) {
-      console.error('Error enviando imagen con botones, intentando fallback...', e.message)
-      
+    }
+
+    if (!enviado) {
+      await sock.sendMessage(chatId, { text: caption }, { quoted: msg })
       try {
-        if (imageBuffer) {
-          await sock.sendMessage(chatId, { image: imageBuffer, caption: caption }, { quoted: msg })
-          await sock.sendMessage(chatId, {
-            text: '👇 *Acciones disponibles:*',
-            footer: config.nombreBot,
-            buttons: buttons,
-            headerType: 1
-          })
-        } else {
-          await sock.sendMessage(chatId, {
-            text: caption,
-            footer: config.nombreBot,
-            buttons: buttons,
-            headerType: 1
-          }, { quoted: msg })
-        }
-      } catch (e2) {
-        console.error('Error en fallback total:', e2.message)
-        await sock.sendMessage(chatId, { text: caption + '\n\n🎯 *Atrapar:* ' + config.prefijo + 'pokeatrapar ' + id }, { quoted: msg })
+        await sock.sendMessage(chatId, {
+          text: '👇 *ᴀᴄᴄɪᴏɴᴇs ᴅɪsᴘᴏɴɪʙʟᴇs:*',
+          footer: config.nombreBot,
+          buttons: buttons,
+          headerType: 1
+        })
+      } catch (e) {
+        console.error('Error enviando botones solos:', e.message)
+        await sock.sendMessage(chatId, { 
+          text: `🎯 *ᴀᴛʀᴀᴘᴀʀ:* ${config.prefijo}pokeatrapar ${id}\n🎒 *ᴍᴏᴄʜɪʟᴀ:* ${config.prefijo}mochila` 
+        })
       }
     }
 
