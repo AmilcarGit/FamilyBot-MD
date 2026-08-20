@@ -1,6 +1,9 @@
-import * as Baileys from '@itsukichan/baileys'
-const makeWASocket = Baileys.default || Baileys
-const { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore } = Baileys
+import { 
+  makeWASocket, 
+  useMultiFileAuthState, 
+  DisconnectReason, 
+  makeCacheableSignalKeyStore 
+} from '@itsukichan/baileys'
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
