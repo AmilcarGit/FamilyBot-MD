@@ -217,6 +217,7 @@ export default async function handler(sock, m) {
   const respuestaBoton =
     msg.message.buttonsResponseMessage?.selectedButtonId ||
     msg.message.templateButtonReplyMessage?.selectedId ||
+    msg.message.listResponseMessage?.singleSelectReply?.selectedRowId ||
     null
 
   const texto =
