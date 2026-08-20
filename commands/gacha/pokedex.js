@@ -1,4 +1,3 @@
-import { generateWAMessageFromContent, prepareWAMessageMedia, proto } from '@whiskeysockets/baileys'
 import fetch from 'node-fetch'
 import { guardarEnCache } from '../../lib/pokedexJuego.js'
 
@@ -49,19 +48,31 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
 ✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ${config.nombreBot}*
 ━━━━━━━━━━━━━━━━━━━━━━━━`.trim()
 
-    await sock.sendMessage(chatId, {
-      image: { url: imagenUrl },
-      caption: caption,
-      footer: config.nombreBot,
-      buttons: [
-        { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 ᴀᴛʀᴀᴘᴀʀ' }, type: 1 },
-        { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 ᴍᴏᴄʜɪʟᴀ' }, type: 1 }
-      ],
-      viewOnce: true
-    }, { quoted: msg })
+    try {
+      await sock.sendMessage(chatId, {
+        image: { url: imagenUrl },
+        caption: caption,
+        footer: config.nombreBot,
+        buttons: [
+          { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 ᴀᴛʀᴀᴘᴀʀ' }, type: 1 },
+          { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 ᴍᴏᴄʜɪʟᴀ' }, type: 1 }
+        ],
+        viewOnce: true
+      }, { quoted: msg })
+    } catch (mediaError) {
+      console.log('⚠️ Fallo subida de imagen, enviando en modo texto con botones...')
+      await sock.sendMessage(chatId, {
+        text: caption + '\n\n💡 _[Modo texto por restricción de red]_',
+        footer: config.nombreBot,
+        buttons: [
+          { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 ᴀᴛʀᴀᴘᴀʀ' }, type: 1 },
+          { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 ᴍᴏᴄʜɪʟᴀ' }, type: 1 }
+        ]
+      }, { quoted: msg })
+    }
 
   } catch (error) {
     console.error('Error en pokedex:', error)
-    await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇᴅᴇx.' }, { quoted: msg })
+    await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏnsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇᴅᴇx.' }, { quoted: msg })
   }
 }
