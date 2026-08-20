@@ -1,7 +1,5 @@
 import fetch from 'node-fetch'
 import { guardarEnCache } from '../../lib/pokedexJuego.js'
-import pkg from '@whiskeysockets/baileys'
-const { prepareWAMessageMedia, generateWAMessageFromContent } = pkg
 import Jimp from 'jimp'
 
 export const desc = 'Busca información detallada de un Pokémon con Interfaz Neural'
@@ -59,52 +57,37 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
       imageBuffer = await image.getBufferAsync(Jimp.MIME_PNG)
     } catch (e) {}
 
-    let media = null
-    if (imageBuffer) {
-      try {
-        media = await prepareWAMessageMedia({ image: imageBuffer }, { upload: sock.waUploadToServer })
-      } catch (e) {}
-    }
-
     const buttons = [
-      {
-        name: "quick_reply",
-        buttonParamsJson: JSON.stringify({
-          display_text: "🎯 ᴀᴛʀᴀᴘᴀʀ",
-          id: `${config.prefijo}pokeatrapar ${id}`
-        })
-      },
-      {
-        name: "quick_reply",
-        buttonParamsJson: JSON.stringify({
-          display_text: "🎒 ᴍᴏᴄʜɪʟᴀ",
-          id: `${config.prefijo}mochila`
-        })
-      }
+      { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 ᴀᴛʀᴀᴘᴀʀ' }, type: 1 },
+      { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 ᴍᴏᴄʜɪʟᴀ' }, type: 1 }
     ]
 
-    const interactiveMessage = {
-      body: { text: caption },
-      footer: { text: config.nombreBot },
-      header: {
-        title: `💠 *${nombre}* (#${id})`,
-        hasMediaAttachment: !!media,
-        imageMessage: media ? media.imageMessage : null
-      },
-      nativeFlowMessage: {
-        buttons: buttons
+    try {
+      if (imageBuffer) {
+        await sock.sendMessage(chatId, {
+          image: imageBuffer,
+          caption: caption,
+          footer: config.nombreBot,
+          buttons: buttons,
+          headerType: 4
+        }, { quoted: msg })
+      } else {
+        throw new Error('Sin imagen')
+      }
+    } catch (e) {
+      try {
+        await sock.sendMessage(chatId, {
+          text: caption,
+          footer: config.nombreBot,
+          buttons: buttons,
+          headerType: 1
+        }, { quoted: msg })
+      } catch (e2) {
+        await sock.sendMessage(chatId, { 
+          text: caption + `\n\n🎯 *Atrapar:* ${config.prefijo}pokeatrapar ${id}\n🎒 *Mochila:* ${config.prefijo}mochila` 
+        }, { quoted: msg })
       }
     }
-
-    const message = generateWAMessageFromContent(chatId, {
-      viewOnceMessage: {
-        message: {
-          interactiveMessage: interactiveMessage
-        }
-      }
-    }, { quoted: msg })
-
-    await sock.relayMessage(chatId, message.message, { messageId: message.key.id })
 
   } catch (error) {
     console.error('Error en pokedex:', error)
