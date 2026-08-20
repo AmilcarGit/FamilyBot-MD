@@ -1,7 +1,9 @@
+import pkg from '@whiskeysockets/baileys'
+const { generateWAMessageFromContent, prepareWAMessageMedia, proto } = pkg
 import fetch from 'node-fetch'
 import { guardarEnCache } from '../../lib/pokedexJuego.js'
 
-export const desc = 'Busca información detallada de un Pokémon'
+export const desc = 'Busca información detallada de un Pokémon con Interfaz Neural'
 export const alias = ['pokemon', 'poke']
 export const cooldown = 5
 
@@ -26,7 +28,7 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
     const tipos = data.types.map(t => t.type.name).join(', ')
     const stats = {}
     data.stats.forEach(s => { stats[s.stat.name] = s.base_stat })
-    const imagen = data.sprites.other['official-artwork'].front_default || data.sprites.front_default
+    const imagenUrl = data.sprites.other['official-artwork'].front_default || data.sprites.front_default
     const statsTotal = Object.values(stats).reduce((a, b) => a + b, 0)
 
     guardarEnCache(id, { nombre, tipos, statsTotal })
@@ -45,33 +47,62 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
 🛡️ ᴅᴇғ: ${stats.defense} | ⚡ sᴘᴅ: ${stats.speed}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
-✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴛʜᴇʏᴜɪ sʏsᴛᴇᴍ*
+✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ${config.nombreBot}*
 ━━━━━━━━━━━━━━━━━━━━━━━━`.trim()
 
-    await sock.sendMessage(chatId, {
-      image: { url: imagen },
-      caption: caption,
-      footer: config.nombreBot
-    }, { quoted: msg })
+    let media = null
+    try {
+      media = await prepareWAMessageMedia({ image: { url: imagenUrl } }, { upload: sock.waUploadToServer })
+    } catch (e) {
+      console.error('Fallo subida de media, usando modo texto')
+    }
 
-    await sock.sendMessage(chatId, {
-      text: `¿Qué quieres hacer con *${nombre}*?`,
-      footer: config.nombreBot,
-      title: '💠 Pokédex Neural',
-      buttonText: '📋 Abrir selector',
-      sections: [
-        {
-          title: 'Acciones disponibles',
-          rows: [
-            { title: '🎯 Atrapar', description: `Intentar capturar a ${nombre}`, rowId: `${config.prefijo}pokeatrapar ${id}` },
-            { title: '🎒 Ver mochila', description: 'Revisa tu colección de Pokémon', rowId: `${config.prefijo}mochila` },
-          ],
-        },
-      ],
+    const buttons = [
+      {
+        name: 'quick_reply',
+        buttonParamsJson: JSON.stringify({
+          display_text: '🎯 ᴀᴛʀᴀᴘᴀʀ ' + nombre,
+          id: config.prefijo + 'pokeatrapar ' + id
+        })
+      },
+      {
+        name: 'quick_reply',
+        buttonParamsJson: JSON.stringify({
+          display_text: '🎒 ᴍᴏᴄʜɪʟᴀ',
+          id: config.prefijo + 'mochila'
+        })
+      }
+    ]
+
+    const interactiveMessage = proto.Message.InteractiveMessage.create({
+      header: proto.Message.InteractiveMessage.Header.create({
+        title: '💠 POKEDEX NEURAL 💠',
+        hasMediaAttachment: !!media,
+        imageMessage: media ? media.imageMessage : null
+      }),
+      body: proto.Message.InteractiveMessage.Body.create({
+        text: caption
+      }),
+      footer: proto.Message.InteractiveMessage.Footer.create({
+        text: config.nombreBot
+      }),
+      nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+        buttons: buttons
+      })
     })
 
+    const messageContent = generateWAMessageFromContent(chatId, {
+      viewOnceMessage: {
+        message: {
+          interactiveMessage
+        }
+      }
+    }, { quoted: msg, userJid: sock.user.id })
+
+    await sock.relayMessage(chatId, messageContent.message, { messageId: messageContent.key.id })
+
   } catch (error) {
-    console.error('Error en pokedex:', error)
+    console.error('Error crítico en pokedex:', error)
     await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇᴅᴇx.' }, { quoted: msg })
   }
 }
