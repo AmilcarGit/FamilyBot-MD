@@ -1,4 +1,5 @@
 import { obtenerImagenMenuAleatoria } from '../../lib/randomImage.js'
+import { normalizarJid } from '../../lib/utils.js'
 
 export const desc = 'Muestra el menú neural de comandos'
 export const alias = ['help', 'ayuda', 'menu']
@@ -31,7 +32,7 @@ function formatRuntime(seconds) {
 export default async function menu({ sock, chatId, comandos, config, db, msg }) {
   try {
     const jidRemitente = msg.key.participant || msg.key.remoteJid
-    const isRegistered = db.data.users[jidRemitente]?.registrado
+    const isRegistered = db.data.users[normalizarJid(jidRemitente)]?.registrado
     
     const uptime = formatRuntime(process.uptime())
     const ram = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)
