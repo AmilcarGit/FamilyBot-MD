@@ -49,56 +49,16 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
 ✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ${config.nombreBot}*
 ━━━━━━━━━━━━━━━━━━━━━━━━`.trim()
 
-    let media = null
-    try {
-      media = await prepareWAMessageMedia({ image: { url: imagenUrl } }, { upload: sock.waUploadToServer })
-    } catch (e) {
-      console.log('Modo texto activado por fallo de media')
-    }
-
-    const buttons = [
-      {
-        name: 'quick_reply',
-        buttonParamsJson: JSON.stringify({
-          display_text: '🎯 ᴀᴛʀᴀᴘᴀʀ ' + nombre,
-          id: config.prefijo + 'pokeatrapar ' + id
-        })
-      },
-      {
-        name: 'quick_reply',
-        buttonParamsJson: JSON.stringify({
-          display_text: '🎒 ᴍᴏᴄʜɪʟᴀ',
-          id: config.prefijo + 'mochila'
-        })
-      }
-    ]
-
-    const interactiveMessage = {
-      header: {
-        title: '💠 POKEDEX NEURAL 💠',
-        hasMediaAttachment: !!media,
-        imageMessage: media ? media.imageMessage : null
-      },
-      body: {
-        text: caption
-      },
-      footer: {
-        text: config.nombreBot
-      },
-      nativeFlowMessage: {
-        buttons: buttons
-      }
-    }
-
-    const messageContent = generateWAMessageFromContent(chatId, {
-      viewOnceMessage: {
-        message: {
-          interactiveMessage
-        }
-      }
-    }, { quoted: msg, userJid: sock.user.id })
-
-    await sock.relayMessage(chatId, messageContent.message, { messageId: messageContent.key.id })
+    await sock.sendMessage(chatId, {
+      image: { url: imagenUrl },
+      caption: caption,
+      footer: config.nombreBot,
+      buttons: [
+        { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 ᴀᴛʀᴀᴘᴀʀ' }, type: 1 },
+        { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 ᴍᴏᴄʜɪʟᴀ' }, type: 1 }
+      ],
+      viewOnce: true
+    }, { quoted: msg })
 
   } catch (error) {
     console.error('Error en pokedex:', error)
