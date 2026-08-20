@@ -6,7 +6,7 @@ import {
   fetchLatestBaileysVersion, 
   DisconnectReason, 
   makeCacheableSignalKeyStore 
-} from '@itsukichan/baileys'
+} from '@whiskeysockets/baileys'
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
@@ -82,7 +82,7 @@ export async function iniciarSubbot({ numero, creadorJid, chatOrigen, sockPrinci
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
-    browser: ['Chrome (Linux)', '', ''],
+    browser: ['Ubuntu', 'Chrome', '110.0.5481.178'],
     patchMessageBeforeSending: (message) => {
       const requiresPatch = !!(message.buttonsMessage || message.templateMessage || message.listMessage)
       if (requiresPatch) {
