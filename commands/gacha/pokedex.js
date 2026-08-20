@@ -36,7 +36,7 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
 ┗━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 🧬 *ᴅᴀᴛᴏs:*
-» *ɴᴏᴍʙʀᴇ:* ${nombre}
+» *ɴᴏᴍʙ🇷ᴇ:* ${nombre}
 » *ɪᴅ:* #${id}
 » *ᴛɪᴘᴏ:* ${tipos}
 
@@ -53,22 +53,50 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
       { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 ᴍᴏᴄʜɪʟᴀ' }, type: 1 }
     ]
 
+    let imageBuffer
     try {
-      await sock.sendMessage(chatId, {
-        image: { url: imagenUrl },
-        caption: caption,
-        footer: config.nombreBot,
-        buttons: buttons,
-        headerType: 4
-      }, { quoted: msg })
+      const imgRes = await fetch(imagenUrl)
+      imageBuffer = await imgRes.buffer()
     } catch (e) {
-      console.error('Error enviando imagen con botones:', e)
-      await sock.sendMessage(chatId, {
-        text: caption,
-        footer: config.nombreBot,
-        buttons: buttons,
-        headerType: 1
-      }, { quoted: msg })
+      console.error('Error descargando imagen:', e)
+    }
+
+    try {
+      if (imageBuffer) {
+        await sock.sendMessage(chatId, {
+          image: imageBuffer,
+          caption: caption,
+          footer: config.nombreBot,
+          buttons: buttons,
+          headerType: 4
+        }, { quoted: msg })
+      } else {
+        throw new Error('No image buffer')
+      }
+    } catch (e) {
+      console.error('Error enviando imagen con botones, intentando fallback...', e.message)
+      
+      try {
+        if (imageBuffer) {
+          await sock.sendMessage(chatId, { image: imageBuffer, caption: caption }, { quoted: msg })
+          await sock.sendMessage(chatId, {
+            text: '👇 *Acciones disponibles:*',
+            footer: config.nombreBot,
+            buttons: buttons,
+            headerType: 1
+          })
+        } else {
+          await sock.sendMessage(chatId, {
+            text: caption,
+            footer: config.nombreBot,
+            buttons: buttons,
+            headerType: 1
+          }, { quoted: msg })
+        }
+      } catch (e2) {
+        console.error('Error en fallback total:', e2.message)
+        await sock.sendMessage(chatId, { text: caption + '\n\n🎯 *Atrapar:* ' + config.prefijo + 'pokeatrapar ' + id }, { quoted: msg })
+      }
     }
 
   } catch (error) {
