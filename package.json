@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
-    "@whiskeysockets/baileys": "7.0.0-rc14",
+    "@whiskeysockets/baileys": "github:Andresv27728/baileys-beta",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
