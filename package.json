@@ -14,16 +14,17 @@
   "author": "AmilcarGit",
   "license": "MIT",
   "overrides": {
-    "libsignal": "npm:libsignal-node@latest"
+    "libsignal": "npm:libsignal-node@latest",
+    "jimp": "0.22.12"
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
-    "@itsukichan/baileys": "latest",
+    "@whiskeysockets/baileys": "npm:@itsukichan/baileys@latest",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "formdata-node": "^6.0.3",
-    "jimp": "^1.6.0",
+    "jimp": "0.22.12",
     "lowdb": "^7.0.1",
     "mongodb": "^6.9.0",
     "node-fetch": "^3.3.2",
