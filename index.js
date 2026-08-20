@@ -1,9 +1,10 @@
-import makeWASocket, { 
+import baileysPkg, { 
   useMultiFileAuthState, 
   DisconnectReason, 
   makeCacheableSignalKeyStore,
   fetchLatestBaileysVersion
 } from '@whiskeysockets/baileys'
+const makeWASocket = baileysPkg.default || baileysPkg
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
