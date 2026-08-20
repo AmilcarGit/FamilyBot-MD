@@ -57,12 +57,11 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
           { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 ᴀᴛʀᴀᴘᴀʀ' }, type: 1 },
           { buttonId: `${config.prefijo}mochila`, buttonText: { displayText: '🎒 ᴍᴏᴄʜɪʟᴀ' }, type: 1 }
         ],
-        viewOnce: true
+        headerType: 4
       }, { quoted: msg })
-    } catch (mediaError) {
-      console.log('⚠️ Fallo subida de imagen, enviando en modo texto con botones...')
+    } catch (e) {
       await sock.sendMessage(chatId, {
-        text: caption + '\n\n💡 _[Modo texto por restricción de red]_',
+        text: caption,
         footer: config.nombreBot,
         buttons: [
           { buttonId: `${config.prefijo}pokeatrapar ${id}`, buttonText: { displayText: '🎯 ᴀᴛʀᴀᴘᴀʀ' }, type: 1 },
@@ -73,6 +72,6 @@ export default async function pokedex({ sock, chatId, args, msg, config }) {
 
   } catch (error) {
     console.error('Error en pokedex:', error)
-    await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏnsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇᴅᴇx.' }, { quoted: msg })
+    await sock.sendMessage(chatId, { text: '❌ ᴇʀʀᴏʀ ᴀʟ ᴄᴏɴsᴜʟᴛᴀʀ ʟᴀ ᴘᴏᴋᴇᴅᴇx.' }, { quoted: msg })
   }
 }
