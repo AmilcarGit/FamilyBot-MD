@@ -1,11 +1,11 @@
 import * as baileysNS from '@whiskeysockets/baileys'
-const { 
-  useMultiFileAuthState, 
-  DisconnectReason, 
+const makeWASocket = baileysNS.default
+const {
+  useMultiFileAuthState,
+  DisconnectReason,
   makeCacheableSignalKeyStore,
-  fetchLatestBaileysVersion
-} = baileysNS.default || baileysNS
-const makeWASocket = baileysNS.makeWASocket || baileysNS.default?.makeWASocket || baileysNS.default || baileysNS
+  fetchLatestBaileysVersion,
+} = baileysNS
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
