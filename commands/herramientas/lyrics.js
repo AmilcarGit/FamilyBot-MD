@@ -33,7 +33,7 @@ export default async function lyrics({ sock, chatId, args, msg, config }) {
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `${lyrics}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
-      `✨ *TheYui-MD - Lyrics Service*`
+      `✨ *FamilyBot-MD - Lyrics Service*`
 
     await sock.sendMessage(chatId, { text: textoLyrics }, { quoted: msg })
 
