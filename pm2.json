@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "name": "TheYui-MD",
+      "name": "FamilyBot-MD",
       "script": "index.js",
       "watch": false,
       "autorestart": true,
