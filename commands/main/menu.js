@@ -15,13 +15,9 @@ const prepareWAMessageMedia =
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const commandsPath = path.join(
-  __dirname,
-  '..'
-)
+const commandsPath = path.join(__dirname, '..')
 
-export const desc =
-  'Menú principal de FamilyBot-MD'
+export const desc = 'Menú principal de FamilyBot-MD'
 
 export const alias = [
   'menu',
@@ -32,40 +28,40 @@ export const alias = [
 export const cooldown = 3
 
 const emojis = {
-  main: '🌿',
+  economia: '💰',
   gacha: '🎴',
-  juegos: '🎮',
-  ia: '🤖',
-  musica: '🎵',
-  descargas: '📥',
-  imagenes: '🖼️',
-  herramientas: '🛠️',
   grupo: '👥',
+  herramientas: '🛠️',
+  ia: '🤖',
+  juegos: '🎮',
+  main: '🌿',
+  media: '🎬',
   owner: '👑',
   perfil: '👤',
-  main2: '📚',
+  social: '🌐',
+  subbot: '🤖',
   default: '📦'
 }
 
 const nombres = {
-  main: 'MAIN',
+  economia: 'ECONOMÍA',
   gacha: 'GACHA',
-  juegos: 'JUEGOS',
-  ia: 'INTELIGENCIA ARTIFICIAL',
-  musica: 'MÚSICA',
-  descargas: 'DESCARGAS',
-  imagenes: 'IMÁGENES',
-  herramientas: 'HERRAMIENTAS',
   grupo: 'GRUPO',
+  herramientas: 'HERRAMIENTAS',
+  ia: 'INTELIGENCIA ARTIFICIAL',
+  juegos: 'JUEGOS',
+  main: 'MAIN',
+  media: 'MULTIMEDIA',
   owner: 'OWNER',
-  perfil: 'PERFIL'
+  perfil: 'PERFIL',
+  social: 'SOCIAL',
+  subbot: 'SUB-BOT'
 }
 
 function obtenerNombreCategoria(carpeta) {
-  const clave =
-    carpeta
-      .toLowerCase()
-      .replace(/\s+/g, '')
+  const clave = carpeta
+    .toLowerCase()
+    .replace(/\s+/g, '')
 
   return (
     nombres[clave] ||
@@ -76,189 +72,118 @@ function obtenerNombreCategoria(carpeta) {
 }
 
 function obtenerEmojiCategoria(carpeta) {
-  const clave =
-    carpeta
-      .toLowerCase()
-      .replace(/\s+/g, '')
+  const clave = carpeta
+    .toLowerCase()
+    .replace(/\s+/g, '')
 
-  return (
-    emojis[clave] ||
-    emojis.default
+  return emojis[clave] || emojis.default
+}
+
+function obtenerAliases(contenido) {
+  const resultado = contenido.match(
+    /export\s+const\s+alias\s*=\s*(\[[\s\S]*?\])/
+  )
+
+  if (!resultado) {
+    return []
+  }
+
+  const aliases = resultado[1].match(
+    /['"`]([^'"`]+)['"`]/g
+  )
+
+  if (!aliases) {
+    return []
+  }
+
+  return aliases.map(alias =>
+    alias.slice(1, -1)
   )
 }
 
-function leerExportacion(
-  contenido,
-  nombre
-) {
-  const expresion =
-    new RegExp(
-      `export\\\\s+const\\\\s+${nombre}\\\\s*=\\\\s*(\\\\[[\\\\s\\\\S]*?\\\\]|['"\`][\\\\s\\\\S]*?['"\`])`
-    )
+function obtenerDescripcion(contenido) {
+  const resultado = contenido.match(
+    /export\s+const\s+desc\s*=\s*['"`]([\s\S]*?)['"`]/
+  )
 
-  const resultado =
-    contenido.match(
-      expresion
-    )
-
-  if (!resultado) {
-    return null
-  }
-
-  const valor =
-    resultado[1]
-
-  if (
-    nombre === 'alias'
-  ) {
-    const aliases =
-      valor.match(
-        /['"`]([^'"`]+)['"`]/g
-      )
-
-    if (!aliases) {
-      return []
-    }
-
-    return aliases.map(
-      x =>
-        x.slice(
-          1,
-          -1
-        )
-    )
-  }
-
-  return valor
-    .replace(
-      /^['"`]|['"`]$/g,
-      ''
-    )
-    .trim()
-}
-
-function obtenerDescripcion(
-  contenido
-) {
-  const resultado =
-    contenido.match(
-      /export\s+const\s+desc\s*=\s*['"`]([\s\S]*?)['"`]/
-    )
-
-  return resultado
-    ? resultado[1]
-    : ''
+  return resultado ? resultado[1] : ''
 }
 
 function obtenerComandos() {
   const categorias = []
 
-  if (
-    !fs.existsSync(
-      commandsPath
-    )
-  ) {
+  if (!fs.existsSync(commandsPath)) {
     return categorias
   }
 
-  const carpetas =
-    fs
-      .readdirSync(
-        commandsPath,
-        {
-          withFileTypes: true
-        }
-      )
+  const carpetas = fs
+    .readdirSync(commandsPath, {
+      withFileTypes: true
+    })
+    .filter(item => item.isDirectory())
+    .sort((a, b) =>
+      a.name.localeCompare(b.name)
+    )
+
+  for (const carpeta of carpetas) {
+    const rutaCategoria = path.join(
+      commandsPath,
+      carpeta.name
+    )
+
+    const archivos = fs
+      .readdirSync(rutaCategoria, {
+        withFileTypes: true
+      })
       .filter(
         item =>
-          item.isDirectory()
+          item.isFile() &&
+          /\.js$/i.test(item.name)
       )
-      .sort(
-        (a, b) =>
-          a.name.localeCompare(
-            b.name
-          )
+      .sort((a, b) =>
+        a.name.localeCompare(b.name)
       )
-
-  for (
-    const carpeta of carpetas
-  ) {
-    const rutaCategoria =
-      path.join(
-        commandsPath,
-        carpeta.name
-      )
-
-    const archivos =
-      fs
-        .readdirSync(
-          rutaCategoria,
-          {
-            withFileTypes: true
-          }
-        )
-        .filter(
-          item =>
-            item.isFile() &&
-            /\.js$/i.test(
-              item.name
-            )
-        )
-        .sort(
-          (a, b) =>
-            a.name.localeCompare(
-              b.name
-            )
-        )
 
     const comandos = []
 
-    for (
-      const archivo of archivos
-    ) {
+    for (const archivo of archivos) {
+      if (archivo.name.startsWith('_')) {
+        continue
+      }
+
       if (
-        archivo.name.startsWith(
-          '_'
-        )
+        archivo.name === 'menu.js' &&
+        carpeta.name === 'main'
       ) {
         continue
       }
 
-      const rutaArchivo =
-        path.join(
-          rutaCategoria,
-          archivo.name
-        )
+      const rutaArchivo = path.join(
+        rutaCategoria,
+        archivo.name
+      )
 
       let contenido = ''
 
       try {
-        contenido =
-          fs.readFileSync(
-            rutaArchivo,
-            'utf8'
-          )
+        contenido = fs.readFileSync(
+          rutaArchivo,
+          'utf8'
+        )
       } catch {
         continue
       }
 
-      const nombre =
-        path
-          .basename(
-            archivo.name,
-            '.js'
-          )
+      const nombre = path.basename(
+        archivo.name,
+        '.js'
+      )
 
       const aliases =
-        leerExportacion(
-          contenido,
-          'alias'
-        ) || []
+        obtenerAliases(contenido)
 
       const descripcion =
-        obtenerDescripcion(
-          contenido
-        )
+        obtenerDescripcion(contenido)
 
       comandos.push({
         nombre,
@@ -267,12 +192,9 @@ function obtenerComandos() {
       })
     }
 
-    if (
-      comandos.length
-    ) {
+    if (comandos.length > 0) {
       categorias.push({
-        carpeta:
-          carpeta.name,
+        carpeta: carpeta.name,
         nombre:
           obtenerNombreCategoria(
             carpeta.name
@@ -289,30 +211,18 @@ function obtenerComandos() {
   return categorias
 }
 
-function limpiarNombre(
-  nombre
-) {
+function limpiarNombre(nombre) {
   return nombre
-    .replace(
-      /\.js$/i,
-      ''
-    )
-    .replace(
-      /[-_]/g,
-      ' '
-    )
+    .replace(/\.js$/i, '')
+    .replace(/[-_]/g, ' ')
     .trim()
 }
 
-function construirMenuComandos(
-  prefijo
-) {
+function construirMenuComandos(prefijo) {
   const categorias =
     obtenerComandos()
 
-  if (
-    !categorias.length
-  ) {
+  if (!categorias.length) {
     return `
 ╭─────── 🌿 ───────╮
       𝐂𝐎𝐌𝐀𝐍𝐃𝐎𝐒
@@ -324,77 +234,68 @@ function construirMenuComandos(
 `.trim()
   }
 
-  const bloques =
-    categorias.map(
-      categoria => {
-        const comandos =
-          categoria.comandos
-            .map(
-              comando => {
-                const nombre =
-                  limpiarNombre(
+  const bloques = categorias.map(
+    categoria => {
+      const comandos =
+        categoria.comandos
+          .map(comando => {
+            const nombre =
+              limpiarNombre(
+                comando.nombre
+              )
+
+            const aliases =
+              comando.aliases
+                .filter(
+                  alias =>
+                    alias !==
                     comando.nombre
+                )
+                .slice(0, 3)
+
+            let linea =
+              `│ ${prefijo}${nombre}`
+
+            if (aliases.length) {
+              linea +=
+                `\n│   ↳ ${aliases
+                  .map(
+                    alias =>
+                      `${prefijo}${alias}`
                   )
+                  .join(' • ')}`
+            }
 
-                const aliases =
-                  comando.aliases
-                    .filter(
-                      alias =>
-                        alias !==
-                        comando.nombre
-                    )
-                    .slice(
-                      0,
-                      3
-                    )
+            return linea
+          })
+          .join('\n')
 
-                let linea =
-                  `│ ${prefijo}${nombre}`
-
-                if (
-                  aliases.length
-                ) {
-                  linea +=
-                    `\n│   ↳ ${aliases.map(
-                      alias =>
-                        `${prefijo}${alias}`
-                    ).join(
-                      ' • '
-                    )}`
-                }
-
-                return linea
-              }
-            )
-            .join(
-              '\n'
-            )
-
-        return `
+      return `
 ╭─❖ ${categoria.emoji} 𝐂𝐀𝐓𝐄𝐆𝐎𝐑Í𝐀: ${categoria.nombre}
 ${comandos}
 ╰────────────────
 `.trim()
-      }
+    }
+  )
+
+  const total =
+    categorias.reduce(
+      (cantidad, categoria) =>
+        cantidad +
+        categoria.comandos.length,
+      0
     )
 
   return `
 ╭─────── 🌿 ───────╮
-      𝐅𝐀𝐌𝐈𝐋𝐘𝐁𝐎𝐓
-     𝐂𝐎𝐌𝐀𝐍𝐃𝐎𝐒
+     𝐅𝐀𝐌𝐈𝐋𝐘𝐁𝐎𝐓
+    𝐂𝐎𝐌𝐀𝐍𝐃𝐎𝐒
 ╰─────── 🌿 ───────╯
 
-${bloques.join(
-  '\n\n'
-)}
+${bloques.join('\n\n')}
 
 ╭─────────────────╮
-│ 📚 Total: ${categorias.reduce(
-    (total, categoria) =>
-      total +
-      categoria.comandos.length,
-    0
-  )} comandos
+│ 📚 Total: ${total} comandos
 ╰─────────────────╯
 
 🌿 *𝐌𝐨𝐫𝐞 𝐭𝐡𝐚𝐧 𝐚 𝐛𝐨𝐭...*
@@ -402,9 +303,7 @@ ${bloques.join(
 `.trim()
 }
 
-async function prepararImagen(
-  sock
-) {
+async function prepararImagen(sock) {
   try {
     const buffer =
       obtenerImagenMenuAleatoria()
@@ -438,14 +337,11 @@ function crearBoton(
   id
 ) {
   return {
-    name:
-      'quick_reply',
+    name: 'quick_reply',
     buttonParamsJson:
       JSON.stringify({
-        display_text:
-          texto,
-        id:
-          `${prefijo}${id}`
+        display_text: texto,
+        id: `${prefijo}${id}`
       })
   }
 }
@@ -460,9 +356,7 @@ async function enviarMenu({
   botones
 }) {
   const media =
-    await prepararImagen(
-      sock
-    )
+    await prepararImagen(sock)
 
   const message =
     generateWAMessageFromContent(
@@ -483,13 +377,15 @@ async function enviarMenu({
                 title: titulo,
                 hasMediaAttachment:
                   !!media,
-                imageMessage:
-                  media
-                    ? media.imageMessage
-                    : null
+                ...(media
+                  ? {
+                      imageMessage:
+                        media.imageMessage
+                    }
+                  : {})
               },
               nativeFlowMessage: {
-                buttons
+                buttons: botones
               }
             }
           }
@@ -504,8 +400,7 @@ async function enviarMenu({
     chatId,
     message.message,
     {
-      messageId:
-        message.key.id
+      messageId: message.key.id
     }
   )
 }
@@ -621,15 +516,17 @@ export default async function menu({
 ╰────────────────
 
 ╭─❖ 𝐂𝐀𝐓𝐄𝐆𝐎𝐑Í𝐀𝐒
+│ 💰 Economía
 │ 🎴 Gacha
-│ 🎮 Juegos
-│ 🤖 Inteligencia Artificial
-│ 🎵 Música
-│ 🎬 Multimedia
-│ 🖼️ Imágenes
-│ 🛠️ Herramientas
 │ 👥 Grupo
+│ 🛠️ Herramientas
+│ 🤖 Inteligencia Artificial
+│ 🎮 Juegos
+│ 🎬 Multimedia
 │ 👑 Owner
+│ 👤 Perfil
+│ 🌐 Social
+│ 🤖 Sub-Bot
 ╰────────────────
 
         🌿 ───────── 🌿
