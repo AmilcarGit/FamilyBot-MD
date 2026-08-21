@@ -1,40 +1,44 @@
 import fetch from 'node-fetch'
 
-export const desc = 'Descarga videos de YouTube usando la API neural de Delerius'
+export const desc = 'Descarga videos de YouTube y Shorts usando la API neural de Delerius'
 export const alias = ['ytmp4', 'video', 'ytvideo']
 export const categoria = 'descargas'
 export const cooldown = 10
 
 export default async function video({ sock, msg, args, chatId, config }) {
   try {
-    const query = args.join(' ')
+    const query = args.join(' ').trim()
     if (!query) {
       await sock.sendMessage(chatId, {
-        text: `❌ *Por favor, ingresa el título o enlace de un video de YouTube.*\n\n*Ejemplo:* \`${config.prefijo}video Bad Bunny Monaco\``
+        text: `❌ *Por favor, ingresa el título o enlace de un video de YouTube.*\n\n*Ejemplo:* \`${config.prefijo}video https://youtube.com/shorts/...\``
       }, { quoted: msg })
       return
     }
 
     await sock.sendMessage(chatId, {
-      text: `⏳ *Buscando y procesando video con Delerius API...*`
+      text: `⏳ *Procesando video con Delerius API...*`
     }, { quoted: msg })
 
-    const searchUrl = `https://api.delirius.online/search/ytsearch?q=${encodeURIComponent(query)}`
-    const searchRes = await fetch(searchUrl)
-    const searchContentType = searchRes.headers.get('content-type') || ''
-    if (!searchContentType.includes('application/json')) {
-      await sock.sendMessage(chatId, { text: `❌ El servidor de Delerius API no respondió con JSON (Búsqueda).` }, { quoted: msg })
-      return
-    }
-    const searchData = await searchRes.json()
+    let videoUrl = query
+    const isUrl = query.startsWith('http://') || query.startsWith('https://') || query.includes('youtube.com') || query.includes('youtu.be')
 
-    if (!searchData.status || !searchData.data || searchData.data.length === 0) {
-      await sock.sendMessage(chatId, { text: `❌ No se encontraron resultados para: *${query}*` }, { quoted: msg })
-      return
-    }
+    if (!isUrl) {
+      const searchUrl = `https://api.delirius.online/search/ytsearch?q=${encodeURIComponent(query)}`
+      const searchRes = await fetch(searchUrl)
+      const searchContentType = searchRes.headers.get('content-type') || ''
+      if (!searchContentType.includes('application/json')) {
+        await sock.sendMessage(chatId, { text: `❌ El servidor de Delerius API no respondió con JSON (Búsqueda).` }, { quoted: msg })
+        return
+      }
+      const searchData = await searchRes.json()
 
-    const videoInfo = searchData.data[0]
-    const videoUrl = videoInfo.url
+      if (!searchData.status || !searchData.data || searchData.data.length === 0) {
+        await sock.sendMessage(chatId, { text: `❌ No se encontraron resultados para: *${query}*` }, { quoted: msg })
+        return
+      }
+
+      videoUrl = searchData.data[0].url
+    }
 
     const dlUrl = `https://api.delirius.online/download/ytmp4?url=${encodeURIComponent(videoUrl)}`
     const dlRes = await fetch(dlUrl)
@@ -51,8 +55,8 @@ export default async function video({ sock, msg, args, chatId, config }) {
     }
 
     const downloadLink = dlData.data.download
-    const title = dlData.data.title || videoInfo.title
-    const duration = videoInfo.timestamp || videoInfo.duration || 'Desconocida'
+    const title = dlData.data.title || 'Video de YouTube'
+    const duration = dlData.data.duration || 'Desconocida'
 
     const caption = `╭━━━〔 📥 *YOUTUBE VIDEO* 〕━━━⬣\n` +
                   `┃ ✧ *Título:* ${title}\n` +
