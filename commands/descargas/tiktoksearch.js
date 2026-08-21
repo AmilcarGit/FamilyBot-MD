@@ -4,7 +4,7 @@ import * as Baileys from '@whiskeysockets/baileys'
 const generateWAMessageFromContent = Baileys.generateWAMessageFromContent || Baileys.default?.generateWAMessageFromContent
 const prepareWAMessageMedia = Baileys.prepareWAMessageMedia || Baileys.default?.prepareWAMessageMedia
 
-export const desc = 'Busca videos en TikTok con Lempi API y botones de descarga directa'
+export const desc = 'Busca videos en TikTok con múltiples APIs gratuitas y botones'
 export const alias = ['ttsearch', 'tiktoks', 'tsearch']
 export const categoria = 'descargas'
 export const cooldown = 10
@@ -19,17 +19,47 @@ export default async function tiktoksearch({ sock, msg, args, chatId, config }) 
       return
     }
 
-    const apiKey = config.apiKeys?.lempi || 'FamilyBot-MD'
-    const searchUrl = `https://api.lempi.lat/s/tiktok?q=${encodeURIComponent(query)}&apikey=${apiKey}`
-    const searchRes = await fetch(searchUrl)
-    const searchData = await searchRes.json()
+    await sock.sendMessage(chatId, {
+      text: `⏳ *Buscando en TikTok con redes neuronales libres...*`
+    }, { quoted: msg })
 
-    if (!searchData.status || !searchData.resultado || searchData.resultado.length === 0) {
+    let results = []
+
+    try {
+      const url1 = `https://api.siputzx.my.id/api/s/tiktok?query=${encodeURIComponent(query)}`
+      const res1 = await fetch(url1)
+      const data1 = await res1.json()
+      if (data1.status && data1.data && data1.data.length > 0) {
+        results = data1.data.slice(0, 3).map(item => ({
+          title: item.title || item.titulo || 'Sin título',
+          author: item.author || item.autor?.nombre || 'Desconocido',
+          video: item.nowm || item.no_watermark || item.video,
+          portada: item.cover || item.thumbnail || item.portada
+        }))
+      }
+    } catch (e) {}
+
+    if (results.length === 0) {
+      try {
+        const url2 = `https://api.vkrnet.in/api/tiktoksearch?query=${encodeURIComponent(query)}`
+        const res2 = await fetch(url2)
+        const data2 = await res2.json()
+        if (data2.results && data2.results.length > 0) {
+          results = data2.results.slice(0, 3).map(item => ({
+            title: item.title || 'Sin título',
+            author: item.author || 'Desconocido',
+            video: item.nowm || item.video,
+            portada: item.cover || item.thumbnail
+          }))
+        }
+      } catch (e) {}
+    }
+
+    if (results.length === 0) {
       await sock.sendMessage(chatId, { text: `❌ No se encontraron resultados en TikTok para: *${query}*` }, { quoted: msg })
       return
     }
 
-    const results = searchData.resultado.slice(0, 3)
     let caption = `┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n` +
                   `┃   🔍  *ᴛɪᴋᴛᴏᴋ sᴇᴀʀᴄʜ*  🔍   ┃\n` +
                   `┗━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n` +
@@ -38,30 +68,25 @@ export default async function tiktoksearch({ sock, msg, args, chatId, config }) 
     const buttons = []
 
     results.forEach((item, index) => {
-      const title = item.titulo || 'Sin título'
-      const author = item.autor?.nombre || 'Desconocido'
-      const directVideoUrl = item.video
-
-      caption += `*${index + 1}.* ${title.substring(0, 45)}...\n`
-      caption += `👤 *ᴀᴜᴛᴏʀ:* ${author}\n\n`
+      caption += `*${index + 1}.* ${item.title.substring(0, 45)}...\n`
+      caption += `👤 *ᴀᴜᴛᴏʀ:* ${item.author}\n\n`
 
       buttons.push({
         name: "quick_reply",
         buttonParamsJson: JSON.stringify({
           display_text: `📥 ᴅᴇsᴄᴀʀɢᴀʀ #${index + 1}`,
-          id: `${config.prefijo}ttdlfile ${directVideoUrl}`
+          id: `${config.prefijo}ttdlfile ${item.video}`
         })
       })
     })
 
-    caption += `━━━━━━━━━━━━━━━━━━━━━━━━\n`
-    caption += `💡 *sᴇʟᴇᴄᴄɪᴏɴᴀ ᴜɴ ʙᴏᴛᴏ́ɴ ᴘᴀʀᴀ ᴇɴᴠɪᴀʀ ᴇʟ ᴠɪᴅᴇᴏ*`
+    caption += `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+               `💡 *sᴇʟᴇᴄᴄɪᴏɴᴀ ᴜɴ ʙᴏᴛᴏ́ɴ ᴘᴀʀᴀ ᴇɴᴠɪᴀʀ ᴇʟ ᴠɪᴅᴇᴏ*`
 
-    const firstItem = results[0]
     let media = null
-    if (firstItem.portada) {
+    if (results[0].portada) {
       try {
-        media = await prepareWAMessageMedia({ image: { url: firstItem.portada } }, { upload: sock.waUploadToServer })
+        media = await prepareWAMessageMedia({ image: { url: results[0].portada } }, { upload: sock.waUploadToServer })
       } catch (e) {}
     }
 
