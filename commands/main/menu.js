@@ -1,162 +1,156 @@
-import { obtenerImagenMenuAleatoria } from '../../lib/randomImage.js'
-import { normalizarJid } from '../../lib/utils.js'
 import * as Baileys from '@whiskeysockets/baileys'
 
-const generateWAMessageFromContent = Baileys.generateWAMessageFromContent || Baileys.default?.generateWAMessageFromContent
-const prepareWAMessageMedia = Baileys.prepareWAMessageMedia || Baileys.default?.prepareWAMessageMedia
+const generateWAMessageFromContent =
+  Baileys.generateWAMessageFromContent ||
+  Baileys.default?.generateWAMessageFromContent
 
-export const desc = 'Muestra el menú neural de comandos'
-export const alias = ['help', 'ayuda', 'menu']
-export const cooldown = 5
+export const desc = 'Menú principal de FamilyBot-MD'
 
-const ICONOS = {
-  main: '💠',
-  descargas: '📥',
-  economia: '💰',
-  gacha: '🧧',
-  grupo: '🛡️',
-  media: '🎬',
-  owner: '👑',
-  social: '🎭',
-  juegos: '🎮',
-  perfil: '👤',
-  subbot: '🤖',
-  herramientas: '🛠️',
-  ia: '🧠',
-  premium: '💎'
-}
+export const alias = [
+  'menu',
+  'help',
+  'ayuda'
+]
 
-function formatRuntime(seconds) {
-  const d = Math.floor(seconds / (3600 * 24))
-  const h = Math.floor((seconds % (3600 * 24)) / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  return `${d}ᴅ ${h}ʜ ${m}ᴍ`
-}
+export const cooldown = 3
 
-export default async function menu({ sock, chatId, comandos, config, db, msg }) {
-  try {
-    const jidRemitente = msg.key.participant || msg.key.remoteJid
-    const isRegistered = db.data.users[normalizarJid(jidRemitente)]?.registrado
+export default async function menu({
+  sock,
+  chatId,
+  msg,
+  config,
+  db
+}) {
+  const jid =
+    msg?.key?.participant ||
+    msg?.key?.remoteJid
 
-    const uptime = formatRuntime(process.uptime())
-    const ram = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)
-    const totalUsers = Object.keys(db.data.users || {}).length
-    const fecha = new Date().toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })
+  const numero =
+    jid?.split('@')[0] ||
+    'Usuario'
 
-    const porCategoria = {}
-    comandos.forEach(c => {
-      if (c.oculto || (config.comandosDesactivados || []).includes(c.nombre)) return
-      const cat = c.categoria || 'main'
-      if (!porCategoria[cat]) porCategoria[cat] = []
-      porCategoria[cat].push(c)
-    })
+  const users =
+    db?.data?.users || {}
 
-    let menuText = `┏━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃   🌌  *ᴛʜᴇ ʏᴜɪ-ᴍᴅ ᴠ1*  🌌   ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━┛
+  const user =
+    users[jid] || {}
 
-🛰️ *sᴛᴀᴛᴜs ɴᴇᴜʀᴀʟ:*
-» *ᴜᴘᴛɪᴍᴇ:* ${uptime}
-» *ʀᴀᴍ:* ${ram} ᴍʙ / 1024 ᴍʙ
-» *ᴜsᴜᴀʀɪᴏs:* ${totalUsers}
-» *ᴘʀᴇғɪᴊᴏ:* [ ${config.prefijo} ]
+  const nivel =
+    user.level ??
+    user.nivel ??
+    1
 
-📅 *ғᴇᴄʜᴀ:* ${fecha}
-━━━━━━━━━━━━━━━━━━━━━━━━
-`
+  const xp =
+    user.exp ??
+    user.xp ??
+    0
 
-    const categorias = Object.keys(porCategoria).sort()
-    categorias.forEach(cat => {
-      const icon = ICONOS[cat.toLowerCase()] || '📂'
-      menuText += `\n┏━━〔 ${icon} *${cat.toUpperCase()}* 〕━━┓\n`
+  const rango =
+    user.rank ??
+    user.rango ??
+    'Miembro'
 
-      porCategoria[cat].forEach(c => {
-        const requiereReg = !['main', 'owner'].includes(cat.toLowerCase())
-        const lock = (requiereReg && !isRegistered) ? ' 🔐' : ''
+  const nombreBot =
+    config?.nombreBot ||
+    'FamilyBot-MD'
 
-        menuText += `┃ ✧ *${config.prefijo}${c.nombre}*${lock}\n`
-        menuText += `┃   🌾 _${c.desc || 'sɪɴ ᴅᴇsᴄʀɪᴘᴄɪᴏ́ɴ'}_\n`
-      })
+  const version =
+    config?.version ||
+    '2.0'
 
-      menuText += `┗━━━━━━━━━━━━━━━━━━━━┛\n`
-    })
+  const prefijo =
+    config?.prefijo ||
+    '.'
 
-    menuText += `\n✨ *ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴍɪʟᴄᴀɢɪᴛ*
-${isRegistered ? '✅ _¡ᴇsᴛᴀs ʀᴇɢɪsᴛʀᴀᴅᴏ!_' : '💡 _ᴜsᴀ ' + config.prefijo + 'reg ᴘᴀʀᴀ ʀᴇɢɪsᴛʀᴀʀᴛᴇ_'}`
+  const texto = `
+╭─────── 🌿 ───────╮
+   𝐅𝐀𝐌𝐈𝐋𝐘𝐁𝐎𝐓-𝐌𝐃
+      𝐌𝐄𝐍𝐔
+╰─────── 🌿 ───────╯
 
-    menuText = menuText.trim()
+👋 𝐇𝐨𝐥𝐚, @${numero}
 
-    let imagen = null
-    try {
-      imagen = obtenerImagenMenuAleatoria()
-    } catch (e) {}
+╭─❖ 𝐁𝐎𝐓 𝐈𝐍𝐅𝐎
+│ 🤖 ${nombreBot}
+│ 🟢 Online
+│ ⚡ v${version}
+│ 👑 AmilcarGit
+╰────────────
 
-    const buttons = [
+╭─❖ 𝐓𝐔 𝐏𝐄𝐑𝐅𝐈𝐋
+│ ⭐ Nivel: ${nivel}
+│ ✨ XP: ${Number(xp).toLocaleString()}
+│ 🎖️ Rango: ${rango}
+╰────────────
+
+╭─❖ 𝐂𝐀𝐓𝐄𝐆𝐎𝐑𝐈𝐄𝐒
+│ 🎴 Gacha
+│ 🎮 Juegos
+│ 🤖 IA
+│ 🎵 Música
+│ 🎬 Multimedia
+│ 🖼️ Imágenes
+│ 🛠️ Tools
+│ 👥 Grupo
+│ 👑 Owner
+╰────────────
+
+🌿 *𝐌𝐨𝐫𝐞 𝐭𝐡𝐚𝐧 𝐚 𝐛𝐨𝐭...*
+   *𝐖𝐞'𝐫𝐞 𝐟𝐚𝐦𝐢𝐥𝐲.*
+
+╭───────────────╮
+│   ⚡ 𝐏𝐈𝐍𝐆   │
+╰───────────────╯
+
+        🍃 𝐀𝐦𝐢𝐥𝐜𝐚𝐫𝐆𝐢𝐭
+`.trim()
+
+  const message =
+    generateWAMessageFromContent(
+      chatId,
       {
-        name: 'quick_reply',
-        buttonParamsJson: JSON.stringify({
-          display_text: '🏓 ᴘɪɴɢ',
-          id: `${config.prefijo}ping`
-        })
-      }
-    ]
-
-    if (generateWAMessageFromContent) {
-      try {
-        let media = null
-        if (imagen) {
-          try {
-            media = await prepareWAMessageMedia({ image: imagen }, { upload: sock.waUploadToServer })
-          } catch (e) {
-            console.error('❌ Error preparando imagen del menú:', e)
-          }
-        }
-
-        const interactiveMessage = {
-          body: { text: menuText },
-          footer: { text: config.nombreBot },
+        interactiveMessage: {
+          body: {
+            text: texto
+          },
+          footer: {
+            text:
+              `${nombreBot} • ${prefijo}help`
+          },
           header: {
-            title: media ? undefined : `🌌 ${config.nombreBot}`,
-            hasMediaAttachment: !!media,
-            imageMessage: media ? media.imageMessage : null
+            title:
+              '🌿 FAMILYBOT-MD',
+            hasMediaAttachment:
+              false
           },
           nativeFlowMessage: {
-            buttons: buttons
+            buttons: [
+              {
+                name:
+                  'quick_reply',
+                buttonParamsJson:
+                  JSON.stringify({
+                    display_text:
+                      '⚡ 𝐏𝐈𝐍𝐆',
+                    id:
+                      `${prefijo}ping`
+                  })
+              }
+            ]
           }
         }
-
-        const message = generateWAMessageFromContent(chatId, {
-          viewOnceMessage: {
-            message: {
-              interactiveMessage: interactiveMessage
-            }
-          }
-        }, { quoted: msg })
-
-        await sock.relayMessage(chatId, message.message, { messageId: message.key.id })
-        return
-      } catch (e) {
-        console.error('❌ Error enviando menú con botón:', e)
+      },
+      {
+        quoted: msg
       }
+    )
+
+  await sock.relayMessage(
+    chatId,
+    message.message,
+    {
+      messageId:
+        message.key.id
     }
-
-    if (imagen) {
-      try {
-        await sock.sendMessage(chatId, {
-          image: imagen,
-          caption: menuText
-        }, { quoted: msg })
-        return
-      } catch (e) {
-        console.error('❌ Error enviando imagen del menú:', e)
-      }
-    }
-
-    await sock.sendMessage(chatId, {
-      text: menuText
-    }, { quoted: msg })
-
-  } catch (error) {
-    console.error('❌ Error en menu:', error)
-  }
+  )
 }
