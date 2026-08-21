@@ -12,14 +12,14 @@ export const desc = 'Busca un paquete de stickers y envía un pack completo.'
 export const alias = ['pack', 'spack', 'stickerpack']
 export const cooldown = 10
 
-const AUTOR_STICKER = 'TheYui-MD Bot'
+const AUTOR_STICKER = 'FamilyBot-MD Bot'
 const PACK_NAME = 'Sticker Pack Elite'
 
 async function agregarExif(webpBuffer) {
   const img = new webp.Image()
   await img.load(webpBuffer)
   const json = {
-    'sticker-pack-id': `theyui-${randomUUID()}`,
+    'sticker-pack-id': `familybot-${randomUUID()}`,
     'sticker-pack-name': PACK_NAME,
     'sticker-pack-publisher': AUTOR_STICKER,
     emojis: ['✨'],
