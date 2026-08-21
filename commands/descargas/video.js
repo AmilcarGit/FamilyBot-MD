@@ -38,7 +38,7 @@ export default async function video({ sock, chatId, args, msg, config }) {
 
     await sock.sendMessage(chatId, { text: `📥 Preparando descarga segura del video...` }, { quoted: msg })
 
-    const apiKey = 'lem954'
+    const apiKey = 'FamilyBot-MD'
     const apiUrl = `https://api.lempi.lat/dl/ytv?url=${encodeURIComponent(url)}&apikey=${apiKey}`
     
     const res = await fetch(apiUrl)
