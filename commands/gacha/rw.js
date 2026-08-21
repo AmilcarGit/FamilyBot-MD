@@ -1,19 +1,14 @@
 import fetch from 'node-fetch'
 import * as Baileys from '@whiskeysockets/baileys'
 
-const generateWAMessageFromContent =
-  Baileys.generateWAMessageFromContent ||
-  Baileys.default?.generateWAMessageFromContent
+const generateWAMessageFromContent = Baileys.generateWAMessageFromContent || Baileys.default?.generateWAMessageFromContent
+const prepareWAMessageMedia = Baileys.prepareWAMessageMedia || Baileys.default?.prepareWAMessageMedia
 
-const prepareWAMessageMedia =
-  Baileys.prepareWAMessageMedia ||
-  Baileys.default?.prepareWAMessageMedia
-
-export const desc = 'Sistema Gacha interactivo de FamilyBot-MD'
+export const desc = 'Sistema Gacha interactivo con personajes e imágenes'
 export const alias = ['gacha', 'rw', 'roll']
 export const cooldown = 5
 
-const PERSONAJES = [
+const personajes = [
   {
     id: '001',
     nombre: 'Yui',
@@ -65,7 +60,7 @@ const PERSONAJES = [
   }
 ]
 
-const RAREZAS = [
+const rarezas = [
   { nombre: 'COMMON', peso: 55 },
   { nombre: 'UNCOMMON', peso: 25 },
   { nombre: 'RARE', peso: 12 },
@@ -75,21 +70,21 @@ const RAREZAS = [
   { nombre: 'SECRET', peso: 0.2 }
 ]
 
+const imagenes = [
+  'https://i.postimg.cc/8kYV5XxY/yui.jpg',
+  'https://i.postimg.cc/9Q8xWkYk/elyssia.jpg',
+  'https://i.postimg.cc/3J7h8V6M/kael.jpg'
+]
+
 function random(min, max) {
-  return Math.floor(
-    Math.random() * (max - min + 1)
-  ) + min
+  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 function elegirRareza() {
-  const total = RAREZAS.reduce(
-    (a, b) => a + b.peso,
-    0
-  )
-
+  const total = rarezas.reduce((a, b) => a + b.peso, 0)
   let valor = Math.random() * total
 
-  for (const rareza of RAREZAS) {
+  for (const rareza of rarezas) {
     valor -= rareza.peso
 
     if (valor <= 0) {
@@ -103,57 +98,40 @@ function elegirRareza() {
 function obtenerPersonaje() {
   const rareza = elegirRareza()
 
-  const disponibles =
-    PERSONAJES.filter(
-      p => p.rareza === rareza
-    )
+  const disponibles = personajes.filter(
+    p => p.rareza === rareza
+  )
 
   const lista = disponibles.length
     ? disponibles
-    : PERSONAJES.filter(
-        p => p.rareza === 'COMMON'
-      )
+    : personajes
 
-  const personaje =
-    lista[random(0, lista.length - 1)]
+  const personaje = lista[random(0, lista.length - 1)]
 
   return {
     ...personaje,
     poder: random(
       personaje.poder[0],
       personaje.poder[1]
-    ),
-    obtenido: Date.now()
+    )
   }
 }
 
 async function obtenerImagen() {
   try {
-    const respuesta = await fetch(
-      'https://api.waifu.im/search?included_tags=waifu'
-    )
+    const url = imagenes[
+      random(0, imagenes.length - 1)
+    ]
 
-    if (!respuesta.ok) {
+    const res = await fetch(url)
+
+    if (!res.ok) {
       return null
     }
 
-    const data =
-      await respuesta.json()
-
-    if (
-      !data.images ||
-      !data.images.length
-    ) {
-      return null
-    }
-
-    return data.images[0].url || null
-  } catch (error) {
-    console.error(
-      'Error obteniendo imagen:',
-      error
-    )
-
+    return url
+  } catch (e) {
+    console.error('❌ Error obteniendo imagen:', e)
     return null
   }
 }
@@ -167,46 +145,26 @@ function obtenerUsuario(db, jid) {
     db.data.users[jid] = {}
   }
 
-  const user =
-    db.data.users[jid]
+  const user = db.data.users[jid]
 
   if (!Array.isArray(user.gacha)) {
     user.gacha = []
   }
 
-  if (
-    typeof user.gachaTickets !==
-    'number'
-  ) {
+  if (typeof user.gachaTickets !== 'number') {
     user.gachaTickets = 10
   }
 
   return user
 }
 
-function crearBotones(
-  config,
-  botones
-) {
-  return botones.map(boton => ({
-    name: 'quick_reply',
-    buttonParamsJson:
-      JSON.stringify({
-        display_text:
-          boton.text,
-        id:
-          `${config.prefijo}${boton.id}`
-      })
-  }))
-}
-
-async function enviarGacha({
+async function enviarMensaje({
   sock,
   chatId,
   msg,
   config,
-  texto,
   titulo,
+  texto,
   imagen,
   botones
 }) {
@@ -215,48 +173,45 @@ async function enviarGacha({
 
     if (imagen) {
       try {
-        media =
-          await prepareWAMessageMedia(
-            {
-              image: {
-                url: imagen
-              }
-            },
-            {
-              upload:
-                sock.waUploadToServer
+        media = await prepareWAMessageMedia(
+          {
+            image: {
+              url: imagen
             }
-          )
-      } catch (error) {
+          },
+          {
+            upload: sock.waUploadToServer
+          }
+        )
+      } catch (e) {
         console.error(
           '❌ Error preparando imagen del Gacha:',
-          error
+          e
         )
       }
     }
 
-    const buttons =
-      crearBotones(
-        config,
-        botones
-      )
+    const buttons = botones.map(boton => ({
+      name: 'quick_reply',
+      buttonParamsJson: JSON.stringify({
+        display_text: boton.text,
+        id: `${config.prefijo}${boton.id}`
+      })
+    }))
 
     const interactiveMessage = {
       body: {
         text: texto
       },
       footer: {
-        text:
-          config.nombreBot
+        text: config.nombreBot
       },
       header: {
         title: titulo,
-        hasMediaAttachment:
-          !!media,
-        imageMessage:
-          media
-            ? media.imageMessage
-            : null
+        hasMediaAttachment: !!media,
+        imageMessage: media
+          ? media.imageMessage
+          : null
       },
       nativeFlowMessage: {
         buttons
@@ -282,13 +237,12 @@ async function enviarGacha({
       chatId,
       message.message,
       {
-        messageId:
-          message.key.id
+        messageId: message.key.id
       }
     )
   } catch (error) {
     console.error(
-      'Error enviando Gacha:',
+      '❌ Error enviando Gacha:',
       error
     )
 
@@ -304,61 +258,6 @@ async function enviarGacha({
   }
 }
 
-function textoPersonaje(
-  personaje
-) {
-  return `
-${personaje.emoji} *${personaje.nombre}*
-
-💎 Rareza:
-*${personaje.rareza}*
-
-⭐ Poder:
-*${personaje.poder.toLocaleString()}*
-
-🆔 ID:
-*#${personaje.id}*
-`.trim()
-}
-
-function textoDiez(
-  personajes
-) {
-  return personajes
-    .map(
-      (p, i) =>
-        `${i + 1}. ${p.emoji} *${p.nombre}*\n` +
-        `   💎 ${p.rareza}\n` +
-        `   ⭐ ${p.poder.toLocaleString()}\n` +
-        `   🆔 #${p.id}`
-    )
-    .join('\n\n')
-}
-
-function obtenerRanking(db) {
-  return Object.entries(
-    db.data.users || {}
-  )
-    .map(([jid, user]) => ({
-      jid,
-      cantidad:
-        Array.isArray(
-          user.gacha
-        )
-          ? user.gacha.length
-          : 0
-    }))
-    .filter(
-      x => x.cantidad > 0
-    )
-    .sort(
-      (a, b) =>
-        b.cantidad -
-        a.cantidad
-    )
-    .slice(0, 10)
-}
-
 export default async function gacha({
   sock,
   chatId,
@@ -368,8 +267,7 @@ export default async function gacha({
   db
 }) {
   const accion =
-    args?.[0]
-      ?.toLowerCase() ||
+    args.join(' ').toLowerCase().trim() ||
     'menu'
 
   const jid =
@@ -377,10 +275,7 @@ export default async function gacha({
     msg.key.remoteJid
 
   const user =
-    obtenerUsuario(
-      db,
-      jid
-    )
+    obtenerUsuario(db, jid)
 
   if (
     accion === 'menu' ||
@@ -388,21 +283,18 @@ export default async function gacha({
     accion === 'ayuda'
   ) {
     const texto = `
-╭━━━〔 🎴 *FAMILY GACHA* 〕━━━╮
-┃
-┃ 👤 Jugador:
-┃ @${jid.split('@')[0]}
-┃
-┃ 🎟️ Tickets:
-┃ *${user.gachaTickets}*
-┃
-┃ 🎴 Colección:
-┃ *${user.gacha.length}*
-┃
-┃ ✨ Consigue personajes
-┃ y completa tu colección.
-┃
-╰━━━━━━━━━━━━━━━━━━━━━━╯
+╭━━〔 🎴 *FAMILY GACHA* 〕━━╮
+
+👤 Jugador:
+@${jid.split('@')[0]}
+
+🎟️ Tickets:
+*${user.gachaTickets}*
+
+🎒 Colección:
+*${user.gacha.length}*
+
+✨ ¡Pon a prueba tu suerte!
 
 💎 *RAREZAS*
 
@@ -413,40 +305,34 @@ export default async function gacha({
 🟡 LEGENDARY
 🔴 MYTHIC
 🌈 SECRET
+
+╰━━━━━━━━━━━━━━━━━━━━━━╯
 `.trim()
 
-    return enviarGacha({
+    return enviarMensaje({
       sock,
       chatId,
       msg,
       config,
+      titulo: '🎴 FAMILY GACHA',
       texto,
-      titulo:
-        '🎴 FAMILY GACHA',
+      imagen: await obtenerImagen(),
       botones: [
         {
-          text:
-            '🎴 ɢᴀᴄʜᴀ ×1',
-          id:
-            'gacha 1'
+          text: '🎴 GACHA ×1',
+          id: 'gacha 1'
         },
         {
-          text:
-            '🌟 ɢᴀᴄʜᴀ ×10',
-          id:
-            'gacha 10'
+          text: '🌟 GACHA ×10',
+          id: 'gacha 10'
         },
         {
-          text:
-            '🎒 ᴄᴏʟᴇᴄᴄɪóɴ',
-          id:
-            'gacha coleccion'
+          text: '🎒 COLECCIÓN',
+          id: 'gacha coleccion'
         },
         {
-          text:
-            '🏆 ʀᴀɴᴋɪɴɢ',
-          id:
-            'gacha ranking'
+          text: '🏆 RANKING',
+          id: 'gacha ranking'
         }
       ]
     })
@@ -456,38 +342,32 @@ export default async function gacha({
     accion === '1' ||
     accion === 'x1'
   ) {
-    if (
-      user.gachaTickets < 1
-    ) {
-      return enviarGacha({
+    if (user.gachaTickets < 1) {
+      return enviarMensaje({
         sock,
         chatId,
         msg,
         config,
+        titulo: '🎟️ SIN TICKETS',
         texto: `
-╭━━〔 🎟️ *TICKETS* 〕━━╮
+╭━━〔 🎟️ *SIN TICKETS* 〕━━╮
 
-❌ No tienes tickets.
+❌ No tienes tickets suficientes.
 
 🎟️ Disponibles:
 *${user.gachaTickets}*
 
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
 `.trim(),
-        titulo:
-          '🎟️ SIN TICKETS',
+        imagen: await obtenerImagen(),
         botones: [
           {
-            text:
-              '🎒 ᴄᴏʟᴇᴄᴄɪóɴ',
-            id:
-              'gacha coleccion'
+            text: '🎒 COLECCIÓN',
+            id: 'gacha coleccion'
           },
           {
-            text:
-              '🏠 ᴍᴇɴú',
-            id:
-              'gacha'
+            text: '🏠 MENÚ',
+            id: 'gacha'
           }
         ]
       })
@@ -501,55 +381,52 @@ export default async function gacha({
     const imagen =
       await obtenerImagen()
 
-    personaje.imagen =
-      imagen
+    personaje.imagen = imagen
+    personaje.fecha = Date.now()
 
-    user.gacha.push(
-      personaje
-    )
+    user.gacha.push(personaje)
 
     const texto = `
 ╭━━〔 ✨ *NUEVA OBTENCIÓN* 〕━━╮
 
-${textoPersonaje(
-  personaje
-)}
+${personaje.emoji} *${personaje.nombre}*
 
-━━━━━━━━━━━━━━━━━━━━
+💎 Rareza:
+*${personaje.rareza}*
 
-🎟️ Tickets restantes:
+⭐ Poder:
+*${personaje.poder.toLocaleString()}*
+
+🆔 ID:
+*#${personaje.id}*
+
+🎟️ Tickets:
 *${user.gachaTickets}*
 
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
 `.trim()
 
-    return enviarGacha({
+    return enviarMensaje({
       sock,
       chatId,
       msg,
       config,
-      texto,
       titulo:
         `🎴 ${personaje.nombre} #${personaje.id}`,
+      texto,
       imagen,
       botones: [
         {
-          text:
-            '🔄 ᴏᴛʀᴀ ᴠᴇᴢ',
-          id:
-            'gacha 1'
+          text: '🔄 OTRA VEZ',
+          id: 'gacha 1'
         },
         {
-          text:
-            '🌟 ×10',
-          id:
-            'gacha 10'
+          text: '🌟 GACHA ×10',
+          id: 'gacha 10'
         },
         {
-          text:
-            '🎒 ᴄᴏʟᴇᴄᴄɪóɴ',
-          id:
-            'gacha coleccion'
+          text: '🎒 COLECCIÓN',
+          id: 'gacha coleccion'
         }
       ]
     })
@@ -559,16 +436,15 @@ ${textoPersonaje(
     accion === '10' ||
     accion === 'x10'
   ) {
-    if (
-      user.gachaTickets < 10
-    ) {
-      return enviarGacha({
+    if (user.gachaTickets < 10) {
+      return enviarMensaje({
         sock,
         chatId,
         msg,
         config,
+        titulo: '🎟️ TICKETS',
         texto: `
-╭━━〔 ❌ *TICKETS INSUFICIENTES* 〕━━╮
+╭━━〔 ❌ *INSUFICIENTES* 〕━━╮
 
 Necesitas:
 🎟️ *10 tickets*
@@ -578,20 +454,15 @@ Tienes:
 
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
 `.trim(),
-        titulo:
-          '🎟️ TICKETS',
+        imagen: await obtenerImagen(),
         botones: [
           {
-            text:
-              '🎴 ×1',
-            id:
-              'gacha 1'
+            text: '🎴 GACHA ×1',
+            id: 'gacha 1'
           },
           {
-            text:
-              '🎒 ᴄᴏʟᴇᴄᴄɪóɴ',
-            id:
-              'gacha coleccion'
+            text: '🏠 MENÚ',
+            id: 'gacha'
           }
         ]
       })
@@ -599,33 +470,32 @@ Tienes:
 
     user.gachaTickets -= 10
 
-    const personajes = []
+    const resultados = []
 
-    for (
-      let i = 0;
-      i < 10;
-      i++
-    ) {
+    for (let i = 0; i < 10; i++) {
       const personaje =
         obtenerPersonaje()
 
       const imagen =
         await obtenerImagen()
 
-      personaje.imagen =
-        imagen
+      personaje.imagen = imagen
+      personaje.fecha = Date.now()
 
-      personajes.push(
-        personaje
-      )
-
-      user.gacha.push(
-        personaje
-      )
+      user.gacha.push(personaje)
+      resultados.push(personaje)
     }
 
+    const lista =
+      resultados.map(
+        (p, i) =>
+          `${i + 1}. ${p.emoji} *${p.nombre}*\n` +
+          `   💎 ${p.rareza}\n` +
+          `   ⭐ ${p.poder.toLocaleString()}`
+      ).join('\n\n')
+
     const imagenPrincipal =
-      personajes.find(
+      resultados.find(
         p => p.imagen
       )?.imagen || null
 
@@ -634,9 +504,7 @@ Tienes:
 
 🎉 *¡DIEZ OBTENCIONES!*
 
-${textoDiez(
-  personajes
-)}
+${lista}
 
 ━━━━━━━━━━━━━━━━━━━━
 
@@ -646,34 +514,26 @@ ${textoDiez(
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
 `.trim()
 
-    return enviarGacha({
+    return enviarMensaje({
       sock,
       chatId,
       msg,
       config,
+      titulo: '🌟 FAMILY GACHA ×10',
       texto,
-      titulo:
-        '🌟 FAMILY GACHA ×10',
-      imagen:
-        imagenPrincipal,
+      imagen: imagenPrincipal,
       botones: [
         {
-          text:
-            '🔄 ×10',
-          id:
-            'gacha 10'
+          text: '🔄 ×10',
+          id: 'gacha 10'
         },
         {
-          text:
-            '🎴 ×1',
-          id:
-            'gacha 1'
+          text: '🎴 ×1',
+          id: 'gacha 1'
         },
         {
-          text:
-            '🎒 ᴄᴏʟᴇᴄᴄɪóɴ',
-          id:
-            'gacha coleccion'
+          text: '🎒 COLECCIÓN',
+          id: 'gacha coleccion'
         }
       ]
     })
@@ -681,49 +541,42 @@ ${textoDiez(
 
   if (
     accion === 'coleccion' ||
-    accion === 'collection' ||
-    accion === 'inventario'
+    accion === 'collection'
   ) {
-    if (
-      !user.gacha.length
-    ) {
-      return enviarGacha({
+    const lista =
+      user.gacha
+        .slice(-10)
+        .reverse()
+
+    if (!lista.length) {
+      return enviarMensaje({
         sock,
         chatId,
         msg,
         config,
+        titulo: '🎒 COLECCIÓN',
         texto: `
-╭━━〔 🎒 *COLECCIÓN* 〕━━╮
+╭━━〔 🎒 *MI COLECCIÓN* 〕━━╮
 
-📭 Tu colección está vacía.
+📭 Todavía no tienes personajes.
 
 🎴 ¡Haz tu primera tirada!
 
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
 `.trim(),
-        titulo:
-          '🎒 MI COLECCIÓN',
+        imagen: await obtenerImagen(),
         botones: [
           {
-            text:
-              '🎴 ɢᴀᴄʜᴀ ×1',
-            id:
-              'gacha 1'
+            text: '🎴 GACHA ×1',
+            id: 'gacha 1'
           },
           {
-            text:
-              '🌟 ɢᴀᴄʜᴀ ×10',
-            id:
-              'gacha 10'
+            text: '🌟 GACHA ×10',
+            id: 'gacha 10'
           }
         ]
       })
     }
-
-    const personajes =
-      [...user.gacha]
-        .reverse()
-        .slice(0, 10)
 
     const texto = `
 ╭━━〔 🎒 *MI COLECCIÓN* 〕━━╮
@@ -736,166 +589,63 @@ ${textoDiez(
 🎟️ Tickets:
 *${user.gachaTickets}*
 
-${textoDiez(
-  personajes
-)}
+${lista.map(
+  (p, i) =>
+    `${i + 1}. ${p.emoji} *${p.nombre}*\n` +
+    `   💎 ${p.rareza} | ⭐ ${p.poder.toLocaleString()}`
+).join('\n\n')}
 
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
 `.trim()
 
     const imagen =
-      personajes.find(
+      lista.find(
         p => p.imagen
-      )?.imagen || null
+      )?.imagen ||
+      await obtenerImagen()
 
-    return enviarGacha({
+    return enviarMensaje({
       sock,
       chatId,
       msg,
       config,
+      titulo: '🎒 MI COLECCIÓN',
       texto,
-      titulo:
-        '🎒 MI COLECCIÓN',
       imagen,
       botones: [
         {
-          text:
-            '🎴 ×1',
-          id:
-            'gacha 1'
+          text: '🎴 GACHA ×1',
+          id: 'gacha 1'
         },
         {
-          text:
-            '🌟 ×10',
-          id:
-            'gacha 10'
+          text: '🌟 GACHA ×10',
+          id: 'gacha 10'
         },
         {
-          text:
-            '🏆 ʀᴀɴᴋɪɴɢ',
-          id:
-            'gacha ranking'
+          text: '🏆 RANKING',
+          id: 'gacha ranking'
         }
       ]
     })
   }
 
-  if (
-    accion === 'ranking' ||
-    accion === 'rank'
-  ) {
-    const ranking =
-      obtenerRanking(db)
-
-    if (!ranking.length) {
-      return enviarGacha({
-        sock,
-        chatId,
-        msg,
-        config,
-        texto: `
-╭━━〔 🏆 *RANKING* 〕━━╮
-
-📭 Todavía no hay jugadores.
-
-🎴 ¡Sé el primero!
-
-╰━━━━━━━━━━━━━━━━━━━━━━╯
-`.trim(),
-        titulo:
-          '🏆 GACHA RANKING',
-        botones: [
-          {
-            text:
-              '🎴 ɢᴀᴄʜᴀ',
-            id:
-              'gacha 1'
-          }
-        ]
-      })
-    }
-
-    const lista =
-      ranking
-        .map((usuario, indice) => {
-          const numero =
-            indice + 1
-
-          const medalla =
-            numero === 1
-              ? '🥇'
-              : numero === 2
-                ? '🥈'
-                : numero === 3
-                  ? '🥉'
-                  : '🏅'
-
-          return (
-            `${medalla} *#${numero}* ` +
-            `@${usuario.jid.split('@')[0]}\n` +
-            `   🎴 ${usuario.cantidad} personajes`
-          )
-        })
-        .join('\n\n')
-
-    const texto = `
-╭━━〔 🏆 *GACHA RANKING* 〕━━╮
-
-${lista}
-
-╰━━━━━━━━━━━━━━━━━━━━━━╯
-`.trim()
-
-    return enviarGacha({
-      sock,
-      chatId,
-      msg,
-      config,
-      texto,
-      titulo:
-        '🏆 GACHA RANKING',
-      botones: [
-        {
-          text:
-            '🎴 ×1',
-          id:
-            'gacha 1'
-        },
-        {
-          text:
-            '🌟 ×10',
-          id:
-            'gacha 10'
-        },
-        {
-          text:
-            '🎒 ᴄᴏʟᴇᴄᴄɪóɴ',
-          id:
-            'gacha coleccion'
-        }
-      ]
-    })
-  }
-
-  return enviarGacha({
+  return enviarMensaje({
     sock,
     chatId,
     msg,
     config,
+    titulo: '🎴 FAMILY GACHA',
     texto: `
-❌ *OPCIÓN NO ENCONTRADA*
+❌ *COMANDO NO ENCONTRADO*
 
-🎴 Usa:
+Usa:
 *${config.prefijo}gacha*
 `.trim(),
-    titulo:
-      '🎴 FAMILY GACHA',
+    imagen: await obtenerImagen(),
     botones: [
       {
-        text:
-          '🎴 ᴀʙʀɪʀ ɢᴀᴄʜᴀ',
-        id:
-          'gacha'
+        text: '🎴 ABRIR GACHA',
+        id: 'gacha'
       }
     ]
   })
