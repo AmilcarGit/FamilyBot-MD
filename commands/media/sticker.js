@@ -33,8 +33,8 @@ async function pngABuffer(objetivo, sock) {
 async function convertirAPngWebp(bufferPng) {
   const carpetaTemp = os.tmpdir()
   const id = randomUUID()
-  const rutaPng = path.join(carpetaTemp, `theyui-${id}.png`)
-  const rutaWebp = path.join(carpetaTemp, `theyui-${id}.webp`)
+  const rutaPng = path.join(carpetaTemp, `familybot-${id}.png`)
+  const rutaWebp = path.join(carpetaTemp, `familybot-${id}.webp`)
 
   try {
     await fs.writeFile(rutaPng, bufferPng)
@@ -65,7 +65,7 @@ export default async function sticker({ sock, msg, chatId }) {
     await img.load(webpBuffer)
 
     const json = {
-      'sticker-pack-id': 'theyui-md-sticker',
+      'sticker-pack-id': 'familybot-md-sticker',
       'sticker-pack-name': config.nombreBot,
       'sticker-pack-publisher': AUTOR_STICKER,
       emojis: ['🤖'],
