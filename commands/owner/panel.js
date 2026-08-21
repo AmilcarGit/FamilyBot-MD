@@ -26,7 +26,7 @@ export default async function panel({ sock, msg, chatId, db, config }) {
     .join('\n') || '   • Sin datos todavía'
 
   let texto =
-    `🦋 *Panel de TheYui-MD*\n\n` +
+    `🦋 *Panel de FamilyBot-MD*\n\n` +
     `⏱️ Uptime: ${formatearUptime(process.uptime())}\n` +
     `💾 RAM: ${(process.memoryUsage().rss / 1024 / 1024).toFixed(1)} MB\n` +
     `👥 Usuarios: ${usuarios}\n` +
