@@ -5,7 +5,7 @@ termux-wake-lock
 
 while true; do
   rm -f bot.lock
-  echo "🌸 Iniciando TheYui-MD..."
+  echo "🌸 Iniciando FamilyBot-MD..."
   node --max-old-space-size=250 index.js
   CODIGO=$?
   echo "⚠️ El bot se detuvo (código $CODIGO). Reiniciando en 5 segundos..."
