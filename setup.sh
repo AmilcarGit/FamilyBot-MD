@@ -42,7 +42,7 @@ function limpiar() {
 limpiar
 termux-wake-lock
 
-echo "🚀 Iniciando TheYui-MD en modo optimizado..."
+echo "🚀 Iniciando FamilyBot-MD en modo optimizado..."
 
 while true; do
     if [ ! -d "session" ]; then
@@ -70,7 +70,7 @@ cat << 'EOF' > ~/.termux/boot/start-yui.sh
 #!/data/data/com.termux/files/usr/bin/sh
 sleep 15
 termux-wake-lock
-cd ~/TheYui-MD
+cd ~/FamilyBot-MD
 bash start.sh
 EOF
 
@@ -80,7 +80,7 @@ termux-wake-lock
 cat << 'EOF' > watchdog.sh
 #!/data/data/com.termux/files/usr/bin/bash
 
-cd ~/TheYui-MD
+cd ~/FamilyBot-MD
 
 if pgrep -f "start.sh" > /dev/null; then
     exit 0
@@ -90,7 +90,7 @@ if ! pgrep -f "index.js" > /dev/null; then
     termux-wake-lock
     nohup bash start.sh > logs/watchdog.log 2>&1 &
     if command -v termux-notification > /dev/null; then
-        termux-notification --title "TheYui-MD" --content "El bot se habia caido, lo reinicie automaticamente." --priority high
+        termux-notification --title "FamilyBot-MD" --content "El bot se habia caido, lo reinicie automaticamente." --priority high
     fi
 fi
 EOF
@@ -98,7 +98,7 @@ EOF
 chmod +x watchdog.sh
 
 if command -v termux-job-scheduler > /dev/null; then
-    termux-job-scheduler --script "$HOME/TheYui-MD/watchdog.sh" --period-ms 900000 --persisted true
+    termux-job-scheduler --script "$HOME/FamilyBot-MD/watchdog.sh" --period-ms 900000 --persisted true
     echo "🐕 Watchdog programado cada 15 minutos con termux-job-scheduler."
 else
     echo "⚠️ No se encontró termux-job-scheduler. Instala Termux:API (pkg install termux-api) para activar el watchdog automático."
