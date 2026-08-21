@@ -54,7 +54,7 @@ ${staffList}
 » *Velocidad:* ${(Math.random() * (0.9 - 0.2) + 0.2).toFixed(3)}s
 
 🌐 *ENLACES:*
-» *GitHub:* https://github.com/AmilcarGit/TheYui-MD
+» *GitHub:* https://github.com/AmilcarGit/FamilyBot-MD
 » *Dashboard:* http://localhost:${config.panelPort}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
