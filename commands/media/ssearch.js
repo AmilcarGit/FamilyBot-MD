@@ -12,14 +12,14 @@ export const desc = 'Busca paquetes de stickers y envía algunos.'
 export const alias = ['buscars', 'stickersearch', 'ss']
 export const cooldown = 10
 
-const AUTOR_STICKER = 'TheYui-MD Bot'
+const AUTOR_STICKER = 'FamilyBot-MD Bot'
 const PACK_NAME = 'Sticker Search'
 
 async function agregarExif(webpBuffer) {
   const img = new webp.Image()
   await img.load(webpBuffer)
   const json = {
-    'sticker-pack-id': `theyui-${randomUUID()}`,
+    'sticker-pack-id': `familybot-${randomUUID()}`,
     'sticker-pack-name': PACK_NAME,
     'sticker-pack-publisher': AUTOR_STICKER,
     emojis: ['✨'],
@@ -64,7 +64,7 @@ export default async function ssearch({ sock, chatId, args, config }) {
   }
 
   try {
-    const apiKey = 'lem711'
+    const apiKey = 'FamilyBot-MD'
     const url = `https://api.lempi.lat/s/stickers?q=${encodeURIComponent(query)}&apikey=${apiKey}`
     
     await sock.sendMessage(chatId, { text: `🔎 Buscando stickers de *${query}*...` })
