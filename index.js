@@ -107,7 +107,7 @@ async function iniciar() {
     generateHighQualityLinkPreview: true,
     syncFullHistory: false,
     getMessage: async (key) => {
-      return { conversation: 'TheYui-MD' }
+      return { conversation: 'FamilyBot-MD' }
     }
   })
 
