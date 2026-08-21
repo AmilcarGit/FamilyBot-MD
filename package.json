@@ -1,5 +1,5 @@
 {
-  "name": "TheYui-MD✓",
+  "name": "FamilyBot-MD",
   "version": "1.0.0",
   "description": "bot de Whatsapp echo con todo el corazón",
   "main": "index.js",
@@ -7,7 +7,7 @@
   "scripts": {
     "start": "bash start.sh",
     "pm2": "pm2 start pm2.json",
-    "stop": "pm2 stop TheYui-MD",
+    "stop": "pm2 stop FamilyBot-MD",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
