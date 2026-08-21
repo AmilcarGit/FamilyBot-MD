@@ -1,38 +1,42 @@
-export const desc = 'Descarga videos de TikTok sin marca de agua.'
-export const alias = ['tk', 'tt', 'tiktokdl']
+import fetch from 'node-fetch'
+
+export const desc = 'Descarga videos de TikTok sin marca de agua usando Delerius API'
+export const alias = ['tt', 'tiktok', 'ttdl']
+export const categoria = 'descargas'
 export const cooldown = 10
 
-export default async function tiktok({ sock, chatId, args, msg, config }) {
-  const url = args[0]
-  
-  if (!url) {
-    return sock.sendMessage(chatId, {
-      text: `❌ Por favor, ingresa un enlace de TikTok.\nEjemplo: *${config.prefijo}tiktok https://www.tiktok.com/...*`
-    })
-  }
-
+export default async function tiktok({ sock, msg, args, chatId, config }) {
   try {
-    await sock.sendMessage(chatId, { text: `⏳ Descargando video de TikTok...` }, { quoted: msg })
-
-    const apiKey = 'lem954'
-    const apiUrl = `https://api.lempi.lat/dl/tiktok?url=${encodeURIComponent(url)}&apikey=${apiKey}`
-    const res = await fetch(apiUrl)
-    const data = await res.json()
-
-    if (!data.status || !data.datos || !data.datos.url) {
-      return sock.sendMessage(chatId, { text: `❌ No se pudo descargar el video de TikTok. Verifica el enlace.` })
+    const query = args[0]
+    if (!query || (!query.includes('tiktok.com') && !query.includes('vt.tiktok.com'))) {
+      await sock.sendMessage(chatId, {
+        text: `❌ *Por favor, ingresa un enlace válido de TikTok.*`
+      }, { quoted: msg })
+      return
     }
 
-    const { titulo, autor, duracion, datos } = data
+    await sock.sendMessage(chatId, { text: `⏳ *Descargando video de TikTok...*` }, { quoted: msg })
+
+    const dlUrl = `https://api.delirius.online/download/tiktok?url=${encodeURIComponent(query)}`
+    const dlRes = await fetch(dlUrl)
+    const dlData = await dlRes.json()
+
+    if (!dlData.status || !dlData.data) {
+      await sock.sendMessage(chatId, { text: `❌ Error al obtener el video.` }, { quoted: msg })
+      return
+    }
+
+    const videoItem = dlData.data.meta.media.find(m => m.type === 'video') || dlData.data.meta.media[0]
+    const downloadLink = videoItem.url
+    const title = dlData.data.title || 'Video de TikTok'
 
     await sock.sendMessage(chatId, {
-      video: { url: datos.url },
-      caption: `🎬 *Título:* ${titulo || 'TikTok Video'}\n👤 *Autor:* ${autor.nombre} (@${autor.usuario})\n⏱️ *Duración:* ${duracion}s\n✅ *Sin marca de agua*`,
-      mimetype: 'video/mp4'
+      video: { url: downloadLink },
+      caption: `✅ *TikTok descargado con éxito*\n\n📌 *Título:* ${title}`
     }, { quoted: msg })
 
   } catch (error) {
-    console.error('Error en comando tiktok:', error)
-    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al descargar de TikTok.` })
+    console.error('Error en tiktok:', error)
+    await sock.sendMessage(chatId, { text: `❌ Error al procesar la descarga.` }, { quoted: msg })
   }
 }
