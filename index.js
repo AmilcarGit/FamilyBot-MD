@@ -1,11 +1,11 @@
 import * as baileysNS from '@whiskeysockets/baileys'
+const makeWASocket = baileysNS.default
 const {
   useMultiFileAuthState,
   DisconnectReason,
   makeCacheableSignalKeyStore,
   fetchLatestBaileysVersion,
-} = baileysNS.default || baileysNS
-const makeWASocket = baileysNS.makeWASocket || baileysNS.default?.makeWASocket || baileysNS.default || baileysNS
+} = baileysNS
 import { Boom } from '@hapi/boom'
 import pino from 'pino'
 import chalk from 'chalk'
@@ -107,7 +107,7 @@ async function iniciar() {
     generateHighQualityLinkPreview: true,
     syncFullHistory: false,
     getMessage: async (key) => {
-      return { conversation: config.nombreBot }
+      return { conversation: 'TheYui-MD' }
     }
   })
 
