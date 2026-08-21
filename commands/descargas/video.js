@@ -1,71 +1,62 @@
-export const desc = 'Busca y descarga el video de YouTube (Enviado como documento seguro).'
-export const alias = ['vid', 'v', 'ytvideo']
-export const cooldown = 15
+import fetch from 'node-fetch'
 
-export default async function video({ sock, chatId, args, msg, config }) {
-  let query = args.join(' ').trim()
-  
-  if (!query) {
-    return sock.sendMessage(chatId, {
-      text: `❌ Por favor, ingresa el nombre de un video, un link o el número del buscador.\nEjemplo: *${config.prefijo}video 1*`
-    })
-  }
+export const desc = 'Descarga videos de YouTube usando la API neural de Delerius'
+export const alias = ['ytmp4', 'video', 'ytvideo']
+export const categoria = 'descargas'
+export const cooldown = 10
 
-  const index = parseInt(query)
-  if (!isNaN(index) && index > 0 && index <= 10) {
-    if (global.ytsStore && global.ytsStore[chatId]) {
-      const result = global.ytsStore[chatId][index - 1]
-      if (result) {
-        query = result.url
-      }
-    }
-  }
-
+export default async function video({ sock, msg, args, chatId, config }) {
   try {
-    let url = query
-
-    if (!query.includes('youtube.com') && !query.includes('youtu.be')) {
-      await sock.sendMessage(chatId, { text: `🔍 Buscando *"${query}"*...` }, { quoted: msg })
-      const searchUrl = `https://dv-edward.onrender.com/api/search/youtube?apiKey=EdwardwEqIgrqU&query=${encodeURIComponent(query)}`
-      const searchRes = await fetch(searchUrl)
-      const searchData = await searchRes.json()
-      if (searchData.status && searchData.data?.length > 0) {
-        url = searchData.data[0].url
-      } else {
-        return sock.sendMessage(chatId, { text: `❌ No se encontró ningún video con ese nombre.` })
-      }
+    const query = args.join(' ')
+    if (!query) {
+      await sock.sendMessage(chatId, {
+        text: `❌ *Por favor, ingresa el título o enlace de un video de YouTube.*\n\n*Ejemplo:* \`${config.prefijo}video Bad Bunny Monaco\``
+      }, { quoted: msg })
+      return
     }
-
-    await sock.sendMessage(chatId, { text: `📥 Preparando descarga segura del video...` }, { quoted: msg })
-
-    const apiKey = 'FamilyBot-MD'
-    const apiUrl = `https://api.lempi.lat/dl/ytv?url=${encodeURIComponent(url)}&apikey=${apiKey}`
-    
-    const res = await fetch(apiUrl)
-    const data = await res.json()
-
-    if (!data.status || !data.datos?.url) {
-      return sock.sendMessage(chatId, { text: `❌ No se pudo procesar la descarga. La API podría estar saturada.` })
-    }
-
-    const { titulo, canal, duracion, datos } = data
-    
-    const cleanName = titulo
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-zA-Z0-9]/g, '_')
-      .toLowerCase()
-      .substring(0, 30)
 
     await sock.sendMessage(chatId, {
-      document: { url: datos.url },
-      fileName: `${cleanName}.mp4`,
-      mimetype: 'video/mp4',
-      caption: `🎬 *Título:* ${titulo}\n👤 *Canal:* ${canal}\n⏱️ *Duración:* ${duracion}\n⚖️ *Tamaño:* ${datos.tamaño}\n✅ *Enviado como documento para evitar errores de WhatsApp.*`
+      text: `⏳ *Buscando y procesando video con Delerius API...*`
+    }, { quoted: msg })
+
+    const searchUrl = `https://api.delirius.online/search/ytsearch?q=${encodeURIComponent(query)}`
+    const searchRes = await fetch(searchUrl)
+    const searchData = await searchRes.json()
+
+    if (!searchData.status || !searchData.data || searchData.data.length === 0) {
+      await sock.sendMessage(chatId, { text: `❌ No se encontraron resultados para: *${query}*` }, { quoted: msg })
+      return
+    }
+
+    const videoInfo = searchData.data[0]
+    const videoUrl = videoInfo.url
+
+    const dlUrl = `https://api.delirius.online/download/ytv?url=${encodeURIComponent(videoUrl)}`
+    const dlRes = await fetch(dlUrl)
+    const dlData = await dlRes.json()
+
+    if (!dlData.status || !dlData.data || !dlData.data.download) {
+      await sock.sendMessage(chatId, { text: `❌ Error al obtener el enlace de descarga del video.` }, { quoted: msg })
+      return
+    }
+
+    const downloadLink = dlData.data.download.url || dlData.data.download
+    const title = dlData.data.title || videoInfo.title
+    const duration = dlData.data.duration || videoInfo.timestamp
+
+    const caption = `╭━━━〔 📥 *YOUTUBE VIDEO* 〕━━━⬣\n` +
+                  `┃ ✧ *Título:* ${title}\n` +
+                  `┃ ✧ *Duración:* ${duration}\n` +
+                  `┃ ✧ *Proveedor:* \`Delerius API\`\n` +
+                  `╰━━━━━━━━━━━━━━━━━━━━━━⬣`
+
+    await sock.sendMessage(chatId, {
+      video: { url: downloadLink },
+      caption: caption.trim()
     }, { quoted: msg })
 
   } catch (error) {
     console.error('Error en comando video:', error)
-    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al procesar el video.` })
+    await sock.sendMessage(chatId, { text: `❌ Ocurrió un error al procesar la descarga del video.` }, { quoted: msg })
   }
 }
