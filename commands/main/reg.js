@@ -64,6 +64,6 @@ export default async function reg({ sock, msg, args, chatId, db, config }) {
       `👤 Nombre: ${nombre}\n` +
       `🎂 Edad: ${edad}\n` +
       `💵 Bono de bienvenida: 500\n\n` +
-      `Ya puedes usar todos los comandos de *TheYui-MD* 👑`,
+      `Ya puedes usar todos los comandos de *FamilyBot-MD* 👑`,
   })
 }
