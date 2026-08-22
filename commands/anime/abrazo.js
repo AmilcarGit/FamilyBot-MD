@@ -1,36 +1,49 @@
-export const desc =
-  'Envía un abrazo 🤗 usando la API de FamilyBot-MD'
-
-export const alias = [
-  'hug',
-  'abrazo'
-]
-
-export const cooldown = 5
-
-const API_BASE =
-  'https://familybot-md-api.onrender.com'
-
-const API_KEY =
-  'familybot-md'
+const fs = require('fs')
+const path = require('path')
+const os = require('os')
+const crypto = require('crypto')
+const { spawn } = require('child_process')
 
 const API_URL =
-  `${API_BASE}/api/anime/reaction?apiKey=${encodeURIComponent(API_KEY)}&type=hug`
+  'https://familybot-md-api.onrender.com/api/anime/reaction?apiKey=familybot-md&type=hug'
 
-const API_TIMEOUT = 30000
+const TIMEOUT = 30000
 
-async function fetchWithTimeout(
-  url,
-  options = {},
-  timeout = API_TIMEOUT
-) {
-  const controller =
-    new AbortController()
+function createTempDir() {
+  const dir = path.join(
+    os.tmpdir(),
+    `familybot-hug-${crypto.randomBytes(8).toString('hex')}`
+  )
 
-  const timer =
-    setTimeout(() => {
-      controller.abort()
-    }, timeout)
+  fs.mkdirSync(dir, {
+    recursive: true
+  })
+
+  return dir
+}
+
+function removeTempDir(dir) {
+  try {
+    if (dir && fs.existsSync(dir)) {
+      fs.rmSync(dir, {
+        recursive: true,
+        force: true
+      })
+    }
+  } catch (error) {
+    console.error(
+      'Error limpiando temporales:',
+      error.message
+    )
+  }
+}
+
+async function fetchTimeout(url, options = {}, timeout = TIMEOUT) {
+  const controller = new AbortController()
+
+  const timer = setTimeout(() => {
+    controller.abort()
+  }, timeout)
 
   try {
     return await fetch(url, {
@@ -42,23 +55,73 @@ async function fetchWithTimeout(
   }
 }
 
-async function getImage() {
-  const response =
-    await fetchWithTimeout(
-      API_URL,
-      {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'User-Agent':
-            'FamilyBot-MD/1.0'
-        }
+async function getGifUrl() {
+  const response = await fetchTimeout(
+    API_URL,
+    {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'FamilyBot-MD'
       }
-    )
+    }
+  )
 
   if (!response.ok) {
     throw new Error(
-      `FamilyBot API HTTP ${response.status}`
+      `API HTTP ${response.status}`
+    )
+  }
+
+  const data = await response.json()
+
+  if (!data || data.status !== true) {
+    throw new Error(
+      data?.message ||
+      'La API no devolvió una reacción'
+    )
+  }
+
+  const url =
+    data.url ||
+    data.image ||
+    data.imageUrl ||
+    data.gif ||
+    data.gifUrl
+
+  if (!url) {
+    throw new Error(
+      'La API no devolvió URL'
+    )
+  }
+
+  try {
+    new URL(url)
+  } catch {
+    throw new Error(
+      'URL de imagen inválida'
+    )
+  }
+
+  return url
+}
+
+async function downloadGif(url, file) {
+  const response = await fetchTimeout(
+    url,
+    {
+      method: 'GET',
+      headers: {
+        Accept:
+          'image/gif,image/webp,image/apng,image/*,*/*;q=0.8',
+        'User-Agent': 'FamilyBot-MD'
+      }
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      `Descarga HTTP ${response.status}`
     )
   }
 
@@ -68,152 +131,238 @@ async function getImage() {
     ) || ''
 
   if (
-    !contentType
-      .toLowerCase()
-      .includes('application/json')
+    !contentType.startsWith('image/')
   ) {
     throw new Error(
-      'La API no devolvió JSON'
+      `El servidor devolvió ${contentType}`
     )
   }
 
-  const data =
-    await response.json()
+  const buffer = Buffer.from(
+    await response.arrayBuffer()
+  )
 
-  if (
-    !data ||
-    data.status !== true
-  ) {
+  if (!buffer.length) {
     throw new Error(
-      data?.message ||
-      'La API no pudo obtener el abrazo'
+      'El archivo descargado está vacío'
     )
   }
 
-  const imageUrl =
-    data.url ||
-    data.image ||
-    data.imageUrl ||
-    data.gif ||
-    data.gifUrl
+  fs.writeFileSync(
+    file,
+    buffer
+  )
 
-  if (!imageUrl) {
-    throw new Error(
-      'La API no devolvió una URL de imagen'
+  return file
+}
+
+function convertToMp4(input, output) {
+  return new Promise(
+    (resolve, reject) => {
+      const ffmpeg =
+        spawn('ffmpeg', [
+          '-y',
+          '-hide_banner',
+          '-loglevel',
+          'error',
+          '-i',
+          input,
+          '-vf',
+          'fps=15,scale=480:-2:flags=lanczos,format=yuv420p',
+          '-c:v',
+          'libx264',
+          '-preset',
+          'veryfast',
+          '-crf',
+          '28',
+          '-movflags',
+          '+faststart',
+          '-an',
+          output
+        ])
+
+      let stderr = ''
+
+      const timer = setTimeout(() => {
+        ffmpeg.kill('SIGKILL')
+
+        reject(
+          new Error(
+            'FFmpeg tardó demasiado'
+          )
+        )
+      }, TIMEOUT)
+
+      ffmpeg.stderr.on(
+        'data',
+        data => {
+          stderr += data.toString()
+        }
+      )
+
+      ffmpeg.on(
+        'error',
+        error => {
+          clearTimeout(timer)
+
+          if (
+            error.code ===
+            'ENOENT'
+          ) {
+            reject(
+              new Error(
+                'FFmpeg no está instalado'
+              )
+            )
+          } else {
+            reject(error)
+          }
+        }
+      )
+
+      ffmpeg.on(
+        'close',
+        code => {
+          clearTimeout(timer)
+
+          if (
+            code !== 0
+          ) {
+            reject(
+              new Error(
+                stderr ||
+                `FFmpeg terminó con código ${code}`
+              )
+            )
+
+            return
+          }
+
+          if (
+            !fs.existsSync(output)
+          ) {
+            reject(
+              new Error(
+                'FFmpeg no creó el MP4'
+              )
+            )
+
+            return
+          }
+
+          const size =
+            fs.statSync(output).size
+
+          if (!size) {
+            reject(
+              new Error(
+                'El MP4 está vacío'
+              )
+            )
+
+            return
+          }
+
+          resolve(output)
+        }
+      )
+    }
+  )
+}
+
+async function prepareVideo() {
+  const tempDir =
+    createTempDir()
+
+  const gifFile =
+    path.join(
+      tempDir,
+      'reaction.gif'
     )
-  }
+
+  const mp4File =
+    path.join(
+      tempDir,
+      'reaction.mp4'
+    )
 
   try {
-    new URL(imageUrl)
-  } catch {
-    throw new Error(
-      'La API devolvió una URL inválida'
-    )
-  }
+    const gifUrl =
+      await getGifUrl()
 
-  const imageResponse =
-    await fetchWithTimeout(
-      imageUrl,
-      {
-        method: 'GET',
-        headers: {
-          Accept:
-            'image/gif,image/webp,image/apng,image/*,*/*;q=0.8',
-          'User-Agent':
-            'FamilyBot-MD/1.0'
-        }
-      }
+    await downloadGif(
+      gifUrl,
+      gifFile
     )
 
-  if (!imageResponse.ok) {
-    throw new Error(
-      `El proxy respondió HTTP ${imageResponse.status}`
+    await convertToMp4(
+      gifFile,
+      mp4File
     )
-  }
 
-  const imageContentType =
-    imageResponse.headers.get(
-      'content-type'
-    ) || ''
+    const video =
+      fs.readFileSync(
+        mp4File
+      )
 
-  if (
-    !imageContentType
-      .toLowerCase()
-      .startsWith('image/')
-  ) {
-    throw new Error(
-      `El proxy no devolvió una imagen (${imageContentType || 'sin content-type'})`
+    if (!video.length) {
+      throw new Error(
+        'MP4 inválido'
+      )
+    }
+
+    return {
+      buffer: video,
+      tempDir
+    }
+  } catch (error) {
+    removeTempDir(
+      tempDir
     )
-  }
 
-  const arrayBuffer =
-    await imageResponse.arrayBuffer()
-
-  const imageBuffer =
-    Buffer.from(arrayBuffer)
-
-  if (
-    !imageBuffer ||
-    imageBuffer.length === 0
-  ) {
-    throw new Error(
-      'La imagen recibida está vacía'
-    )
-  }
-
-  return {
-    buffer: imageBuffer,
-    contentType:
-      imageContentType
+    throw error
   }
 }
 
-export default async function reaction({
+async function sendHug({
   sock,
   chatId,
   m
 }) {
+  let tempDir = null
+
   try {
     console.log(
-      '🤗 Solicitando GIF de abrazo...'
+      '🤗 Obteniendo abrazo...'
     )
 
-    const image =
-      await getImage()
+    const result =
+      await prepareVideo()
+
+    tempDir =
+      result.tempDir
 
     console.log(
-      `✅ GIF recibido: ${image.contentType}`
+      '🎬 GIF convertido a MP4 correctamente'
     )
 
     await sock.sendMessage(
       chatId,
       {
-        video: image.buffer,
+        video: result.buffer,
+        mimetype:
+          'video/mp4',
         gifPlayback: true,
-        caption: `
-╭━━━━━━━━━━━━━━━━━━━━━━╮
-┃   🌿 𝐅𝐀𝐌𝐈𝐋𝐘𝐁𝐎𝐓-𝐌𝐃
-┃      🤗 𝐀𝐁𝐑𝐀𝐙𝐎
-╰━━━━━━━━━━━━━━━━━━━━━━╯
-
-🫂 ¡Abrazo enviado!
-
-╭─❖ 💚 𝐑𝐄𝐀𝐂𝐂𝐈Ó𝐍
-│
-│ 🤗 Tipo: Hug
-│ 🌐 API: FamilyBot-MD
-│ 🟢 Estado: Online
-│
-╰──────────────────────
-
-✦ ───────────── ✦
-🌿 𝐖𝐞'𝐫𝐞 𝐟𝐚𝐦𝐢𝐥𝐲.
-✦ ───────────── ✦
-`.trim()
+        caption:
+          '🤗 *¡Abrazo enviado!* 🌿\n\n_FamilyBot-MD_'
       },
       {
         quoted: m
       }
+    )
+
+    console.log(
+      '✅ Abrazo enviado correctamente'
     )
 
   } catch (error) {
@@ -226,25 +375,8 @@ export default async function reaction({
       await sock.sendMessage(
         chatId,
         {
-          text: `
-╭━━━━━━━━━━━━━━━━━━━━━━╮
-┃   🌿 𝐅𝐀𝐌𝐈𝐋𝐘𝐁𝐎𝐓-𝐌𝐃
-┃      🤗 𝐀𝐁𝐑𝐀𝐙𝐎
-╰━━━━━━━━━━━━━━━━━━━━━━╯
-
-🔴 No se pudo obtener el abrazo.
-
-╭─❖ ⚠️ 𝐃𝐄𝐓𝐀𝐋𝐋𝐄
-│
-│ La API no pudo entregar
-│ el GIF en este momento.
-│
-│ 🔄 Intenta nuevamente.
-│
-╰──────────────────────
-
-🌿 FamilyBot-MD
-`.trim()
+          text:
+            '❌ No pude enviar el abrazo en este momento. Intenta nuevamente.'
         },
         {
           quoted: m
@@ -252,9 +384,31 @@ export default async function reaction({
       )
     } catch (sendError) {
       console.error(
-        '❌ Error enviando mensaje:',
+        '❌ Error enviando mensaje de error:',
         sendError
       )
     }
+
+  } finally {
+    if (tempDir) {
+      removeTempDir(
+        tempDir
+      )
+
+      console.log(
+        '🧹 Archivos temporales eliminados'
+      )
+    }
   }
+}
+
+module.exports = {
+  name: 'abrazo',
+  aliases: [
+    'hug'
+  ],
+  description:
+    'Envía un abrazo animado',
+  execute: sendHug,
+  run: sendHug
 }
