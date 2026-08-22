@@ -1,4 +1,5 @@
 import { buscarYouTube, descargarYouTube, esEnlaceYouTube, limpiarTitulo } from '../../lib/youtube.js'
+import { getResult } from '../../lib/tempStore.js'
 
 export const desc = 'Descarga y envía audio de YouTube mediante FamilyBot-API'
 export const alias = ['ytplay', 'audio', 'ytmp3']
@@ -21,7 +22,15 @@ export default async function play({ sock, msg, args, chatId, config }) {
     }, { quoted: msg })
 
     let video
-    if (esEnlaceYouTube(consulta)) {
+    if (/^\d+$/.test(consulta)) {
+      video = getResult(chatId, Number(consulta))
+      if (!video) {
+        await sock.sendMessage(chatId, {
+          text: '❌ La búsqueda expiró. Ejecuta nuevamente `.ytsearch`.'
+        }, { quoted: msg })
+        return
+      }
+    } else if (esEnlaceYouTube(consulta)) {
       video = {
         url: consulta,
         title: 'Audio de YouTube',
@@ -40,7 +49,7 @@ export default async function play({ sock, msg, args, chatId, config }) {
     }
 
     const descarga = await descargarYouTube(video.url, 'audio')
-    const caption = `╭━━━〔 🎵 *FAMILYBOT PLAY* 〕━━━⬣\n┃ ✧ *Título:* ${limpiarTitulo(descarga.title || video.title)}\n┃ ✧ *Duración:* ${descarga.duration || video.duration}\n┃ ✧ *Autor:* ${video.author}\n┃ ✧ *Fuente:* ${descarga.provider || 'FamilyBot-API'}\n╰━━━━━━━━━━━━━━━━━━━━━━⬣`
+    const caption = `╭━━━〔 🎵 *FAMILYBOT PLAY* 〕━━━⬣\n┃ ✧ *Título:* ${limpiarTitulo(video.title)}\n┃ ✧ *Duración:* ${video.duration || descarga.duration || 'Desconocida'}\n┃ ✧ *Autor:* ${video.author || 'Desconocido'}\n┃ ✧ *Fuente:* ${descarga.provider || 'FamilyBot-API'}\n╰━━━━━━━━━━━━━━━━━━━━━━⬣`
 
     const mensaje = descarga.archivo
       ? { audio: descarga.archivo, mimetype: 'audio/mpeg', ptt: false, fileName: `${limpiarTitulo(video.title)}.mp3` }
