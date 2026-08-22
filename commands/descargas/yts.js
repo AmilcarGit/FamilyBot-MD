@@ -1,5 +1,6 @@
 import * as Baileys from '@whiskeysockets/baileys'
 import { buscarYouTube, esEnlaceYouTube, limpiarTitulo } from '../../lib/youtube.js'
+import { saveResults } from '../../lib/tempStore.js'
 
 const generateWAMessageFromContent = Baileys.generateWAMessageFromContent || Baileys.default?.generateWAMessageFromContent
 const prepareWAMessageMedia = Baileys.prepareWAMessageMedia || Baileys.default?.prepareWAMessageMedia
@@ -22,7 +23,7 @@ function crearFila(item, index, tipo, prefijo) {
     header: `${index + 1}`,
     title: titulo,
     description: `${textoTipo} | ${item.duration || 'Desconocida'} | ${item.author || 'YouTube'}`,
-    id: `${prefijo}${comando} ${item.url}`
+    id: `${prefijo}${comando} ${index + 1}`
   }
 }
 
@@ -81,6 +82,7 @@ export default async function ytsearch({ sock, msg, args, chatId, config }) {
     })
     cuerpo += 'Selecciona una canción y el formato de descarga.'
 
+    saveResults(chatId, resultados)
     const filasAudio = resultados.map((item, index) => crearFila(item, index, 'audio', config.prefijo))
     const filasVideo = resultados.map((item, index) => crearFila(item, index, 'video', config.prefijo))
     const filas = [
