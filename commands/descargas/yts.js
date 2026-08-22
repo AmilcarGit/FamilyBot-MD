@@ -1,70 +1,100 @@
-export const alias = ['ytsearch', 'yts']
-export const cooldown = 5
+import * as Baileys from '@whiskeysockets/baileys'
+import { buscarYouTube, esEnlaceYouTube, limpiarTitulo } from '../../lib/youtube.js'
 
-export default async function yts({ sock, chatId, args, config, m }) {
-  const query = args.join(' ').trim()
-  
-  if (!query) {
-    return sock.sendMessage(chatId, {
-      text: `❌ Por favor, ingresa un término de búsqueda.\nEjemplo: *${config.prefijo}yts Minecraft*`
+const generateWAMessageFromContent = Baileys.generateWAMessageFromContent || Baileys.default?.generateWAMessageFromContent
+
+export const desc = 'Busca videos de YouTube y permite elegir audio o video'
+export const alias = ['yts', 'youtube']
+export const categoria = 'descargas'
+export const cooldown = 10
+
+function crearBoton(texto, id) {
+  return {
+    name: 'quick_reply',
+    buttonParamsJson: JSON.stringify({
+      display_text: texto,
+      id
     })
   }
+}
+
+export default async function ytsearch({ sock, msg, args, chatId, config }) {
+  const query = args.join(' ').trim()
+
+  if (!query) {
+    await sock.sendMessage(chatId, {
+      text: `❌ Escribe el nombre de un video.\n\nEjemplo: ${config.prefijo}ytsearch música cyberpunk`
+    }, { quoted: msg })
+    return
+  }
+
+  if (esEnlaceYouTube(query)) {
+    await sock.sendMessage(chatId, {
+      text: `Selecciona el formato para este enlace:\n\n${query}\n\n${config.prefijo}play ${query}\n${config.prefijo}video ${query}`
+    }, { quoted: msg })
+    return
+  }
+
+  await sock.sendMessage(chatId, {
+    text: `⏳ Buscando *${query}* en YouTube...`
+  }, { quoted: msg })
 
   try {
-    const apiKey = 'EdwardNDffYyRz'
-    const url = `https://dv-edward.onrender.com/api/search/youtube?apiKey=${apiKey}&query=${encodeURIComponent(query)}`
-    
-    await sock.sendMessage(chatId, { text: `🔍 Buscando *"${query}"* en YouTube...` }, { quoted: m })
-
-    const response = await fetch(url)
-    const data = await response.json()
-
-    if (!data.status || !data.data || data.data.length === 0) {
-      return sock.sendMessage(chatId, {
-        text: `❌ No se encontraron resultados para: *${query}*`
-      })
+    const resultados = await buscarYouTube(query)
+    if (!resultados.length) {
+      await sock.sendMessage(chatId, {
+        text: '❌ No encontré resultados para esa búsqueda.'
+      }, { quoted: msg })
+      return
     }
 
-    const resultados = data.data.slice(0, 10)
-    
-    global.ytsStore = global.ytsStore || {}
-    global.ytsStore[chatId] = resultados
+    let cuerpo = `╭━━━〔 🔎 *YT SEARCH* 〕━━━⬣\n┃ Consulta: *${query}*\n╰━━━━━━━━━━━━━━━━━━━━━━⬣\n\n`
+    const botones = []
 
-    global.ytsTimeouts = global.ytsTimeouts || {}
-    if (global.ytsTimeouts[chatId]) {
-      clearTimeout(global.ytsTimeouts[chatId])
-    }
-
-    global.ytsTimeouts[chatId] = setTimeout(() => {
-      if (global.ytsStore[chatId] === resultados) {
-        delete global.ytsStore[chatId]
-        delete global.ytsTimeouts[chatId]
-      }
-    }, 5 * 60 * 1000)
-
-    let mensaje = `📺 *Resultados para:* ${query}\n\n`
-
-    for (let i = 0; i < resultados.length; i++) {
-      const res = resultados[i]
-      mensaje += `*${i + 1}.* ${res.title}\n`
-      mensaje += `⏱️ *Duración:* ${res.duration} | 👤 *Canal:* ${res.author}\n\n`
-    }
-
-    mensaje += `💡 *Escribe:* \`${config.prefijo}play <número>\` para audio.\n`
-    mensaje += `💡 *Escribe:* \`${config.prefijo}video <número>\` para video.\n\n`
-    mensaje += `⏳ *Nota:* Tienes 5 minutos para elegir antes de que la lista expire.`
-
-    const primerResultado = resultados[0]
-    
-    await sock.sendMessage(chatId, {
-      image: { url: primerResultado.thumbnail },
-      caption: mensaje
-    }, { quoted: m })
-
-  } catch (error) {
-    console.error('Error en comando yts:', error)
-    await sock.sendMessage(chatId, {
-      text: `❌ Ocurrió un error al realizar la búsqueda.`
+    resultados.slice(0, 3).forEach((item, index) => {
+      const titulo = limpiarTitulo(item.title)
+      cuerpo += `*${index + 1}.* ${titulo}\n`
+      cuerpo += `👤 ${item.author}  |  ⏱️ ${item.duration}\n\n`
+      botones.push(crearBoton(`▶️ Play #${index + 1}`, `${config.prefijo}play ${item.url}`))
+      botones.push(crearBoton(`🎬 Video #${index + 1}`, `${config.prefijo}video ${item.url}`))
     })
+
+    cuerpo += 'Selecciona si quieres audio o video.'
+
+    if (!generateWAMessageFromContent || typeof sock.relayMessage !== 'function') {
+      await sock.sendMessage(chatId, {
+        text: `${cuerpo}\n\n${config.prefijo}play ENLACE\n${config.prefijo}video ENLACE`
+      }, { quoted: msg })
+      return
+    }
+
+    const interactiveMessage = {
+      body: { text: cuerpo },
+      footer: { text: config.nombreBot || 'FamilyBot-MD' },
+      header: {
+        title: '🌌 FamilyBot-MD Neural Search',
+        subtitle: 'Elige el formato de descarga',
+        hasMediaAttachment: false
+      },
+      nativeFlowMessage: {
+        buttons: botones,
+        messageParamsJson: JSON.stringify({ from: 'familybot-ytsearch' })
+      }
+    }
+
+    const mensaje = generateWAMessageFromContent(chatId, {
+      viewOnceMessage: {
+        message: { interactiveMessage }
+      }
+    }, { quoted: msg })
+
+    await sock.relayMessage(chatId, mensaje.message, {
+      messageId: mensaje.key.id
+    })
+  } catch (error) {
+    console.error('Error en ytsearch:', error.message)
+    await sock.sendMessage(chatId, {
+      text: `❌ Falló la búsqueda de YouTube.\n\nDetalle: ${error.message}`
+    }, { quoted: msg })
   }
 }
