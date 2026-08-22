@@ -1,4 +1,12 @@
 import fetch from 'node-fetch'
+import fs from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
+
+const ejecutar = promisify(execFile)
 
 export const desc = 'Envía un abrazo animado con una reacción anime'
 export const alias = ['hug', 'abrazar']
@@ -24,9 +32,11 @@ function extraerUrl(data) {
     data?.result?.image,
     data?.result?.imageUrl,
     data?.result?.gif,
+    data?.result?.video,
     data?.resultado?.url,
     data?.resultado?.image,
-    data?.resultado?.gif
+    data?.resultado?.gif,
+    data?.resultado?.video
   ]
 
   return valores.find(valor => {
@@ -39,26 +49,55 @@ function obtenerMencion(msg) {
   return contexto.mentionedJid?.[0] || null
 }
 
-function obtenerNombreObjetivo(msg, mencionado) {
-  if (mencionado) return `@${mencionado.split('@')[0]}`
+async function convertirAnimacion(mediaUrl) {
+  const respuesta = await fetch(mediaUrl, {
+    headers: {
+      accept: 'image/gif,video/*,application/octet-stream',
+      'user-agent': 'FamilyBot-MD/1.0'
+    }
+  })
 
-  const participante = msg?.key?.participant || msg?.key?.remoteJid
-  if (participante && !participante.endsWith('@g.us')) {
-    return `@${participante.split('@')[0]}`
+  if (!respuesta.ok) {
+    throw new Error(`No se pudo descargar la animación: HTTP ${respuesta.status}`)
   }
 
-  return 'toda la familia'
+  const contenido = Buffer.from(await respuesta.arrayBuffer())
+  if (!contenido.length) {
+    throw new Error('La animación descargada está vacía')
+  }
+
+  const carpeta = await fs.mkdtemp(path.join(os.tmpdir(), 'familybot-hug-'))
+  const entrada = path.join(carpeta, `${crypto.randomUUID()}.gif`)
+  const salida = path.join(carpeta, `${crypto.randomUUID()}.mp4`)
+
+  try {
+    await fs.writeFile(entrada, contenido)
+
+    await ejecutar('ffmpeg', [
+      '-y',
+      '-i', entrada,
+      '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
+      '-movflags', 'faststart',
+      '-c:v', 'libx264',
+      '-pix_fmt', 'yuv420p',
+      '-an',
+      salida
+    ])
+
+    return await fs.readFile(salida)
+  } finally {
+    await fs.rm(carpeta, { recursive: true, force: true })
+  }
 }
 
 export default async function abrazo({ sock, chatId, msg, config }) {
   try {
     const mencionado = obtenerMencion(msg)
     const nombreBot = config?.nombreBot || 'FamilyBot-MD'
-    const objetivo = obtenerNombreObjetivo(msg, mencionado)
     const endpoint = `${API_URL}?apiKey=${encodeURIComponent(API_KEY)}&type=hug`
 
     await sock.sendMessage(chatId, {
-      text: '🫂 *Preparando un abrazo neural animado...*'
+      text: '🫂 *Preparando y convirtiendo el abrazo animado...*'
     }, { quoted: msg })
 
     const respuesta = await fetch(endpoint, {
@@ -78,7 +117,7 @@ export default async function abrazo({ sock, chatId, msg, config }) {
     try {
       data = JSON.parse(contenido)
     } catch {
-      throw new Error('La API no devolvió un JSON válido')
+      throw new Error('La API no devolvió JSON válido')
     }
 
     const mediaUrl = extraerUrl(data)
@@ -86,10 +125,14 @@ export default async function abrazo({ sock, chatId, msg, config }) {
       throw new Error('La respuesta no contiene una URL multimedia')
     }
 
-    const texto = `🫂 *Abrazo neural*\n\n${objetivo} recibió un abrazo de la familia.\n\n✨ *Powered by ${nombreBot}*`
+    const video = await convertirAnimacion(mediaUrl)
+    const texto = mencionado
+      ? `🫂 *Abrazo neural*\n\n@${mencionado.split('@')[0]} recibió un abrazo de la familia.\n\n✨ *Powered by ${nombreBot}*`
+      : `🫂 *Abrazo neural*\n\nUn abrazo para toda la familia.\n\n✨ *Powered by ${nombreBot}*`
 
     await sock.sendMessage(chatId, {
-      video: { url: mediaUrl },
+      video,
+      mimetype: 'video/mp4',
       gifPlayback: true,
       caption: texto,
       mentions: mencionado ? [mencionado] : []
@@ -98,7 +141,7 @@ export default async function abrazo({ sock, chatId, msg, config }) {
     console.error('Error en abrazo:', error.message)
 
     await sock.sendMessage(chatId, {
-      text: '❌ No pude obtener el GIF del abrazo desde FamilyBot-API. Comprueba que la API devuelva una URL multimedia válida.'
+      text: '❌ No pude convertir o enviar el GIF del abrazo. Verifica que FFmpeg esté instalado y que la API devuelva una URL multimedia.'
     }, { quoted: msg })
   }
 }
