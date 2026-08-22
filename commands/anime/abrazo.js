@@ -1,4 +1,4 @@
-export const desc = 'Envía una reacción de abrazo 🤗'
+export const desc = 'Envía un abrazo 🤗 usando la API oficial de FamilyBot-MD'
 export const alias = ['hug', 'abrazo']
 export const cooldown = 5
 
@@ -11,25 +11,24 @@ export default async function reaction({
   m
 }) {
   try {
-    const url = `${API_URL}?apiKey=${encodeURIComponent(API_KEY)}&type=hug`
+    const apiUrl =
+      `${API_URL}?apiKey=${encodeURIComponent(API_KEY)}&type=hug`
 
-    const response = await fetch(url, {
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         Accept: 'application/json'
       },
-      signal: AbortSignal.timeout(15000)
+      signal: AbortSignal.timeout(20000)
     })
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
+      throw new Error(
+        `FamilyBot API respondió HTTP ${response.status}`
+      )
     }
 
     const data = await response.json()
-
-    if (!data) {
-      throw new Error('La API no devolvió datos')
-    }
 
     const imageUrl =
       data.url ||
@@ -41,30 +40,73 @@ export default async function reaction({
       data.data?.image
 
     if (!imageUrl) {
-      throw new Error('La API no devolvió una URL de imagen')
+      console.error(
+        'Respuesta de FamilyBot API:',
+        data
+      )
+
+      throw new Error(
+        'La API no devolvió una URL de imagen'
+      )
+    }
+
+    const imageResponse = await fetch(imageUrl, {
+      method: 'GET',
+      headers: {
+        Accept: 'image/gif,image/webp,image/jpeg,image/png,*/*',
+        'User-Agent': 'FamilyBot-MD/1.0'
+      },
+      signal: AbortSignal.timeout(30000)
+    })
+
+    if (!imageResponse.ok) {
+      throw new Error(
+        `No se pudo descargar la imagen: HTTP ${imageResponse.status}`
+      )
+    }
+
+    const contentType =
+      imageResponse.headers.get('content-type') || ''
+
+    if (
+      !contentType.includes('image') &&
+      !contentType.includes('gif')
+    ) {
+      throw new Error(
+        `La respuesta no es una imagen: ${contentType}`
+      )
+    }
+
+    const arrayBuffer =
+      await imageResponse.arrayBuffer()
+
+    const buffer = Buffer.from(arrayBuffer)
+
+    if (!buffer.length) {
+      throw new Error(
+        'La imagen descargada está vacía'
+      )
     }
 
     await sock.sendMessage(
       chatId,
       {
-        image: {
-          url: imageUrl
-        },
+        image: buffer,
         caption: `
-╭━━━━━━━━━━━━━━━━━━━━╮
+╭━━━━━━━━━━━━━━━━━━━━━━╮
 ┃   🌿 𝐅𝐀𝐌𝐈𝐋𝐘𝐁𝐎𝐓-𝐌𝐃
-┃      🤗 𝐑𝐄𝐀𝐂𝐓𝐈𝐎𝐍
-╰━━━━━━━━━━━━━━━━━━━━╯
+┃      🤗 𝐀𝐁𝐑𝐀𝐙𝐎
+╰━━━━━━━━━━━━━━━━━━━━━━╯
 
-      🤗 *¡Abrazo enviado!*
+        🫂 ¡Abrazo enviado!
 
 ╭─❖ 💚 𝐑𝐄𝐀𝐂𝐂𝐈Ó𝐍
 │
-│ 🫂 Tipo: *Hug*
-│ 🌐 API: *FamilyBot-MD*
-│ ⚡ Estado: *Online*
+│ 🤗 Tipo: Hug
+│ 🌐 API: FamilyBot-MD
+│ 🟢 Estado: Online
 │
-╰────────────────────
+╰──────────────────────
 
         🌿 𝐖𝐞'𝐫𝐞 𝐟𝐚𝐦𝐢𝐥𝐲. 💚
 `.trim()
@@ -76,7 +118,7 @@ export default async function reaction({
 
   } catch (error) {
     console.error(
-      'Error en reaction.js:',
+      '❌ Error en reaction.js:',
       error
     )
 
@@ -84,17 +126,23 @@ export default async function reaction({
       chatId,
       {
         text: `
-╭━━━━━━━━━━━━━━━━━━━━╮
+╭━━━━━━━━━━━━━━━━━━━━━━╮
 ┃   🌿 𝐅𝐀𝐌𝐈𝐋𝐘𝐁𝐎𝐓-𝐌𝐃
-┃      🤗 𝐑𝐄𝐀𝐂𝐓𝐈𝐎𝐍
-╰━━━━━━━━━━━━━━━━━━━━╯
+┃      🤗 𝐀𝐁𝐑𝐀𝐙𝐎
+╰━━━━━━━━━━━━━━━━━━━━━━╯
 
-🔴 *No pude obtener el abrazo.*
+🔴 No pude obtener el abrazo.
 
-⚠️ La API no respondió correctamente.
-🔄 Inténtalo nuevamente en unos segundos.
+╭─❖ ⚠️ 𝐄𝐑𝐑𝐎𝐑
+│
+│ La API o la imagen no
+│ respondió correctamente.
+│
+│ 🔄 Intenta nuevamente.
+│
+╰──────────────────────
 
-╰─ 🌿 FamilyBot-MD
+🌿 FamilyBot-MD
 `.trim()
       },
       {
