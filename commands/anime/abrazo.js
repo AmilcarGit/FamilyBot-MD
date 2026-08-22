@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 
-export const desc = 'Envía un abrazo con una reacción anime'
+export const desc = 'Envía un abrazo animado con una reacción anime'
 export const alias = ['hug', 'abrazar']
 export const categoria = 'social'
 export const cooldown = 5
@@ -14,17 +14,24 @@ function extraerUrl(data) {
     data?.image,
     data?.imageUrl,
     data?.gif,
+    data?.video,
     data?.data?.url,
     data?.data?.image,
     data?.data?.imageUrl,
     data?.data?.gif,
+    data?.data?.video,
     data?.result?.url,
     data?.result?.image,
+    data?.result?.imageUrl,
+    data?.result?.gif,
     data?.resultado?.url,
-    data?.resultado?.image
+    data?.resultado?.image,
+    data?.resultado?.gif
   ]
 
-  return valores.find(valor => typeof valor === 'string' && /^https?:\/\//i.test(valor)) || null
+  return valores.find(valor => {
+    return typeof valor === 'string' && /^https?:\/\//i.test(valor)
+  }) || null
 }
 
 function obtenerMencion(msg) {
@@ -32,14 +39,26 @@ function obtenerMencion(msg) {
   return contexto.mentionedJid?.[0] || null
 }
 
+function obtenerNombreObjetivo(msg, mencionado) {
+  if (mencionado) return `@${mencionado.split('@')[0]}`
+
+  const participante = msg?.key?.participant || msg?.key?.remoteJid
+  if (participante && !participante.endsWith('@g.us')) {
+    return `@${participante.split('@')[0]}`
+  }
+
+  return 'toda la familia'
+}
+
 export default async function abrazo({ sock, chatId, msg, config }) {
   try {
     const mencionado = obtenerMencion(msg)
     const nombreBot = config?.nombreBot || 'FamilyBot-MD'
+    const objetivo = obtenerNombreObjetivo(msg, mencionado)
     const endpoint = `${API_URL}?apiKey=${encodeURIComponent(API_KEY)}&type=hug`
 
     await sock.sendMessage(chatId, {
-      text: '🫂 *Preparando un abrazo neural...*'
+      text: '🫂 *Preparando un abrazo neural animado...*'
     }, { quoted: msg })
 
     const respuesta = await fetch(endpoint, {
@@ -67,19 +86,19 @@ export default async function abrazo({ sock, chatId, msg, config }) {
       throw new Error('La respuesta no contiene una URL multimedia')
     }
 
-    const texto = mencionado
-      ? `🫂 *Abrazo neural*\n\n@${mencionado.split('@')[0]} recibió un abrazo de la familia.\n\n✨ *Powered by ${nombreBot}*`
-      : `🫂 *Abrazo neural*\n\nUn abrazo para toda la familia.\n\n✨ *Powered by ${nombreBot}*`
+    const texto = `🫂 *Abrazo neural*\n\n${objetivo} recibió un abrazo de la familia.\n\n✨ *Powered by ${nombreBot}*`
 
     await sock.sendMessage(chatId, {
-      image: { url: mediaUrl },
+      video: { url: mediaUrl },
+      gifPlayback: true,
       caption: texto,
       mentions: mencionado ? [mencionado] : []
     }, { quoted: msg })
   } catch (error) {
     console.error('Error en abrazo:', error.message)
+
     await sock.sendMessage(chatId, {
-      text: '❌ No pude obtener la imagen del abrazo. Comprueba que la API esté devolviendo una URL multimedia.'
+      text: '❌ No pude obtener el GIF del abrazo desde FamilyBot-API. Comprueba que la API devuelva una URL multimedia válida.'
     }, { quoted: msg })
   }
 }
