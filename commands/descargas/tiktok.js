@@ -25,7 +25,7 @@ export default async function tiktok({ sock, msg, args, chatId, config }) {
     }, { quoted: msg })
 
     // Tu API personal de FamilyBot-MD
-    const apiKey = config.apiKeys?.familybot || 'FamilyBot-MDDJ2x5UHeZn'
+    const apiKey = config.apiKeys?.familybot || 'familybot-md'
     const dlUrl = `https://familybot-md-api.onrender.com/api/download/tiktok?apiKey=${apiKey}&url=${encodeURIComponent(query)}`
 
     const dlRes = await fetch(dlUrl)
