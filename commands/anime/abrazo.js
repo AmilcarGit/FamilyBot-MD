@@ -244,3 +244,17 @@ export default async function reaction({
 ╰──────────────────────
 
 🌿 FamilyBot-MD
+`.trim()
+        },
+        {
+          quoted: m
+        }
+      )
+    } catch (sendError) {
+      console.error(
+        '❌ Error enviando mensaje:',
+        sendError
+      )
+    }
+  }
+}
