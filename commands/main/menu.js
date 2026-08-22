@@ -1,25 +1,26 @@
 import { obtenerImagenMenuAleatoria } from '../../lib/randomImage.js'
 
-export const desc = 'Muestra el menú compacto de comandos de FamilyBot-MD'
+export const desc = 'Muestra el menú Cyberpunk de FamilyBot-MD'
 export const alias = ['help', 'ayuda', 'menu']
 export const categoria = 'main'
 export const cooldown = 5
 
-const ICONOS = {
-  main: '◈',
-  descargas: '⌁',
-  economia: '₿',
-  gacha: '✦',
-  grupo: '⬢',
-  media: '◉',
-  owner: '♛',
-  social: '♡',
-  juegos: '♧',
-  perfil: '◎',
-  subbot: '⌘',
-  herramientas: '⚙',
-  ia: 'Ψ',
-  premium: '◇'
+const ESTILO = {
+  main: ['◈', 'ＭＡＩＮ'],
+  descargas: ['📡', 'ＤＥＳＣＡＲＧＡＳ'],
+  economia: ['💰', 'ＥＣＯＮＯＭＩＡ'],
+  gacha: ['🎴', 'ＧＡＣＨＡ'],
+  anime: ['🌸', 'ＡＮＩＭＥ'],
+  grupo: ['🛡️', 'ＧＲＵＰＯ'],
+  media: ['🎞️', 'ＭＥＤＩＡ'],
+  owner: ['👑', 'ＯＷＮＥＲ'],
+  social: ['💞', 'ＳＯＣＩＡＬ'],
+  juegos: ['🎮', 'ＪＵＥＧＯＳ'],
+  perfil: ['🪪', 'ＰＥＲＦＩＬ'],
+  subbot: ['🤖', 'ＳＵＢＢＯＴ'],
+  herramientas: ['🧰', 'ＨＥＲＲＡＭＩＥＮＴＡＳ'],
+  ia: ['🧠', 'ＩＮＴＥＬＩＧＥＮＣＩＡ'],
+  premium: ['💎', 'ＰＲＥＭＩＵＭ']
 }
 
 function formatRuntime(seconds) {
@@ -28,17 +29,24 @@ function formatRuntime(seconds) {
   return `${horas}h ${minutos}m`
 }
 
+function limpiar(texto) {
+  return String(texto || '').replace(/[\n\r]+/g, ' ').trim()
+}
+
 function recortar(texto, limite) {
-  const valor = String(texto || '').replace(/[\n\r]+/g, ' ').trim()
+  const valor = limpiar(texto)
   return valor.length > limite ? `${valor.slice(0, limite - 1)}…` : valor
 }
 
-function construirLineaComandos(lista, prefijo, registrado, categoria) {
+function construirBloqueComando(comando, prefijo, registrado, categoria) {
   const requiereRegistro = !['main', 'owner'].includes(categoria.toLowerCase())
-  return lista.map(comando => {
-    const candado = requiereRegistro && !registrado ? ' 🔒' : ''
-    return `${prefijo}${comando.nombre}${candado}`
-  }).join('  ·  ')
+  const bloqueo = requiereRegistro && !registrado ? ' 🔒' : ''
+  const principal = `*${prefijo}${comando.nombre}${bloqueo}*`
+  const alias = Array.isArray(comando.alias) && comando.alias.length
+    ? ` · Alias: ${comando.alias.map(item => `*${prefijo}${item}*`).join(' · ')}`
+    : ''
+  const descripcion = recortar(comando.desc || 'Sin descripción disponible', 48)
+  return [`│ ✦ ${principal}${alias}`, `│   ↳ _${descripcion}_`, '│']
 }
 
 export default async function menu({ sock, chatId, comandos, config, db, msg }) {
@@ -65,29 +73,31 @@ export default async function menu({ sock, chatId, comandos, config, db, msg }) 
     }
 
     const lineas = [
-      '╭────────────────────────╮',
-      `│  ◢  *${nombreBot.toUpperCase()}*  ◣  │`,
-      '│    N E U R A L   C O R E    │',
-      '╰────────────────────────╯',
+      '╭━━━〔 ⚡ 𝙁𝘼𝙈𝙄𝙇𝙔𝘽𝙊𝙏-𝙈𝘿 ⚡ 〕━━━╮',
+      '┃       ⟡ 𝙉𝙀𝙐𝙍𝘼𝙇 𝘾𝙔𝘽𝙀𝙍 𝙎𝙔𝙎𝙏𝙀𝙈 ⟡',
+      '╰━━━━━━━━━━━━━━━━━━━━━━━━╯',
       '',
-      `◉ *STATUS*  ${registrado ? 'ONLINE · REG' : 'ONLINE · NO REG'}`,
-      `⌁ Uptime: ${formatRuntime(process.uptime())}  |  RAM: ${memoria} MB`,
-      `◎ Usuarios: ${usuarios}  |  Prefijo: ${prefijo}`,
-      `◷ Fecha: ${fecha}`,
+      '╭─「 📡 𝙎𝙏𝘼𝙏𝙐𝙎 」',
+      `│ ${registrado ? '🟢 ＲＥＧ' : '🟡 ＮＯ ＲＥＧ'} · ＯＮＬＩＮＥ`,
+      `│ ⏱️ ${formatRuntime(process.uptime())}  •  🧠 ${memoria} MB`,
+      `│ 👥 ${usuarios}  •  ⚙️ ${prefijo}`,
+      `│ 📅 ${fecha}`,
+      '╰──────────────────────────',
       ''
     ]
 
     for (const categoria of Object.keys(porCategoria).sort()) {
-      const icono = ICONOS[categoria.toLowerCase()] || '◇'
-      const titulo = recortar(categoria.toUpperCase(), 19)
-      lineas.push(`┌─ ${icono} *${titulo}*`)
-      lineas.push(`│ ${construirLineaComandos(porCategoria[categoria], prefijo, registrado, categoria)}`)
-      lineas.push('└────────────────────────')
+      const [icono, tituloBase] = ESTILO[categoria.toLowerCase()] || ['◇', recortar(categoria.toUpperCase(), 20)]
+      lineas.push(`╭─「 ${icono} ${tituloBase} 」`)
+      for (const comando of porCategoria[categoria]) {
+        lineas.push(...construirBloqueComando(comando, prefijo, registrado, categoria))
+      }
+      lineas.push('╰──────────────────────────')
     }
 
     lineas.push('')
-    lineas.push(registrado ? `✓ Registrado · ${prefijo}reg` : `! Usa ${prefijo}reg para desbloquear comandos`)
-    lineas.push(`⚡ *${nombreBot}* · Cyberpunk System`)
+    lineas.push(registrado ? `✅ ＲＥＧＩＳＴＲＡＤＯ · ${prefijo}reg` : `🔐 ＵＳＡ ${prefijo}reg · ＡＣＣＥＳＯ`)
+    lineas.push(`✦ ${nombreBot} · 𝘾𝙔𝘽𝙀𝙍𝙋𝙐𝙉𝙆 ✦`)
     const menuText = lineas.join('\n')
 
     let imagen = null
@@ -110,7 +120,7 @@ export default async function menu({ sock, chatId, comandos, config, db, msg }) 
   } catch (error) {
     console.error('Error en menu:', error.message)
     await sock.sendMessage(chatId, {
-      text: '❌ No se pudo cargar el menú neural.'
+      text: '❌ Error al generar el menú Cyberpunk.'
     }, { quoted: msg })
   }
 }
