@@ -1,5 +1,5 @@
 export const desc =
-  'Envía un abrazo 🤗 usando la API oficial de FamilyBot-MD'
+  'Envía un abrazo 🤗 usando la API de FamilyBot-MD'
 
 export const alias = [
   'hug',
@@ -16,9 +16,6 @@ const API_KEY =
 
 const API_URL =
   `${API_BASE}/api/anime/reaction?apiKey=${encodeURIComponent(API_KEY)}&type=hug`
-
-const PROXY_URL =
-  `${API_BASE}/api/anime/reaction/image?apiKey=${encodeURIComponent(API_KEY)}&type=hug`
 
 const API_TIMEOUT = 30000
 
@@ -47,13 +44,17 @@ async function fetchWithTimeout(
 
 async function getImage() {
   const response =
-    await fetchWithTimeout(API_URL, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': 'FamilyBot-MD/1.0'
+    await fetchWithTimeout(
+      API_URL,
+      {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'User-Agent':
+            'FamilyBot-MD/1.0'
+        }
       }
-    })
+    )
 
   if (!response.ok) {
     throw new Error(
@@ -83,59 +84,31 @@ async function getImage() {
     !data ||
     data.status !== true
   ) {
-    console.log(
-      'Respuesta de FamilyBot-MD:',
-      data
-    )
-
     throw new Error(
       data?.message ||
       'La API no pudo obtener el abrazo'
     )
   }
 
-  let imageUrl =
+  const imageUrl =
     data.url ||
     data.image ||
     data.imageUrl ||
     data.gif ||
-    data.gifUrl ||
-    data.result?.url ||
-    data.result?.image ||
-    data.result?.gif ||
-    data.data?.url ||
-    data.data?.image ||
-    data.data?.gif
+    data.gifUrl
 
   if (!imageUrl) {
-    imageUrl =
-      PROXY_URL
+    throw new Error(
+      'La API no devolvió una URL de imagen'
+    )
   }
 
   try {
     new URL(imageUrl)
   } catch {
-    imageUrl =
-      PROXY_URL
-  }
-
-  try {
-    const parsed =
-      new URL(imageUrl)
-
-    if (
-      parsed.hostname ===
-        'nekos.best' ||
-      parsed.hostname.endsWith(
-        '.nekos.best'
-      )
-    ) {
-      imageUrl =
-        PROXY_URL
-    }
-  } catch {
-    imageUrl =
-      PROXY_URL
+    throw new Error(
+      'La API devolvió una URL inválida'
+    )
   }
 
   const imageResponse =
@@ -145,16 +118,14 @@ async function getImage() {
         method: 'GET',
         headers: {
           Accept:
-            'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+            'image/gif,image/webp,image/apng,image/*,*/*;q=0.8',
           'User-Agent':
             'FamilyBot-MD/1.0'
         }
       }
     )
 
-  if (
-    !imageResponse.ok
-  ) {
+  if (!imageResponse.ok) {
     throw new Error(
       `El proxy respondió HTTP ${imageResponse.status}`
     )
@@ -193,12 +164,7 @@ async function getImage() {
   return {
     buffer: imageBuffer,
     contentType:
-      imageContentType,
-    provider:
-      data.provider ||
-      'familybot-md',
-    fallback:
-      data.fallback === true
+      imageContentType
   }
 }
 
@@ -209,28 +175,28 @@ export default async function reaction({
 }) {
   try {
     console.log(
-      '🤗 Solicitando abrazo a FamilyBot-MD API...'
+      '🤗 Solicitando GIF de abrazo...'
     )
 
     const image =
       await getImage()
 
     console.log(
-      `✅ Abrazo obtenido | provider=${image.provider} | fallback=${image.fallback}`
+      `✅ GIF recibido: ${image.contentType}`
     )
 
     await sock.sendMessage(
       chatId,
       {
-        image:
-          image.buffer,
+        video: image.buffer,
+        gifPlayback: true,
         caption: `
 ╭━━━━━━━━━━━━━━━━━━━━━━╮
 ┃   🌿 𝐅𝐀𝐌𝐈𝐋𝐘𝐁𝐎𝐓-𝐌𝐃
 ┃      🤗 𝐀𝐁𝐑𝐀𝐙𝐎
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
 
-        🫂 ¡Abrazo enviado!
+🫂 ¡Abrazo enviado!
 
 ╭─❖ 💚 𝐑𝐄𝐀𝐂𝐂𝐈Ó𝐍
 │
@@ -240,15 +206,16 @@ export default async function reaction({
 │
 ╰──────────────────────
 
-        ✦ ───────────── ✦
-        🌿 𝐖𝐞'𝐫𝐞 𝐟𝐚𝐦𝐢𝐥𝐲.
-        ✦ ───────────── ✦
+✦ ───────────── ✦
+🌿 𝐖𝐞'𝐫𝐞 𝐟𝐚𝐦𝐢𝐥𝐲.
+✦ ───────────── ✦
 `.trim()
       },
       {
         quoted: m
       }
     )
+
   } catch (error) {
     console.error(
       '❌ Error en abrazo.js:',
@@ -265,29 +232,15 @@ export default async function reaction({
 ┃      🤗 𝐀𝐁𝐑𝐀𝐙𝐎
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
 
-🔴 *No se pudo obtener el abrazo.*
+🔴 No se pudo obtener el abrazo.
 
 ╭─❖ ⚠️ 𝐃𝐄𝐓𝐀𝐋𝐋𝐄
 │
-│ La API oficial no pudo
-│ entregar la imagen.
+│ La API no pudo entregar
+│ el GIF en este momento.
 │
 │ 🔄 Intenta nuevamente.
 │
 ╰──────────────────────
 
 🌿 FamilyBot-MD
-`.trim()
-        },
-        {
-          quoted: m
-        }
-      )
-    } catch (sendError) {
-      console.error(
-        '❌ No se pudo enviar el mensaje de error:',
-        sendError
-      )
-    }
-  }
-}
